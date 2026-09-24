@@ -75,9 +75,9 @@ work breakdown and its `tasks: plan for <slug>` commit). Phase 3 starts on that 
 
 Run the `verify-change` skill. All checks must pass, and the feature must be seen working in a
 **dev instance** (`verify-change` section 4) — never `deploy-local`, which installs only
-`master` (phase 6, after the user's merge OK, or after `sync-upstream`). A change that touches
-nothing under `core/` or `quickshell/` (docs, skills, tooling) has no build, dev instance or
-service stop: `verify-change` section 0 covers it. The verifier reports to the PM, and the PM
+`master` (phase 6, after the user's merge OK, or after `sync-upstream`). A docs-only change
+(`verify-change` section 0's docs-only test prints nothing) has no build, dev instance or
+service stop: that section covers it. The verifier reports to the PM, and the PM
 posts the report as an issue comment (`project-manager`'s format); if `project-manager`'s
 review rule doesn't require phase 5, the PM says so in that comment.
 
@@ -116,7 +116,7 @@ both in the main checkout, with `dcal-verifier` in between.
    ```bash
    [ "$(git diff --name-only --diff-filter=U)" = tasks/lessons.md ] || { git merge --abort; echo "STOP: conflict beyond tasks/lessons.md"; exit 1; }
    sed -i '/^\(<<<<<<< \|=======$\|>>>>>>> \)/d' tasks/lessons.md
-   ! grep -nE '^(<<<<<<<|=======|>>>>>>>|\|{7})' tasks/lessons.md || exit 1
+   ! grep -nE '^(<<<<<<<|=======|>>>>>>>|\|{7})' tasks/lessons.md || { git merge --abort; echo "STOP: markers left"; exit 1; }
    git add tasks/lessons.md
    ```
 
@@ -125,9 +125,14 @@ both in the main checkout, with `dcal-verifier` in between.
    check-docs hook may block it, because the merged files trip its doc rules: the docs were
    already reviewed on the branch, so `.claude/tools/check-docs.py --ack` and committing again
    is expected here. On a STOP, report the conflict to the PM.
-2. Deploy — only if the merge touched `core/` or `quickshell/`
-   (`git diff --name-only master~1..master -- core quickshell` lists files): run
-   `deploy-local`. Otherwise there is nothing to deploy; go straight to 6b in the same brief.
+2. Deploy unless the merge is docs-only (`verify-change` section 0's test, on the merge):
+
+   ```bash
+   git diff --name-only master~1..master | grep -vE '^(\.claude/|tasks/|CLAUDE\.md$|\.graphifyignore$|[^/]+\.md$)'
+   ```
+
+   Any output: run `deploy-local`. No output: nothing to deploy — go straight to 6b in the same
+   brief.
 3. If any `.qml` file changed in the merge (`git diff --name-only master~1..master -- '*.qml'`),
    refresh the graph: `GRAPHIFY_VIZ_NODE_LIMIT=0 ~/.local/share/graphify-venv/bin/graphify
    update .`, plus the QML refresh from the `code-graph` skill if
@@ -138,12 +143,12 @@ both in the main checkout, with `dcal-verifier` in between.
 Then `dcal-verifier` confirms the deploy actually landed (installed version, `dcal` service
 running, a screenshot).
 
-**If the deploy fails**, nothing is pushed and the issue stays open. The PM briefs
-`dcal-builder` to undo the local merge — only if the merge is the one commit `master` has
-over `origin/master`:
+**If the deploy fails** — `deploy-local` errors, or `dcal-verifier` can't confirm it — nothing
+is pushed and the issue stays open. The PM briefs `dcal-builder` to undo the local merge — only
+if the merge is the one commit `master` has over `origin/master` and the tree is clean:
 
 ```bash
-[ "$(git branch --show-current)" = master ] && [ "$(git rev-list --first-parent --count origin/master..master)" = 1 ] && [ "$(git log -1 --format=%s master)" = "merge: <slug>" ] || { echo "STOP: master holds more than the merge"; exit 1; }
+[ "$(git branch --show-current)" = master ] && [ "$(git rev-list --first-parent --count origin/master..master)" = 1 ] && [ "$(git log -1 --format=%s master)" = "merge: <slug>" ] && [ -z "$(git status --short)" ] || { echo "STOP: master holds more than the merge, or the tree is dirty"; exit 1; }
 git log --oneline --first-parent origin/master..master
 git reset --hard origin/master
 ```

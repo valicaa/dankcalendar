@@ -11,8 +11,19 @@ why.
 ## 0. Docs and tooling
 
 Any change touching `.claude/`, `CLAUDE.md` or `tasks/`: `.claude/tools/check-docs.py` must
-print `docs OK`. A change that touches nothing under `core/` or `quickshell/` stops here, with
-no build, dev instance or service stop:
+print `docs OK`.
+
+**Docs-only test** (`new-feature` and `project-manager` use this same test). A change is
+docs-only only if this prints nothing for its range — `master...HEAD` on the branch,
+`master~1..master` for a merge:
+
+```bash
+git diff --name-only master...HEAD | grep -vE '^(\.claude/|tasks/|CLAUDE\.md$|\.graphifyignore$|[^/]+\.md$)'
+```
+
+Any path it prints — code, the `dank-qml-common` submodule, `Makefile`, `scripts/`, `assets/`,
+`flake.nix`, `distro/`, `.github/` — means the full checks in sections 1–5. A docs-only change
+stops here, with no build, dev instance or service stop:
 
 ```bash
 .claude/tools/check-docs.py

@@ -164,8 +164,8 @@ work) does phase 3 on the branch the PM created; `dcal-verifier` does phase 4; `
 does phase 5 when the review rule below calls for it. Phase 6 is two `dcal-builder` briefs:
 **6a** — pull, merge, deploy, QML graph check, then **stop before pushing** and report;
 `dcal-verifier` confirms the deploy; **6b** — push and delete the merged branch (a new brief,
-or SendMessage to the same builder). A change that touches nothing under `core/` or
-`quickshell/` has no deploy, so 6a and 6b run as one brief (merge, then push).
+or SendMessage to the same builder). A docs-only change (`verify-change` section 0's docs-only
+test prints nothing) has no deploy, so 6a and 6b run as one brief (merge, then push).
 `sync-upstream` and `upstream-pr` likewise go to `dcal-builder`; the PM gets the user's OKs
 those skills ask for and relays them in the brief.
 
@@ -215,7 +215,8 @@ Deliverable: diff summary + command output / screenshot as evidence, not prose
 ## 5. Close — Definition of Done
 
 - [ ] `dcal-verifier` report posted: all checks pass, feature seen in a dev instance (a
-      docs/tooling-only change: `check-docs.py`, `git diff --check` and a read of the diff)
+      docs-only change per `verify-change` section 0: `check-docs.py`, `git diff --check` and
+      a read of the diff)
 - [ ] `dcal-reviewer` pass posted when the review rule called for it; blockers fixed and
       re-verified
 - [ ] every acceptance item ticked with its evidence, and ticked in the issue body itself:
@@ -226,7 +227,7 @@ Deliverable: diff summary + command output / screenshot as evidence, not prose
       `git status --short tasks/` prints nothing)
 - [ ] phase 6 done in order: 6a merge with `Closes #N` → deploy → stop; `dcal-verifier`
       confirms the deploy; 6b push `master` (this closes the issue — never before the deploy
-      is confirmed) and delete the merged branch. Docs/tooling-only: merge, then push
+      is confirmed) and delete the merged branch. Docs-only (same test): merge, then push
 - [ ] a final issue comment: merge commit hash + deploy confirmation (version, service state)
 - [ ] user summary: what changed, how it was proven, what's left, next step (deploy/PR)
 - [ ] retrospective: a correction, a wrong tier or a brief that had to be redone → one dated

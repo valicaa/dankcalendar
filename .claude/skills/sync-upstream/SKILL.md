@@ -29,6 +29,7 @@ description: Use when pulling new AvengeMedia/dankcalendar commits into the fork
    ```bash
    git switch master
    git pull --ff-only origin master
+   [ "$(git rev-list --count origin/master..master)" = 0 ] || { echo "STOP: master has unpushed commits"; exit 1; }
    git merge upstream/master -m "merge: upstream $(git rev-parse --short upstream/master)"
    git submodule update --init --recursive
    ```
@@ -44,7 +45,11 @@ description: Use when pulling new AvengeMedia/dankcalendar commits into the fork
    `code-graph` skill. It costs LLM tokens, so ask first.
 5. **Deploy.** Run `deploy-local` on `master`; it handles the migration backup.
 6. **Push** after the user confirms it works and has reviewed any closing-keyword hit from
-   step 2: `git push origin master`.
+   step 2 — only the upstream merge may ride out, never a leftover unpushed commit:
+   ```bash
+   [ "$(git branch --show-current)" = master ] && [ "$(git rev-list --first-parent --count origin/master..master)" = 1 ] && git log -1 --format=%s | grep -q '^merge: upstream ' || { echo "STOP: master holds more than the upstream merge"; exit 1; }
+   git push origin master
+   ```
 7. **Update open feature branches.** For each unmerged `feat/*`/`fix/*`/`chore/*` branch, offer
    `git switch <branch> && git merge master`. End on the branch noted in step 1.
 8. **Rebase open `pr/*` branches — never in the main checkout.** Each lives in its own
