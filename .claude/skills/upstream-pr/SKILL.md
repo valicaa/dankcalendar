@@ -14,16 +14,16 @@ below exists to make the PR look like a careful human contribution. The user own
 git fetch upstream
 git switch -c pr/<slug> upstream/master
 # code commits only, oldest first — skip merges and anything touching fork-only paths
-git log --reverse --no-merges --format=%H master..feat/<slug> -- . ':!tasks' ':!.claude' ':!CLAUDE.md'
+git log --reverse --no-merges --format=%H master..feat/<slug> -- . ':!tasks' ':!.claude' ':!CLAUDE.md' ':!.graphifyignore'
 git cherry-pick <those hashes>
 ```
 
-If a commit mixes fork-only paths with code, cherry-pick it with `-n`, run
-`git restore --staged --worktree -- tasks .claude CLAUDE.md`, then commit.
+If a commit mixes fork-only paths with code (check each hash with `git show --stat`), cherry-pick it with `-n`, run
+`git restore --staged --worktree -- tasks .claude CLAUDE.md .graphifyignore`, then commit.
 
 Confirm that nothing fork-only leaked:
 ```bash
-git diff --name-only upstream/master...HEAD | grep -E '^(tasks/|\.claude/|CLAUDE\.md)' && echo LEAK
+git diff --name-only upstream/master...HEAD | grep -E '^(tasks/|\.claude/|CLAUDE\.md|\.graphifyignore)' && echo LEAK
 ```
 
 ## 2. Polish for review

@@ -21,9 +21,12 @@ description: Use when pulling new AvengeMedia/dankcalendar commits into the fork
    git submodule update --init --recursive
    ```
    Resolve conflicts by keeping upstream's version, then re-applying our feature's intent on
-   top of it. Fork-only files (`CLAUDE.md`, `.claude/`, `tasks/`) should never conflict. If they
+   top of it. Fork-only files (`CLAUDE.md`, `.claude/`, `tasks/`, `.graphifyignore`) should never conflict. If they
    do, keep ours.
 4. **Verify.** Run the `verify-change` static checks and build, `make test` and `make build`.
+   Refresh the code graph with `GRAPHIFY_VIZ_NODE_LIMIT=0 ~/.local/share/graphify-venv/bin/graphify update .`. If upstream changed a lot of
+   QML (`.claude/tools/graph-qml.py status`), offer the QML refresh from the `code-graph` skill.
+   It costs LLM tokens, so ask first.
 5. **Deploy.** Run `deploy-local`, which handles the migration backup.
 6. **Push** after the user confirms it works: `git push origin master`.
 7. **Update open feature branches.** For each unmerged `feat/*` branch, offer

@@ -1,8 +1,7 @@
 # Dank Calendar — personal fork
 
-Fork of `AvengeMedia/dankcalendar`, used as the daily driver on this machine and as a
-base for new features. Any feature may later be offered upstream as a PR, so all code
-follows upstream's rules in `CONTRIBUTING.md` (read it before a first change).
+Fork of `AvengeMedia/dankcalendar`: this machine's daily driver and a base for features that may
+go upstream as PRs, so all code follows `CONTRIBUTING.md` (read it before a first change).
 
 - `origin` = `valicaa/dankcalendar` (push here), `upstream` = `AvengeMedia/dankcalendar`.
 - Installed build: `~/.local/bin/dcal`, run by `~/.config/systemd/user/dcal.service`
@@ -10,24 +9,32 @@ follows upstream's rules in `CONTRIBUTING.md` (read it before a first change).
 - User data: `~/.local/share/dankcal/` (SQLite `dankcal.db` + keyring), UI settings:
   `~/.config/dankcal/ui-settings.json`. Treat both as production data.
 
+## Working mode — the main session is the project manager
+
+The main session follows the `project-manager` skill: it elicits and specs with the user, then
+delegates all technical work (code reading, edits, tests, debugging, review) to the `.claude/agents/`
+roster and accepts only evidence. A subagent ignores this section and does its brief directly.
+
 ## Skills — use them, every feature goes through the same path
 
 | Skill | When |
 |---|---|
+| `project-manager` | Every user request: elicit → spec → delegate to `.claude/agents/` → verify evidence → report. |
 | `new-feature` | Starting any feature or behaviour change. Drives spec → branch → build → verify → merge → deploy. |
 | `dcal-recipes` | Implementing: adding an IPC method, UI setting, settings page, HTTP endpoint, DB migration, QML view. |
 | `verify-change` | Before claiming anything works or committing. |
 | `deploy-local` | Putting a build onto the running desktop calendar. |
 | `sync-upstream` | Pulling new commits from AvengeMedia into the fork. |
 | `upstream-pr` | Turning a finished feature into a clean PR against AvengeMedia. |
+| `code-graph` | Before reading source to trace call chains, callers, blast radius (`.claude/tools/graph-calls.py <path>`); refreshing the graph. Overrides the global graphify skill's "run `graphify query` first" default here. |
 
 ## Branch model
 
-- `master` = `upstream/master` + fork tooling (this file, `.claude/`, `tasks/`) + finished
+- `master` = `upstream/master` + fork tooling (this file, `.claude/`, `tasks/`, `.graphifyignore`) + finished
   features. It is what gets deployed.
 - `feat/<slug>` branches off `master`, one feature each, merged back with `--no-ff`.
 - `pr/<slug>` branches off `upstream/master` and carries only a feature's code commits —
-  never `CLAUDE.md`, `.claude/`, or `tasks/`. Created by the `upstream-pr` skill.
+  never `CLAUDE.md`, `.claude/`, `tasks/` or `.graphifyignore`. Created by the `upstream-pr` skill.
 - Keep planning-doc edits (`tasks/`) in their own commits so feature commits cherry-pick
   cleanly onto upstream.
 
@@ -62,10 +69,21 @@ make run              # dev build against ./quickshell (stop the service first)
 make i18n-extract     # after adding/changing any I18n.tr() string
 make generate         # after editing core/ent/schema
 make migrate name=x   # new DB migration from schema diff
+# hot-reload UI work, from core/ with the service stopped:
+DCAL_ENABLE_HOTRELOAD=1 go run ./cmd/dcal run -c ../quickshell
 ```
 
-Hot-reload UI work (from `core/`, service stopped):
-`DCAL_ENABLE_HOTRELOAD=1 go run ./cmd/dcal run -c ../quickshell`
+## Lessons and keeping these docs current
+
+- `tasks/lessons.md` is injected at session start by a hook. When the user corrects you, or you
+  catch your own mistake, add a dated rule there in the same session.
+- This file holds facts and rules only, within 120 lines. A procedure of more than a few steps
+  belongs in a skill under `.claude/skills/`, with a row in the table above.
+- A PreToolUse hook runs `.claude/tools/check-docs.py` before every `git commit`:
+  - It blocks on broken doc references, the line budget, bad skill/agent frontmatter, the
+    skill table or the `.claude/agents/` roster drifting out of sync with source.
+  - If uncommitted code a doc describes changed (staged or not), it blocks the commit until the
+    listed docs are staged, or `.claude/tools/check-docs.py --ack` is run once nothing needs to change.
 
 ## Rules
 

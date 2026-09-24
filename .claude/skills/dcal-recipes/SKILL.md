@@ -6,7 +6,10 @@ description: Use when implementing a piece of a Dank Calendar feature — adding
 # Dank Calendar implementation recipes
 
 Always open the worked example and copy its shape. New code should be indistinguishable
-from what's already there.
+from what's already there. To see a worked example's full chain without reading whole
+files, run `.claude/tools/graph-calls.py <file-or-dir> --grep <name>`. For example,
+`graph-calls.py quickshell/Services/DankCalService.qml --grep autostart` shows the QML function,
+the IPC method string and the Go `case` that handles it.
 
 ## A. New IPC method (UI ↔ daemon)
 

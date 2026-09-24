@@ -1,0 +1,20 @@
+# Keeps the code graph (graphify-out/, local only) to hand-written code. Fork tooling.
+# Generated Ent code: keep only the schema.
+core/ent/*
+!core/ent/schema/
+!core/ent/schema/**
+core/internal/mocks/
+core/internal/shellembed/dist/
+quickshell/translations/
+# Shared QML submodule (AvengeMedia/dank-qml-common) and its symlink.
+dank-qml-common/
+quickshell/DankCommon
+.claude/
+assets/screenshots/
+# Icons, OAuth-console setup screenshots, notification sound, flatpak dependency lists:
+# no code structure, and each would cost an LLM/vision call on /graphify --update.
+*.svg
+quickshell/assets/
+core/internal/notify/assets/
+distro/flatpak/go.mod.yml
+distro/flatpak/modules.txt

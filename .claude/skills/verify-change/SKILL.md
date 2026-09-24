@@ -24,6 +24,17 @@ git diff --check master...HEAD
 
 Skip the Go checks only if the branch touches nothing under `core/`.
 
+**Blast radius.** Refresh the graph first
+(`GRAPHIFY_VIZ_NODE_LIMIT=0 ~/.local/share/graphify-venv/bin/graphify update .`, ~10s). For
+each changed file, run `.claude/tools/graph-calls.py <file>`. Its `<-` and `~ call sites` lines
+are the direct callers; for transitive callers of a key function add
+`graphify affected <node-id> --relation calls --depth 3`. Every caller must be covered by a
+test or by the manual checks in section 4. Changes to a `calendar.Provider` method need a grep
+of every implementation (`git grep -n 'func (p \*Provider) <Method>(' core/internal/providers`),
+because the graph doesn't resolve interface calls. Refreshing with `update` covers only Go. For
+changed QML, the graph's QML callers are stale until the QML refresh runs, so grep QML callers
+(`git grep -n '<function>(' quickshell`).
+
 ## 2. QML checks (when `quickshell/` changed)
 
 - `qmllint` on changed files (`/usr/bin/qmllint quickshell/<file>.qml`). Treat new warnings
