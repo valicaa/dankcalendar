@@ -60,9 +60,11 @@ AGENT_MODELS = {"sonnet", "opus", "haiku", "fable", "inherit"}
 AGENT_EFFORTS = {"low", "medium", "high", "xhigh", "max"}
 
 # Issue-first branch naming (see CLAUDE.md's Branch model). Exempt: master, pr/* (upstream-pr's
-# cherry-pick branches), worktree-* (a real `isolation: worktree` agent's branch — confirmed by
-# `git worktree add -b worktree-agent-abc123 <path> master` then `git worktree list` printing
-# `<path>  <sha> [worktree-agent-abc123]`), detached HEAD.
+# cherry-pick branches), detached HEAD, and worktree-*: a real `isolation: worktree` agent probe
+# showed `git worktree list` printing
+# `.claude/worktrees/agent-afa1f28e45b87f1ec [worktree-agent-afa1f28e45b87f1ec]`, cut from master
+# (0c98d7e) while the main checkout was on a feature branch. Writing agents never run that way
+# (project-manager); read-only ones may, and don't commit, so the exemption is harmless.
 BRANCH_RE = re.compile(r"^(feat|fix|chore)/\d+-")
 EXEMPT_BRANCHES = {"master"}
 EXEMPT_BRANCH_PREFIXES = ("pr/", "worktree-")

@@ -31,15 +31,16 @@ The main session follows `project-manager`: it elicits, specs (a GitHub issue), 
 
 - **Issue-first:** every change starts as an issue on `valicaa/dankcalendar` (body = spec,
   template in `project-manager`); no branch before it exists.
-- `master` = `upstream/master` + fork tooling (this file, `.claude/`, `tasks/`, `.graphifyignore`)
-  + finished features. It is what gets deployed.
+- `master` = `upstream/master` + fork tooling (this file, `.claude/`, `tasks/`,
+  `.graphifyignore`) and finished features. It is the only branch that gets deployed.
 - `feat|fix|chore/<N>-<slug>` branches off `master` via `gh issue develop N -R
   valicaa/dankcalendar --name <prefix>/<N>-<slug> --base master --checkout` — every `gh`
   command carries an explicit `-R`, never `gh repo set-default`. Merged `--no-ff` with
   `Closes #N` in the merge commit only.
 - `pr/<slug>` is created by the `upstream-pr` skill off `upstream/master`, code commits only —
   never `CLAUDE.md`, `.claude/`, `tasks/`, `.graphifyignore` or a fork `#N`.
-- Keep `tasks/<N>-<slug>/` edits in their own commits.
+- One feature in flight, in the main checkout; writing agents work on its branch one at a time
+  (never `isolation: worktree`). `tasks/` edits go in their own `tasks:` commits, by the PM.
 
 ## Architecture — two halves, one binary
 

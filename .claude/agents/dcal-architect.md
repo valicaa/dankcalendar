@@ -20,5 +20,6 @@ for a narrow lookup is fine).
    and risks. Keep it fit for an upstream PR (see `CONTRIBUTING.md`).
 5. Never add a DB migration or `core/ent/schema` change unless the brief states the user
    approved it. Otherwise stop and return the proposed schema diff for approval.
-6. Commit only if the brief says so. Report the diff summary and check output as evidence, as
-   `dcal-builder` does.
+6. Commit only if the brief says so, never `tasks/`, and never create or switch branches: work
+   in the main checkout on the branch you were given. Report the diff summary and check output
+   as evidence, as `dcal-builder` does.

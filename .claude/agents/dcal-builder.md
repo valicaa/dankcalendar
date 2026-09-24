@@ -20,6 +20,9 @@ for a narrow lookup is fine).
    edit `quickshell/DankCommon`.
 4. Run the checks that cover what you touched (`make test`, `make vet`, gofmt, `qmllint`, the
    brief's own commands) and fix failures you caused.
-5. Commit only if the brief says so, as `area: lowercase summary`.
+5. Commit only if the brief says so, as `area: lowercase summary`, and never commit `tasks/`
+   (the PM does). Work in the main checkout on the branch you were given; create or switch
+   branches only when the brief is a branch-operating procedure (the `new-feature` phase-6
+   merge, `deploy-local`, `sync-upstream`, `upstream-pr`).
 6. Report: files changed with a one-line summary each, `git diff --stat`, each check with its
    actual output excerpt, and anything left undone. "Should work" is not evidence.

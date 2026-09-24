@@ -10,7 +10,8 @@ why.
 
 ## 1. Static checks (mirror upstream pre-commit + CI)
 
-From the repo root:
+From the repo root. In an `upstream-pr` worktree, follow `upstream-pr` step 2 instead of the
+paths and base below.
 
 ```bash
 cd core && go mod tidy && git diff --exit-code go.mod go.sum; cd ..
@@ -52,8 +53,9 @@ make build && core/bin/dcal version
 ## 4. See it working
 
 Static checks do not prove UI behaviour. Use a **dev instance**, never `deploy-local` — that
-installs onto the user's real desktop calendar and only runs in `new-feature` phase 6, after
-merge and the user's explicit OK, on `master`:
+installs onto the user's real desktop calendar and only ever deploys `master`, after the user's
+explicit OK (`new-feature` phase 6, or after `sync-upstream`). An unmerged branch is tried
+here, never deployed:
 
 `systemctl --user stop dcal`, then from `core/`:
 `DCAL_ENABLE_HOTRELOAD=1 go run ./cmd/dcal run -c ../quickshell` in the background.
