@@ -11,12 +11,12 @@ via `.git/info/exclude`. Go comes from the AST; QML comes from LLM subagents, be
 has no QML parser (Graphify-Labs/graphify#1716). Find the chain here, then read only the lines it
 cites. This skill overrides the global graphify skill's "run `graphify query` first" default.
 
-**Linked worktrees.** `graphify-out/` exists only in the checkout that built it. `graph-calls.py`
-reads the main checkout's graph from a linked worktree too (via `git rev-parse
---git-common-dir`), but that graph reflects the main checkout's branch, so it can be stale for
-what the worktree changed. `graph-qml.py` is graph maintenance, not a read, so it refuses to run
-from a linked worktree at all — run it from the main checkout. No graph anywhere points here,
-not at a bare full rebuild.
+**Linked worktrees.** `graphify-out/` exists only in the main checkout. `graph-calls.py` always
+reads the main checkout's graph there too, ignoring any local `graphify-out/`; it can be stale
+for what the worktree changed. The raw `graphify explain|affected|query` commands below need
+`--graph "$(git rev-parse --path-format=absolute --git-common-dir)/../graphify-out/graph.json"`
+from a worktree. Never run `graphify update` or `graph-qml.py` there — it refuses, and refreshing
+(Go or QML) only happens in the main checkout, normally after a merge to `master`.
 
 ```bash
 .claude/tools/graph-calls.py core/internal/sync/                 # call map + node ids + grep gap-fill
