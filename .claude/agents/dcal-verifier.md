@@ -15,6 +15,9 @@ for a narrow lookup is fine).
 1. Read `tasks/lessons.md` first; its rules apply to you.
 2. Run `verify-change` on the branch or diff range in the brief, plus the brief's scenarios
    (Given/When/Then) in the running app. Save screenshots under the scratchpad the brief names.
+   A docs-only change (`verify-change` section 0's test prints nothing) gets only that section:
+   `check-docs.py`, `git diff --check` and a read of the diff — no build, dev instance or
+   service stop.
 3. If you stopped the `dcal` service for a dev run, kill the dev process and
    `systemctl --user start dcal` before you finish.
 4. To confirm a deploy (`new-feature` 6.4, after the owner merged the PR), run `deploy-local`

@@ -9,28 +9,31 @@ The main session is the PM. It talks to the user, owns the issue, dispatches sub
 checks their evidence and reports back. It does not read source, edit code, run builds or
 debug. Keep the PM's context small and about the user's intent; subagents carry the file dumps.
 
-This skill decides *who* does the work; process skills (e.g. superpowers brainstorming,
-systematic-debugging) may still be used *inside* a step — brainstorming within Elicit,
-systematic-debugging by `dcal-architect`.
+This skill decides *who* does the work; process skills may still run *inside* a step
+(superpowers brainstorming within Elicit, systematic-debugging by `dcal-architect`).
 
 **The PM does itself:** talk to the user; read CLAUDE.md, skills, `tasks/lessons.md`, issues
 and subagent reports; write the issue body and briefs; create and update the issue
 (`gh issue create|comment|edit|reopen -R valicaa/dankcalendar`); create the branch (step 2, or a
 step-0 `docs/<slug>` branch — the only branch operations the PM runs); write
-`tasks/<N>-<slug>/todo.md`, keep it ticked, and make every `tasks:` commit —
-`tasks: plan for <slug>` in step 2 and `tasks: result for <slug>` in `new-feature` 6.1 (no code;
-no agent commits `tasks/`, except phase 6's merge of `origin/master` that resolves a
-`tasks/lessons.md` conflict); write PR bodies; post every issue and PR comment (agents never
-post); cheap read-only status checks needed to decide (`git status`, `git log --oneline`,
-`check-docs.py`, `gh pr view`). Everything else goes to a subagent, including "quick" lookups.
+`tasks/<N>-<slug>/todo.md`, keep it ticked, and commit everything under `tasks/` — plan, result,
+lessons, any deliverable that lives there — as `tasks:` commits (`tasks: plan for <slug>` in
+step 2, `tasks: result for <slug>` in `new-feature` 6.1). Agents may edit `tasks/` but never
+commit it; a merge of `origin/master` (`new-feature` Conflicts) authors nothing there, so it
+isn't one. Also: write PR bodies; post every issue and PR comment (agents never post); cheap
+read-only status checks needed to decide (`git status`, `git log --oneline`, `check-docs.py`,
+`gh pr view`). Everything else goes to a subagent, including "quick" lookups.
 
-**Branches.** One feature is in flight at a time, from its branch's creation until `new-feature`
-6.4 is done or its PR is closed. In phases 3–5 no agent creates or switches branches: they work
-on the branch the PM created. The branch-operating procedures — phase 6, step 0's trivial PR,
-`sync-upstream`, `deploy-local` (and its rollback) and `upstream-pr` — are run by `dcal-builder`
-on the PM's brief, in the main checkout (`upstream-pr` in its own `pr/<slug>` worktree).
-`master` moves only when the owner merges a PR on GitHub: nobody commits on it (the check-docs
-hook blocks it) or pushes it, and the main checkout returns to it whenever a PR is open.
+**Branches.** One feature is worked on at a time: the one whose branch is checked out, from
+step 2 until `new-feature` 6.2 opens its PR and returns the checkout to `master`. Then the next
+one may start; several PRs may await the owner, and each merge gets its own 6.4. Review rounds,
+conflicts and 6.4 need the checkout on `master`, so they wait for the feature being worked to
+reach its PR (or, with the user's OK, for it to be parked). In phases 3–5 no agent creates or
+switches branches. The branch-operating procedures — phase 6 (including review rounds), step
+0's trivial PR, `sync-upstream`, `deploy-local` (and its rollback) and `upstream-pr` — are run
+by `dcal-builder` on the PM's brief, in the main checkout (`upstream-pr` in its own `pr/<slug>`
+worktree). `master` moves only when the owner merges a PR on GitHub: nobody commits on it (the
+check-docs hook blocks it) or pushes it.
 
 ## 0. Does this need an issue at all?
 
@@ -40,14 +43,14 @@ change goes on. Two trivial changes skip the issue, but not the PR — every cha
 `master` as a PR the owner merges; everything else goes through steps 1–5:
 
 - **Anything in `tasks/lessons.md`** (a new rule, or a typo inside one): always the PM, as a
-  `tasks: <summary>` commit. While a feature branch is checked out (phases 2–5) it rides along
-  in that feature's next `tasks:` commit; otherwise it goes on a trivial branch as below.
+  `tasks: <summary>` commit. While a feature branch is checked out (phases 2–5, or a review
+  round) it rides along in that branch's next `tasks:` commit; otherwise a trivial branch.
 - **A typo in any other doc** (CLAUDE.md, a skill, an agent): a `dcal-builder`, as a
-  `docs: <summary>` commit on a trivial branch — only while the main checkout is on `master`;
-  otherwise it waits until that feature's PR is open.
+  `docs: <summary>` commit on a trivial branch — only while the main checkout is on `master`.
 
-A trivial branch is `docs/<slug>` (no issue; the check-docs hook takes commits on it only while
-every uncommitted path passes `verify-change` section 0's docs-only test), made by the committer:
+A trivial branch is `docs/<slug>`, no issue; `<slug>` comes from the commit summary by step 2's
+slug rule. The check-docs hook takes commits on it only while every uncommitted path is a doc
+(`.claude/**.md`, `tasks/`, CLAUDE.md, a root `*.md`). The committer creates it:
 
 ```bash
 [ -f CLAUDE.md ] && [ "$(git rev-parse --show-toplevel)" = "$PWD" ] && [ "$(git branch --show-current)" = master ] && [ -z "$(git status --short)" ] || { echo "STOP: not the main checkout on a clean master"; exit 1; }
@@ -55,15 +58,18 @@ git pull --ff-only origin master
 git switch -c docs/<slug> || exit 1
 ```
 
-Then `dcal-builder` runs `new-feature` 6.2 with `<branch>` = `docs/<slug>`, except that the PR
-takes the commit subject as title and a PM-written body with no `Closes` (what, why, attribution):
+After the commit, `dcal-builder` verifies (`.claude/tools/check-docs.py` prints `docs OK`,
+`git diff --check master...HEAD` prints nothing), pushes with `new-feature` 6.2's push block
+(`<branch>` = `docs/<slug>`), opens the PR with this block and returns with 6.2's last block.
+The PM-written body (what, why, attribution) closes no issue:
 
 ```bash
+! grep -qiE '\b(close[sd]?|fix(e[sd])?|resolve[sd]?):? +#[0-9]+' <scratchpad>/pr-docs-<slug>.md && tail -1 <scratchpad>/pr-docs-<slug>.md | grep -qF 'Generated with [Claude Code]' || { echo "STOP: a step-0 PR body closes no issue and ends with the attribution"; exit 1; }
 gh pr create -R valicaa/dankcalendar --base master --head docs/<slug> --title "$(git log -1 --format=%s docs/<slug>)" --body-file <scratchpad>/pr-docs-<slug>.md
 ```
 
-The PM gives the owner the link. Once merged, `dcal-builder` runs 6.4's first block; docs-only,
-so nothing is deployed.
+The PM gives the owner the link. Once it is merged and the checkout is on `master`,
+`dcal-builder` runs 6.4's first block; only docs, so nothing is deployed.
 
 ## 1. Elicit (BABOK elicitation, Jobs-to-be-Done)
 
@@ -121,7 +127,8 @@ gh issue create -R valicaa/dankcalendar --title "<area>: <summary>" --body-file 
 The title is `area: lowercase summary`, with `area` from the same vocabulary as commit subjects —
 upstream's most used are `ui`, `i18n`, `core`, `events`, `providers`, `caldav`, `settings`,
 `sync`, `reminders`, `notifications`, `keyring`, `ipc`, `nix`, `flatpak`, `ci`; fork-only work
-uses `docs` (CLAUDE.md, skills, agents) or `tooling` (scripts, hooks). One type label, one size
+uses `docs` (CLAUDE.md, skills, agents), `tooling` (scripts, hooks) or `tasks` (only `tasks/`
+changes). One type label, one size
 label. `N` is the number at the end of the URL this command prints. The slug is the summary
 (without `area:`) as lowercase kebab-case, 2–5 words (a hyphenated or slashed word like
 `free/busy` counts as one): `events: add free/busy check` → `add-free-busy-check`. A longer
@@ -129,7 +136,7 @@ summary keeps its 2–5 most specific words, dropping articles and filler:
 `ui: show week numbers in the month view header` → `week-numbers-month-header`.
 
 Then create the branch — in the main checkout, which must be on `master` with a clean tree
-(one feature in flight — see Branches; with the user's OK a checked-out feature can be parked:
+(one feature worked at a time — see Branches; with the user's OK a checked-out one can be parked:
 `dcal-builder` commits its work, then `git switch master`):
 
 ```bash
@@ -147,9 +154,10 @@ local `master` that is behind up to date (phases 4–5 diff against it), and a l
 would be missing from the branch. `master` never holds local commits, so a nonzero count or a
 refused pull (diverged) means something went wrong: stop and take it to the user.
 
-Write `tasks/<N>-<slug>/todo.md` — the work breakdown from step 3, one line per task,
-`- [ ] <deliverable> — <agent>` — and commit it as
-`tasks: plan for <slug>`. It is not pushed on its own; phase 6 pushes it with the branch.
+Write `tasks/<N>-<slug>/todo.md` — the work breakdown through `new-feature` 6.1, one line per
+task, `- [ ] <deliverable> — <agent>`, with agents from the table below — and commit it as
+`tasks: plan for <slug>`. The branch exists on origin (`gh issue develop` made it) but carries no
+commits there until 6.2 pushes it. The PR, merge and deploy are tracked in issue comments.
 
 ## 3. Break down and delegate
 
@@ -168,12 +176,8 @@ task needs:
 
 The Agent tool's `model` param overrides the agent's frontmatter: use `fable` for the hardest
 problems (architect failed, subtle concurrency or data-loss risk), `haiku` for bulk mechanical
-steps. For a `new-feature` run: the PM owns phases 1–2 and 7, the `tasks:` commits and the PR
-body. `dcal-builder` (or `dcal-architect` for L, schema or provider work) does phase 3 on the
-branch the PM created; `dcal-verifier` does phase 4; `dcal-reviewer` does phase 5 when the review
-rule below calls for it. Phase 6 is two `dcal-builder` briefs around the owner's merge on
-GitHub: **6.2** push, open the PR, back to `master`; **6.4** pull, delete the branch, deploy
-unless docs-only, then `dcal-verifier` confirms. `sync-upstream` (which also ends in a PR) and
+steps. Who does which `new-feature` phase is in that skill's header (phase 6: two `dcal-builder`
+briefs around the owner's merge — 6.2 opens the PR, 6.4 pulls and deploys). `sync-upstream` and
 `upstream-pr` go to `dcal-builder`; the PM relays any OK those skills ask the user for.
 
 **Review rule (this overrides any other phrasing):** send `dcal-reviewer` for every M/L
@@ -208,43 +212,38 @@ Deliverable: diff summary + command output / screenshot as evidence, not prose
   an issue comment, short and concrete:
   ```markdown
   ## <Verifier|Reviewer> report
-  Verdict: pass | blockers found (N) | review skipped — <why>
+  Verdict: pass | blockers found (N)
+  Review: skipped — <why>          (verifier comment only, when the review rule doesn't apply)
   - check: pass/fail — `<command>` → `<real output excerpt>`
   ```
-  `gh issue comment <N> -R valicaa/dankcalendar --body-file <scratchpad>/evidence.md`. One
+  `gh issue comment <N> -R valicaa/dankcalendar --body-file <scratchpad>/evidence.md` — always
+  `--body-file`: a quoted `git commit` in an inline `--body` trips the check-docs hook. One
   comment per verifier run and per reviewer run.
 - Scope grows (new layer, migration, extra setting): stop and raise a change request with the
   user — what changed, cost in size, options. Don't absorb it silently.
 - A subagent fails twice: re-brief with what was missing, or escalate one tier (builder →
   architect → `model: fable`). Don't take over the work yourself.
-- Keep `tasks/<N>-<slug>/todo.md` ticked as tasks land — the PM's own job, not a subagent's.
+- Keep `tasks/<N>-<slug>/todo.md` ticked as tasks land (through 6.1; the last ticks go in the
+  `tasks: result` commit) — the PM's own job. Review requests come from the owner or
+  `gh pr view <PR> -R valicaa/dankcalendar --json state,reviewDecision,reviews,comments`.
 
 ## 5. Close — Definition of Done
 
-- [ ] `dcal-verifier` report posted: all checks pass, feature seen in a dev instance (a
-      docs-only change per `verify-change` section 0: `check-docs.py`, `git diff --check` and
-      a read of the diff)
-- [ ] `dcal-reviewer` pass posted when the review rule called for it; blockers fixed and
-      re-verified
-- [ ] every acceptance item ticked with its evidence, and ticked in the issue body itself:
+- [ ] `dcal-verifier` report posted: all checks pass, seen in a dev instance (docs-only:
+      `verify-change` section 0); `dcal-reviewer` pass posted when the review rule calls for it
+- [ ] every acceptance item ticked with its evidence, and ticked in the issue body itself —
+      only the boxes under `## Acceptance`, never the Risks layer list:
       `gh issue view N -R valicaa/dankcalendar --json body -q .body > <scratchpad>/body.md`,
-      tick the boxes in that file, then
+      tick them in that file, then
       `gh issue edit N -R valicaa/dankcalendar --body-file <scratchpad>/body.md`
-- [ ] retrospective: a correction, a wrong tier or a brief that had to be redone → one dated
-      rule in `tasks/lessons.md`, in the `tasks: result` commit (a later one: step 0)
-- [ ] `tasks: result for <slug>` committed on the feature branch (skipped when
-      `git status --short tasks/` prints nothing)
-- [ ] PR open on `valicaa/dankcalendar` (body: `Closes #N` first, evidence comment links,
-      attribution last), its URL posted on the issue, main checkout back on an up-to-date
-      `master`
-- [ ] user summary: what changed, how it was proven, the PR link, what's left — no merge
-      question
-- [ ] after the owner merges (the merge closes the issue): pulled, local branch deleted,
-      deployed unless docs-only and confirmed by `dcal-verifier`; a final issue comment with
-      the merge commit hash + deploy confirmation (version, service state) or "docs-only". A
-      failed deploy: rollback, reopen, new PR (`new-feature` phase 6)
+- [ ] retrospective (a correction, a wrong tier, a redone brief) → a dated rule in
+      `tasks/lessons.md`; `todo.md` ticked through 6.1; both in `tasks: result for <slug>`
+- [ ] PR open (6.2), its URL on the issue, main checkout on an up-to-date `master`; user
+      summary: what changed, how it was proven, the PR link, what's left — no merge question
+- [ ] after the owner merges (the merge closes the issue): 6.4 done, a final issue comment with
+      the merge commit + deploy confirmation, or "docs-only" (`new-feature` phase 6 also covers
+      a failed deploy and a PR closed unmerged)
 
-The PM never asks for a merge, push or deploy OK in chat: the owner merges the PR on GitHub, and
-that is the OK to deploy (the PM learns of it from the owner or
-`gh pr view <PR> -R valicaa/dankcalendar --json state,mergeCommit`). Only the QML graph refresh
-(LLM cost) and `upstream-pr` still wait for the user's word.
+The PM never asks for a merge, push or deploy OK in chat: the owner merges the PR on GitHub,
+and that is the OK to deploy (`new-feature` 6.4 says how the PM learns of it). Only the QML
+graph refresh (LLM cost) and `upstream-pr` still wait for the user's word.

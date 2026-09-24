@@ -20,11 +20,11 @@ for a narrow lookup is fine).
    and risks. Keep it fit for an upstream PR (see `CONTRIBUTING.md`).
 5. Never add a DB migration or `core/ent/schema` change unless the brief states the user
    approved it. Otherwise stop and return the proposed schema diff for approval.
-6. Commit only if the brief says so, and never commit `tasks/` (the PM does; the one exception is
-   the merge of `origin/master` into a feature branch that resolves a `tasks/lessons.md`
-   conflict, per `new-feature` phase 6's Conflicts). Never commit on or push `master`: it moves
-   only when the owner merges a PR on GitHub. Work in the main checkout on the branch you were
-   given; create or switch branches only when the brief is a branch-operating procedure
-   (`new-feature` phase 6, `deploy-local`, `sync-upstream`, `upstream-pr`) — e.g. escalated to
-   you after a builder failed it, or a code conflict on a PR. Report the diff summary and check
-   output as evidence, as `dcal-builder` does.
+6. Commit only if the brief says so. Edit `tasks/` if asked but never commit it (the PM does;
+   a merge of `origin/master`, `new-feature` Conflicts, authors nothing there). Never commit on
+   or push `master`: it moves only when the owner merges a PR on GitHub. Work in the main
+   checkout on the branch you were given; create or switch branches only for a branch-operating
+   procedure (`new-feature` phase 6 including a review round's switch to the branch and back,
+   `deploy-local`, `sync-upstream`, `upstream-pr`) — e.g. escalated to you after a builder
+   failed it, or a code conflict on a PR. Report the diff summary and check output as evidence,
+   as `dcal-builder` does.

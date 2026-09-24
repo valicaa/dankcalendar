@@ -19,7 +19,7 @@ The main session follows `project-manager`: it elicits, specs (a GitHub issue), 
 | Skill | When |
 |---|---|
 | `project-manager` | Every user request: elicit → spec → delegate to `.claude/agents/` → verify evidence → report. |
-| `new-feature` | Starting any feature or behaviour change. Drives spec → branch → build → verify → merge → deploy. |
+| `new-feature` | Starting any feature or behaviour change. Drives spec → branch → build → verify → PR → deploy. |
 | `dcal-recipes` | Implementing: adding an IPC method, UI setting, settings page, HTTP endpoint, DB migration, QML view. |
 | `verify-change` | Before claiming anything works or committing. |
 | `deploy-local` | Putting a build onto the running desktop calendar. |
@@ -30,7 +30,7 @@ The main session follows `project-manager`: it elicits, specs (a GitHub issue), 
 ## Branch model
 
 - **Issue-first:** every change except `project-manager` step 0's trivial ones starts as an
-  issue on `valicaa/dankcalendar` (body = spec, template there); no branch before it exists.
+  issue on `valicaa/dankcalendar` (body = spec, template: `project-manager` step 2), then a branch.
 - `master` = `upstream/master` + fork tooling (this file, `.claude/`, `tasks/`,
   `.graphifyignore`) and finished features; the only branch deployed. It moves only when the
   owner merges a PR on GitHub — that merge is the OK to deploy, never asked in chat.
@@ -40,8 +40,8 @@ The main session follows `project-manager`: it elicits, specs (a GitHub issue), 
   the checkout back on `master`. Other PR branches: `docs/<slug>` (step 0), `sync/upstream-<hash>`.
 - `pr/<slug>` is created by the `upstream-pr` skill off `upstream/master`, code commits only —
   never `CLAUDE.md`, `.claude/`, `tasks/`, `.graphifyignore` or a fork `#N`.
-- One feature in flight, in the main checkout; writing agents work on its branch one at a time
-  (never `isolation: worktree`). `tasks/` edits go in their own `tasks:` commits, by the PM.
+- One feature is worked at a time (its branch checked out) until `new-feature` 6.2 opens its PR;
+  writing agents take turns there (never `isolation: worktree`); the PM commits all of `tasks/`.
 
 ## Architecture — two halves, one binary
 

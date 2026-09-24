@@ -14,11 +14,11 @@ Who does each phase (`project-manager` skill): the PM owns 1, 2 and 7, every `ta
 every issue comment. `dcal-builder` (or `dcal-architect` for L, schema or provider work) does 3 on
 the branch the PM created in phase 2. `dcal-verifier` does 4. `dcal-reviewer` does 5 when
 `project-manager`'s review rule calls for it. In phase 6 `dcal-builder` opens a PR that the owner
-merges on GitHub, then pulls and deploys. The merge is the owner's OK: nobody asks for a merge,
-push or deploy OK in chat. Phases 3–5 never create or switch branches, and agents never commit
-`tasks/` (one exception: phase 6's merge of `origin/master` that resolves a `tasks/lessons.md`
-conflict). Writing agents run one at a time in the main checkout, never with
-`isolation: worktree`.
+merges on GitHub, then pulls and deploys; it also switches to the branch and back for a review
+round. The merge is the owner's OK: nobody asks for a merge, push or deploy OK in chat. Phases
+3–5 never create or switch branches. Agents may edit `tasks/` but never commit it (the PM does;
+a merge of `origin/master` in Conflicts authors nothing there). Writing agents run one at a time
+in the main checkout, never with `isolation: worktree`.
 
 ## 1. Issue — the spec
 
@@ -27,37 +27,26 @@ conflict). Writing agents run one at a time in the main checkout, never with
    UI, what persists, and what is out of scope. Ask one question at a time; prefer
    multiple choice.
 3. `dcal-scout` (briefed by the PM) locates the closest existing feature and reads it
-   end-to-end — new code must look like it.
-   `dcal-recipes` lists worked examples per feature type. Map it with the code graph first
-   (`code-graph` skill): `.claude/tools/graph-calls.py <dir> [--grep name]` gives the
-   chain across layers with node ids, then read only the lines it cites. Check
+   end-to-end — new code must look like it (`dcal-recipes` lists worked examples). Map it with
+   the code graph first (`code-graph` skill): `.claude/tools/graph-calls.py <dir> [--grep name]`
+   gives the chain across layers with node ids; read only the lines it cites. Check
    `graphify-out/memory/` for an earlier trace of the same flow.
-4. From the scout's report, decide the layers touched — this goes in the issue's Risks section as
-   a tick list:
-   - [ ] QML only (view/widget/modal)
-   - [ ] UI setting (`SettingsData`) — daemon reads it too?
-   - [ ] New IPC method(s)
-   - [ ] DB schema change / migration (**one-way door — needs explicit user approval**)
-   - [ ] Provider behaviour (google/caldav/microsoft/evolution/local/ical)
-   - [ ] Background engine (`core/internal/{sync,reminders,invitations}`)
-   - [ ] HTTP API / CLI subcommand
-
+4. From the scout's report, tick the layers touched in the issue's Risks list: QML only; UI
+   setting (`SettingsData` — daemon reads it too?); IPC method; DB schema change / migration
+   (**one-way door — explicit user approval**); provider (google/caldav/microsoft/evolution/
+   local/ical); background engine (`core/internal/{sync,reminders,invitations}`); HTTP API / CLI.
    For each existing function you will change, list its callers in the same Risks section.
    Use the `<-` and `~ call sites` lines from `graph-calls.py`, plus
    `graphify affected <node-id> --relation calls --depth 3` for transitive callers. Grep for
    interface implementations and callbacks, which the graph can't see.
-5. Write the issue body using `project-manager`'s template (Problem, Goal/Non-goals, Story,
-   Scenarios, Constraints, Acceptance, Risks, Size — always these 8 headings; "Upstream-worthy:
-   yes/no" is a line under Constraints, not its own heading). **Show it to the user and get
-   their yes before creating the issue** — order matters, see `project-manager` step 2.
+5. Write the issue body with `project-manager` step 2's template (8 headings). **Show it to
+   the user and get their yes before creating the issue.**
 
 ## 2. Branch
 
-The PM creates the issue, the branch and `tasks/<N>-<slug>/todo.md` in this phase — see
-`project-manager` step 2 for the exact commands (main checkout on `master` with a clean tree,
-one feature in flight; freshness check via `git fetch origin` +
-`git rev-list --count origin/master..master`; `gh issue develop … --checkout`; the `todo.md`
-work breakdown and its `tasks: plan for <slug>` commit). Phase 3 starts on that branch.
+The PM creates the issue, the branch (`gh issue develop … --checkout`, from a clean, current
+`master`) and `tasks/<N>-<slug>/todo.md` with its `tasks: plan for <slug>` commit — exact
+commands in `project-manager` step 2. Phase 3 starts on that branch.
 
 ## 3. Implement
 
@@ -65,9 +54,9 @@ work breakdown and its `tasks: plan for <slug>` commit). Phase 3 starts on that 
 - Go changes get tests in the same commit (TDD where practical: failing test first).
 - Every new user-facing string: `I18n.tr("…", "context")`, then `make i18n-extract` and commit
   the `translations/en.json` diff with the change that introduced the strings.
-- Commit in small, self-contained steps: `area: lowercase summary`. Never commit `tasks/`
-  (the PM does), and no `#N` or `Closes #N` in feature commits — cherry-picked upstream,
-  `#N` would point at the wrong issue there; only the PR body (phase 6) references the issue.
+- Commit in small, self-contained steps: `area: lowercase summary`. Edit `tasks/` if the task
+  needs it but never commit it (the PM does). No `#N` or `Closes #N` in feature commits:
+  cherry-picked upstream, `#N` would point at the wrong issue; only the PR body references it.
 - If something goes sideways (design doesn't fit, unexpected complexity): stop, tell the PM,
   who updates the issue and re-checks with the user.
 
@@ -75,29 +64,23 @@ work breakdown and its `tasks: plan for <slug>` commit). Phase 3 starts on that 
 
 Run the `verify-change` skill. All checks must pass, and the feature must be seen working in a
 **dev instance** (`verify-change` section 4) — never `deploy-local`, which installs only
-`master` (phase 6, after the owner merged the PR, or `sync-upstream`). A docs-only change
-(`verify-change` section 0's docs-only test prints nothing) has no build, dev instance or
-service stop: that section covers it. The verifier reports to the PM, and the PM
-posts the report as an issue comment (`project-manager`'s format); if `project-manager`'s
-review rule doesn't require phase 5, the PM says so in that comment.
+`master` after a merge. A docs-only change needs only `verify-change` section 0. The PM posts the
+verifier's report as an issue comment (`project-manager` step 4's format, which also says when
+review is skipped).
 
 ## 5. Review
 
-When `project-manager`'s review rule calls for it (every M/L change, and anything touching the
-DB, migrations, providers or the background engines
-`core/internal/{sync,reminders,invitations}` — this phase is otherwise optional), dispatch
-`dcal-reviewer` on `git diff master...HEAD` with the issue number, so it checks the acceptance
-criteria and CLAUDE.md's rules. Fix real findings; re-run `verify-change`. The PM posts the
-findings and how they were resolved as an issue comment.
+When `project-manager`'s review rule calls for it (otherwise optional), dispatch `dcal-reviewer`
+on `git diff master...HEAD` with the issue number, so it checks the acceptance criteria and
+CLAUDE.md's rules. Fix real findings; re-run `verify-change`. The PM posts the findings and how
+they were resolved as an issue comment.
 
 ## 6. Pull request, merge and deploy
 
 The owner reviews every change as a PR on `valicaa/dankcalendar` and merges it on GitHub (merge
-commits only; GitHub then deletes the remote branch). That merge is the OK to deploy — the PM
-never asks for a merge, push or deploy OK in chat. `<branch>` below is
-`<feat|fix|chore>/<N>-<slug>`. Each block is one Bash call in the main checkout (a subagent's
-default cwd); a block that changes it starts with a guard line. A `STOP` is a failed step to
-report to the PM.
+commits only; GitHub then deletes the remote branch) — the OK to deploy, never asked in chat.
+`<branch>` is `<feat|fix|chore>/<N>-<slug>`. Each block is one Bash call in the main checkout;
+one that changes it starts with a guard line. A `STOP` is a failed step to report to the PM.
 
 **6.1 Result (PM).** Commit `tasks/` notes on the feature branch as `tasks: result for <slug>`
 (skipped when `git status --short tasks/` prints nothing). Write the PR body to
@@ -110,7 +93,7 @@ Closes #<N>
 
 Evidence:
 - Verifier: <verdict> — <comment URL>
-- Reviewer: <verdict, or "skipped — <why>"> — <comment URL>
+- Reviewer: <verdict> — <comment URL>, or: skipped — <why> — <the verifier comment URL>
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 ```
@@ -147,12 +130,15 @@ git switch master || exit 1
 git pull --ff-only origin master
 ```
 
-**6.3 Hand over (PM).** `gh issue comment <N> -R valicaa/dankcalendar --body "PR: <URL>"`, and
-give the owner the URL. The feature stays in flight until 6.4 is done or the PR is closed.
+**6.3 Hand over (PM).** Post `PR: <URL>` with
+`gh issue comment <N> -R valicaa/dankcalendar --body-file <scratchpad>/pr-link.md`, then give
+the owner the URL. The next feature may start now; this PR waits for the owner.
 
-**Review requests.** When the owner asks for changes on the PR, phases 3–5 run again on the same
-branch. The first brief starts with checking it out again (the pull picks up anything pushed to
-it on GitHub, e.g. its "Update branch" button):
+**Review requests.** The PM learns of them from the owner or from
+`gh pr view <PR> -R valicaa/dankcalendar --json state,reviewDecision,reviews,comments`. Phases
+3–5 run again on the same branch, once the checkout is on `master` (a feature being worked
+reaches its PR first). `dcal-builder` checks the branch out again (the pull picks up anything
+pushed to it on GitHub, e.g. its "Update branch" button):
 
 ```bash
 [ -f CLAUDE.md ] && [ "$(git rev-parse --show-toplevel)" = "$PWD" ] && [ "$(git branch --show-current)" = master ] && [ -z "$(git status --short)" ] || { echo "STOP: not the main checkout on a clean master"; exit 1; }
@@ -160,10 +146,11 @@ git switch <branch> || exit 1
 git pull --ff-only origin <branch>
 ```
 
-Fixes are new commits, never a rewrite. The PM posts the new evidence on the issue and links it
-on the PR (`gh pr comment <PR> -R valicaa/dankcalendar --body "<what changed> — <comment URL>"`).
-Then `dcal-builder` runs 6.2's push block (the push updates the PR; no second `gh pr create`)
-and its return to `master`.
+Fixes are new commits, never a rewrite; a lesson from the round rides in the PM's next `tasks:`
+commit on the branch. The PM posts the new evidence on the issue and links it on the PR
+(`gh pr comment <PR> -R valicaa/dankcalendar --body-file <scratchpad>/pr-round.md`). Then
+`dcal-builder` runs 6.2's push block (it updates the PR; no second `gh pr create`) and its
+return to `master`.
 
 **Conflicts.** When 6.2 stops on a conflict, or the PR shows one
 (`gh pr view <PR> -R valicaa/dankcalendar --json mergeable` prints `CONFLICTING`),
@@ -189,18 +176,16 @@ git add tasks/lessons.md
 ```
 
 Then, in a separate call, `git commit --no-edit --cleanup=strip` (it keeps the `-m` message).
-This merge commit is the one exception to "only the PM commits `tasks/`". The check-docs hook
-may block it because the merged-in files trip its doc rules; they were reviewed on `master`
-already, so `.claude/tools/check-docs.py --ack` and committing again is expected here. On a
-STOP the PM briefs `dcal-builder` (or `dcal-architect`) to resolve the code conflict by hand in
-the same merge, and phases 4–5 run again. Either way, finish with 6.2's push block and its
-return to `master`.
+It keeps both sides and authors nothing under `tasks/`, so the builder commits it. If the hook
+blocks it over the merged-in files (reviewed on `master` already), `check-docs.py --ack` and
+commit again. On a STOP the PM briefs `dcal-builder` (or `dcal-architect`) to resolve the code
+conflict by hand, then phases 4–5 again. Finish with 6.2's push block and return to `master`.
 
 **6.4 After the merge (`dcal-builder`).** The PM learns of the merge from the owner, or from
 `gh pr view <PR> -R valicaa/dankcalendar --json state,mergeCommit` (`"state":"MERGED"`; the
-merge commit's `oid` is `<M>`), and briefs this with `<M>`. Pull it and delete the merged local
-branch (`-d` refuses a branch whose commits aren't all in `master`; a failed deploy's fix gets
-a new branch anyway):
+merge commit's `oid` is `<M>`), and briefs this with `<M>` once the checkout is on `master`;
+each merged PR gets its own 6.4. Pull and delete the merged local branch (`-d` refuses a branch
+whose commits aren't all in `master`; a failed deploy's fix gets a new branch anyway):
 
 ```bash
 [ -f CLAUDE.md ] && [ "$(git rev-parse --show-toplevel)" = "$PWD" ] && [ "$(git branch --show-current)" = master ] && [ -z "$(git status --short)" ] || { echo "STOP: not the main checkout on a clean master"; exit 1; }
@@ -217,26 +202,42 @@ git diff --name-only <M>~1..<M> | grep -vE '^(\.claude/|tasks/|CLAUDE\.md$|\.gra
 ```
 
 - No output: docs-only, nothing to deploy.
-- Any output: run `deploy-local`, then refresh the Go graph
-  (`GRAPHIFY_VIZ_NODE_LIMIT=0 ~/.local/share/graphify-venv/bin/graphify update .`). If
-  `git diff --name-only <M>~1..<M> -- '*.qml'` lists files, say so: the QML refresh (`code-graph`
-  skill) costs LLM tokens, so the PM offers it to the owner.
+- Any output: run `deploy-local` (it stops during a deploy freeze, below), then
+  `GRAPHIFY_VIZ_NODE_LIMIT=0 ~/.local/share/graphify-venv/bin/graphify update .`. If
+  `git diff --name-only <M>~1..<M> -- '*.qml'` lists files, say so: the PM offers the owner the
+  QML refresh (`code-graph`; it costs LLM tokens).
 
-Report `<M>`, the branch deletion and the deploy output. `dcal-verifier` then confirms the
-deploy landed (installed version, `dcal` service running, a screenshot), and the PM posts the
-final comment on the (already closed) issue: `<M>` plus the deploy confirmation, or "docs-only,
-nothing deployed".
+Report `<M>`, the branch deletion and the deploy output with the previously deployed commit
+`<C>` that `deploy-local` step 2 printed. `dcal-verifier` confirms the deploy (version, service,
+screenshot); the PM posts `<M>` plus that confirmation, or "docs-only", on the closed issue.
 
 **If the deploy fails** — `deploy-local` errors, or `dcal-verifier` can't confirm it:
 
-1. `dcal-builder` runs `deploy-local`'s Rollback, reinstalling `<M>~1`. `master` is never reset:
-   it moves only by merged PRs.
-2. The PM reopens the issue with the evidence: `gh issue reopen <N> -R valicaa/dankcalendar`,
-   then `gh issue comment <N> -R valicaa/dankcalendar --body-file <scratchpad>/deploy-failure.md`.
+1. `dcal-builder` runs `deploy-local`'s Rollback, reinstalling `<C>` from the deploy report.
+   `master` is never reset: it moves only by merged PRs.
+2. The PM reopens the issue, freezes deploys (`deploy-local` and `sync-upstream` stop while an
+   open issue has the label) and posts the evidence: `gh issue reopen <N> -R valicaa/dankcalendar`,
+   `gh issue edit <N> -R valicaa/dankcalendar --add-label deploy-failed`, and
+   `gh issue comment <N> -R valicaa/dankcalendar --body-file <scratchpad>/deploy-failure.md`.
 3. The fix goes up as a new PR from a new branch for the same issue, which the PM creates as in
    phase 2, named `fix/<N>-<slug>-2` (`-3` for a third round) whatever the first prefix was:
    `gh issue develop <N> -R valicaa/dankcalendar --name fix/<N>-<slug>-2 --base master --checkout`.
-   Phases 3–6 run again on it; its PR body starts with `Closes #<N>` too.
+   Phases 3–6 run again on it; its PR body starts with `Closes #<N>` too, so its merge closes
+   the issue and lifts the freeze for its own 6.4. Once `dcal-verifier` confirms that deploy,
+   the PM runs `gh issue edit <N> -R valicaa/dankcalendar --remove-label deploy-failed`.
+
+**PR closed without merging.** The issue stays open (redone on a new `<prefix>/<N>-<slug>-2`
+branch) unless the owner says the change is dropped; then the PM comments why (`--body-file`)
+and runs `gh issue close <N> -R valicaa/dankcalendar --reason "not planned"`.
+Either way `dcal-builder` deletes the local branch — only if every commit on it is on origin;
+the remote branch stays, so the PR can be reopened:
+
+```bash
+[ -f CLAUDE.md ] && [ "$(git rev-parse --show-toplevel)" = "$PWD" ] && [ "$(git branch --show-current)" = master ] && [ -z "$(git status --short)" ] || { echo "STOP: not the main checkout on a clean master"; exit 1; }
+git fetch origin
+[ "$(git rev-parse <branch>)" = "$(git rev-parse origin/<branch>)" ] || { echo "STOP: <branch> has commits that aren't on origin"; exit 1; }
+git branch -D <branch>
+```
 
 ## 7. Offer upstream
 

@@ -12,8 +12,9 @@ the user" below means: stop and return the question to the PM, who asks and re-b
 block is one Bash call; a `STOP` is a failed step.
 
 1. **Start on a clean `master` and preview.** A checked-out feature branch (`new-feature` phases
-   2–5) holds the main checkout: wait until its PR is open.
+   2–5) holds the main checkout: wait until its PR is open. No sync during a deploy freeze.
    ```bash
+   [ "$(gh issue list -R valicaa/dankcalendar --label deploy-failed --state open --json number -q length)" = 0 ] || { echo "STOP: deploy freeze - an open deploy-failed issue waits for its fix"; exit 1; }
    [ -f CLAUDE.md ] && [ "$(git rev-parse --show-toplevel)" = "$PWD" ] && [ "$(git branch --show-current)" = master ] && [ -z "$(git status --short)" ] || { echo "STOP: not the main checkout on a clean master"; exit 1; }
    git pull --ff-only origin master
    git fetch upstream
@@ -26,6 +27,8 @@ block is one Bash call; a `STOP` is a failed step.
    approves it) and the last command's hits: upstream commits that would close or cross-link a
    same-numbered fork issue once merged (upstream and fork numbers collide); no output means
    none. It must run before step 2: after the merge, `master..upstream/master` is empty.
+   Unverified: GitHub may already cross-link those fork issues when step 4 pushes the sync
+   branch, not only at the merge — say so in the report when there are hits.
 2. **Branch and merge:**
    ```bash
    [ -f CLAUDE.md ] && [ "$(git rev-parse --show-toplevel)" = "$PWD" ] && [ "$(git branch --show-current)" = master ] && [ -z "$(git status --short)" ] || { echo "STOP: not the main checkout on a clean master"; exit 1; }
@@ -49,18 +52,22 @@ block is one Bash call; a `STOP` is a failed step.
    migrations, the verify results, each closing-keyword hit by commit hash only, then the
    attribution line. Never copy a `Fixes #12`-style line into it: GitHub acts on keywords in a
    PR body, and the body becomes the merge commit's message. Push with `new-feature` 6.2's push
-   block (`<branch>` = the `sync/upstream-<hash>` branch step 2 made), open the PR, then return
-   to `master` with 6.2's last block:
+   block (`<branch>` = the `sync/upstream-<hash>` branch step 2 made), open the PR (the first
+   line refuses a body that closes an issue), then return to `master` with 6.2's last block:
    ```bash
+   ! grep -qiE '\b(close[sd]?|fix(e[sd])?|resolve[sd]?):? +#[0-9]+' <scratchpad>/pr-sync.md && tail -1 <scratchpad>/pr-sync.md | grep -qF 'Generated with [Claude Code]' || { echo "STOP: the sync PR body closes no issue and ends with the attribution"; exit 1; }
    gh pr create -R valicaa/dankcalendar --base master --head sync/upstream-<hash> --title "merge: upstream <hash>" --body-file <scratchpad>/pr-sync.md
    ```
    The PM gives the owner the link.
 5. **After the owner merges**, `new-feature` 6.4 applies as written: pull, delete the branch,
-   `deploy-local` (it handles the migration backup), `dcal-verifier` confirms. A failed deploy
-   is rolled back the same way; with no issue to reopen, the PM opens a `bug` issue for the fix.
-6. **Update the feature in flight.** If a feature's PR is open, offer merging `origin/master`
-   into its branch with `new-feature`'s Conflicts procedure (merge, then push) — needed when
-   the PR shows a conflict, otherwise only to re-verify it against the new upstream.
+   `deploy-local` (it handles the migration backup), `dcal-verifier` confirms. With no issue,
+   the PM posts the result as a PR comment
+   (`gh pr comment <PR> -R valicaa/dankcalendar --body-file <scratchpad>/sync-deploy.md`). A
+   failed deploy is rolled back the same way; the PM opens a `bug` issue for the fix with the
+   `deploy-failed` label (the freeze), and the fix follows `new-feature`.
+6. **Update open feature PRs.** For each open feature PR, offer merging `origin/master` into its
+   branch with `new-feature`'s Conflicts procedure (merge, then push) — needed when the PR shows
+   a conflict, otherwise only to re-verify it against the new upstream.
 7. **Rebase open `pr/*` branches — never in the main checkout.** Each lives in its own
    `git worktree` (see `upstream-pr`, whose `<main>`/`<W>` placeholders and guard lines apply
    here: literal absolute paths, one self-contained Bash call per block, and a `STOP` means

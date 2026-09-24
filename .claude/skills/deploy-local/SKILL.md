@@ -12,16 +12,23 @@ the main checkout, once the owner has merged the PR on GitHub (`new-feature` 6.4
 
 ## Steps
 
-1. **Check the branch.** Only `master` is deployed: `git branch --show-current` must print
-   `master` and `git status --short` nothing. To try out an unmerged branch, use
-   `verify-change`'s dev instance instead — never install it here.
+1. **Check the freeze and the branch.** No deploy while an open issue carries `deploy-failed`
+   (a failed deploy waits for its fix PR, `new-feature` 6.4), and only a clean `master` is
+   deployed — to try out an unmerged branch, use `verify-change`'s dev instance instead:
+   ```bash
+   [ "$(gh issue list -R valicaa/dankcalendar --label deploy-failed --state open --json number -q length)" = 0 ] || { echo "STOP: deploy freeze - an open deploy-failed issue waits for its fix"; exit 1; }
+   [ "$(git branch --show-current)" = master ] && [ -z "$(git status --short)" ] || { echo "STOP: not on a clean master"; exit 1; }
+   ```
+   A `gh` failure prints nothing, which also stops: never deploy without the check.
 2. **Check for migrations.** Compare the migrations this build ships with what the deployed
    binary last had:
    ```bash
    C=$(~/.local/bin/dcal version | sed -n 's/.*commit \([0-9a-f]*\).*/\1/p'); [ -n "$C" ] && git cat-file -e "$C^{commit}" || { echo "STOP: deployed commit unknown - treat every migration as new, back up first"; exit 1; }
+   echo "previously deployed: $C"
    git diff --name-only "$C" HEAD -- core/ent/migrate/migrations
    ```
-   If any are listed, or the first line stopped, back up first and tell the user:
+   Put the `previously deployed` hash (`<C>`) in the deploy report: it is the rollback target.
+   If any migrations are listed, or the first line stopped, back up first and tell the user:
    ```bash
    cp -a ~/.local/share/dankcal ~/.local/share/dankcal.bak-$(date +%F-%H%M)
    ```
@@ -44,13 +51,13 @@ the main checkout, once the owner has merged the PR on GitHub (`new-feature` 6.4
 
 ## Rollback
 
-Reinstall the last good commit: for a failed deploy of a PR's merge commit `<M>`, that is
-`<M>~1`, `master` just before the merge. Check it out detached (a plain `git switch <M>~1`
-fails: "a branch is expected"), then rerun steps 3–4 — the one time step 1's `master` check
-doesn't apply:
+Reinstall the previously deployed commit `<C>` that step 2 printed (if step 2 stopped with the
+deployed commit unknown, use `<M>~1`, `master` before the merge, and say so). Check it out
+detached (a plain `git switch <C>` fails: "a branch is expected"), then rerun steps 3–4 — the
+one time step 1 doesn't apply:
 
 ```bash
-git switch --detach <M>~1
+git switch --detach <C>
 ```
 
 If a migration ran, stop the service and restore the backup directory before starting the
