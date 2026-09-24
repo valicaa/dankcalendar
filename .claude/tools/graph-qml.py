@@ -12,6 +12,10 @@ cached per file in graphify's semantic cache, and merged back with this tool.
 
 Flow: status -> one general-purpose subagent per ~20 changed files, each given the output of
 `prompt` -> merge. Only changed files cost tokens; unchanged ones come from the cache.
+
+status and prompt are read-only and work from a linked worktree against the main checkout's
+graph. merge writes graph.json; from a worktree it refuses, since it would merge that
+checkout's (possibly different-branch) QML into the main checkout's graph — run it from there.
 """
 import glob
 import json
@@ -22,25 +26,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import graphpaths  # noqa: E402
 
-def find_graphify_out():
-    """graphify-out/ lives only in the checkout that built it (excluded via .git/info/exclude,
-    so a linked worktree never has its own). Prefer this checkout's; otherwise fall back to the
-    main checkout's, found as the parent of the common .git dir."""
-    local = ROOT / "graphify-out"
-    if local.exists():
-        return local
-    try:
-        common_dir = subprocess.run(
-            ["git", "-C", str(ROOT), "rev-parse", "--path-format=absolute", "--git-common-dir"],
-            capture_output=True, text=True, check=True,
-        ).stdout.strip()
-    except (subprocess.CalledProcessError, OSError):
-        return local
-    return Path(common_dir).parent / "graphify-out"
-
-
-OUT = find_graphify_out()
+OUT = graphpaths.resolve(ROOT)
 GRAPH = OUT / "graph.json"
 FILE_TYPES = {"code", "document", "paper", "image", "rationale", "concept"}
 os.chdir(ROOT)
@@ -121,6 +110,7 @@ def prompt(n, files):
 
 
 def merge():
+    graphpaths.refuse_if_fallback(ROOT, OUT)
     for c in sorted(glob.glob(str(OUT / ".qml_chunk_*.json"))):
         d = json.loads(Path(c).read_text())
         bad = [x["id"] for x in d.get("nodes", []) if x.get("file_type") not in FILE_TYPES]
