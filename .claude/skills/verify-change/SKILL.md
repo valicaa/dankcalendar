@@ -15,7 +15,7 @@ print `docs OK`.
 
 **Docs-only test** (`new-feature` and `project-manager` use this same test). A change is
 docs-only only if this prints nothing for its range — `master...HEAD` on the branch,
-`master~1..master` for a merge:
+`<M>~1..<M>` for a PR's merge commit `<M>`:
 
 ```bash
 git diff --name-only master...HEAD | grep -vE '^(\.claude/|tasks/|CLAUDE\.md$|\.graphifyignore$|[^/]+\.md$)'
@@ -78,9 +78,9 @@ make build && core/bin/dcal version
 ## 4. See it working
 
 Static checks do not prove UI behaviour. Use a **dev instance**, never `deploy-local` — that
-installs onto the user's real desktop calendar and only ever deploys `master`, after the user's
-explicit OK (`new-feature` phase 6, or after `sync-upstream`). An unmerged branch is tried
-here, never deployed:
+installs onto the user's real desktop calendar and only ever deploys `master`, after the owner
+merged the PR (`new-feature` 6.4, or `sync-upstream`). An unmerged branch is tried here, never
+deployed:
 
 `systemctl --user stop dcal`, then from `core/`:
 `DCAL_ENABLE_HOTRELOAD=1 go run ./cmd/dcal run -c ../quickshell` in the background.

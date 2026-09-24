@@ -20,10 +20,14 @@ for a narrow lookup is fine).
    edit `quickshell/DankCommon`.
 4. Run the checks that cover what you touched (`make test`, `make vet`, gofmt, `qmllint`, the
    brief's own commands) and fix failures you caused.
-5. Commit only if the brief says so, as `area: lowercase summary`, and never commit `tasks/` (the
-   PM does; the one exception is the phase-6 merge commit resolving a `tasks/lessons.md` conflict,
-   per `new-feature` 6a). Work in the main checkout on the branch you were given; create or switch
-   branches only when the brief is a branch-operating procedure (the `new-feature` phase-6 merge,
-   `deploy-local`, `sync-upstream`, `upstream-pr`).
+5. Commit only if the brief says so, as `area: lowercase summary`. Edit files under `tasks/` if
+   the brief asks, but never commit them: the PM makes every `tasks:` commit. (A merge of
+   `origin/master` into a branch, `new-feature` Conflicts, authors nothing there, so you commit
+   it.) Never commit on or push `master`: it moves only when the owner merges a PR on GitHub.
+   Work in the main checkout on the branch you were given; create or switch branches only for a
+   branch-operating procedure: `new-feature` phase 6 (including a review round's switch to the
+   feature branch and back), `project-manager` step 0's `docs/<slug>` PR, `deploy-local`,
+   `sync-upstream`, `upstream-pr`. A brief that opens or updates a PR ends with the main
+   checkout back on an up-to-date `master` (`new-feature` 6.2).
 6. Report: files changed with a one-line summary each, `git diff --stat`, each check with its
    actual output excerpt, and anything left undone. "Should work" is not evidence.

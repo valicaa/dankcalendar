@@ -17,7 +17,7 @@ from an earlier call:
 - `<main>` — the main checkout's absolute path (`git rev-parse --show-toplevel` there)
 - `<W>` — the worktree's absolute path, `dankcalendar-pr-<slug>` next to `<main>`, written
   out in full (e.g. `/home/nozomi/Documents/code/dankcalendar-pr-add-free-busy-check`)
-- `<M>` — the merge commit hash printed in step 1
+- `<M>` — a merge commit hash printed in step 1 (`<M1> <M2>…` when there are several)
 - `<N>` — the fork issue number, `<slug>` — its slug
 
 **Every block starts with a guard line** that `cd`s into the directory it works on and stops
@@ -34,16 +34,20 @@ switching the main checkout onto it would delete that file out from under the Pr
 on disk.
 
 The feature's own commits are between the merge commit's two parents, not `master..<branch>`
-(the branch is gone or has moved on after merge). Find the merge commit by its `Closes #N`,
-anchored so `#7` doesn't also match `#70`:
+(the branch is gone after the merge). The fork's merge commit is GitHub's `<PR title> (#<PR>)`,
+whose message is the PR body, starting with `Closes #N` (`new-feature` 6.1). Find it by that
+line, anchored so `#7` doesn't also match `#70`:
 
 ```bash
 cd "<main>" && [ -f CLAUDE.md ] && [ "$(git rev-parse --show-toplevel)" = "$PWD" ] || { echo "STOP: not the main checkout"; exit 1; }
 git fetch upstream
-git log master --first-parent --merges -E --grep '^[[:space:]]*Closes #<N>$' -1 --format=%H
+git fetch origin
+git log origin/master --first-parent --merges -E --grep '^[[:space:]]*Closes #<N>$' --reverse --format='%H %s'
 ```
 
-It must print one hash: that is `<M>`. No output means no merge closes #N — stop and report.
+Each line is one merged PR for #N, oldest first — usually one; a failed deploy's fix PR
+(`new-feature` 6.4) adds another. Each hash is an `<M>`. No output means no merge closes #N —
+stop and report.
 
 Create the worktree and its submodule (the first line also refuses a `<W>` that exists already
 or isn't `…/dankcalendar-pr-<slug>`):
@@ -56,18 +60,24 @@ cd "<W>" && [ "$(git branch --show-current)" = "pr/<slug>" ] && [ "$(git rev-par
 git submodule update --init --recursive
 ```
 
-List the feature's commits, oldest first, each classified by what it touches:
+List the feature's commits, oldest first, each classified by what it touches (all the
+`<M>` hashes from above, in their order):
 
 ```bash
 cd "<main>" && [ -f CLAUDE.md ] && [ "$(git rev-parse --show-toplevel)" = "$PWD" ] || { echo "STOP: not the main checkout"; exit 1; }
-git cat-file -e "<M>^2" || { echo "STOP: <M> is not a merge commit"; exit 1; }
-for c in $(git rev-list --reverse --no-merges "<M>^1..<M>^2"); do
-  code=$(git diff-tree --no-commit-id --name-only -r "$c" -- . ':!tasks' ':!.claude' ':!CLAUDE.md' ':!.graphifyignore')
-  fork=$(git diff-tree --no-commit-id --name-only -r "$c" -- tasks .claude CLAUDE.md .graphifyignore)
-  kind=code; [ -n "$fork" ] && kind=mixed; [ -z "$code" ] && kind=fork-only
-  echo "$c $kind $(git log -1 --format=%s "$c")"
+for m in <M1> [<M2>…]; do
+  git cat-file -e "$m^2" || { echo "STOP: $m is not a merge commit"; exit 1; }
+  for c in $(git rev-list --reverse --no-merges "$m^1..$m^2"); do
+    code=$(git diff-tree --no-commit-id --name-only -r "$c" -- . ':!tasks' ':!.claude' ':!CLAUDE.md' ':!.graphifyignore')
+    fork=$(git diff-tree --no-commit-id --name-only -r "$c" -- tasks .claude CLAUDE.md .graphifyignore)
+    kind=code; [ -n "$fork" ] && kind=mixed; [ -z "$code" ] && kind=fork-only
+    echo "$c $kind $(git log -1 --format=%s "$c")"
+  done
 done
 ```
+
+A `merge: master into <slug>` commit on the branch (`new-feature` Conflicts) is skipped by
+`--no-merges`; the `master` commits it brought in are already in `<M>^1`, so they aren't listed.
 
 Go down the list in order. Skip `fork-only`. Cherry-pick each run of `code` commits:
 
@@ -113,9 +123,9 @@ If that message talks about the fork-only files, fix it with
 `git commit --amend -m "<subject>" -m "<body>"` (after the same guard line).
 
 Confirm that nothing fork-only leaked, including a fork issue reference (feature commits never
-carry `#N` — only the fork's merge commit does, and that commit isn't cherry-picked). Past the
-guard, the block prints nothing when clean (both greps exit 1). Review each hit by eye — a hex
-colour like `#333` is a false positive, not a leak:
+carry `#N` — only the PR body in the fork's merge commit does, and that isn't cherry-picked).
+Past the guard, the block prints nothing when clean (both greps exit 1). Review each hit by
+eye — a hex colour like `#333` is a false positive, not a leak:
 
 ```bash
 cd "<W>" && [ "$(git branch --show-current)" = "pr/<slug>" ] && [ "$(git rev-parse --show-toplevel)" = "$PWD" ] || { echo "STOP: not the pr/<slug> worktree"; exit 1; }
