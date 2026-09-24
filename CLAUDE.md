@@ -11,9 +11,8 @@ go upstream as PRs, so all code follows `CONTRIBUTING.md` (read it before a firs
 
 ## Working mode — the main session is the project manager
 
-The main session follows the `project-manager` skill: it elicits and specs (as a GitHub issue)
-with the user, delegates all technical work to the `.claude/agents/` roster and accepts only
-evidence. A subagent does its brief directly, ignoring this section.
+The main session follows `project-manager`: it elicits, specs (a GitHub issue), delegates to
+`.claude/agents/`, and accepts only evidence. Subagents skip this, working their brief directly.
 
 ## Skills — use them, every feature goes through the same path
 
@@ -31,17 +30,18 @@ evidence. A subagent does its brief directly, ignoring this section.
 ## Branch model
 
 - **Issue-first:** every change starts as an issue on `valicaa/dankcalendar` (body = spec,
-  template in `project-manager`); no branch before it exists. `master` = `upstream/master` +
-  fork tooling (this file, `.claude/`, `tasks/`, `.graphifyignore`) + finished features.
-- `feat|fix|chore/<N>-<slug>` branches off `master` (`gh issue develop N -R valicaa/dankcalendar
-  --name <prefix>/<N>-<slug> --base master --checkout` — every `gh` command carries an explicit
-  `-R`, never `gh repo set-default`), merged `--no-ff` with `Closes #N` in the merge commit only.
-- `pr/<slug>` branches off `upstream/master`, code commits only — never `CLAUDE.md`, `.claude/`,
-  `tasks/`, `.graphifyignore` or a fork `#N`. Keep `tasks/<N>-<slug>/` edits in their own commits.
+  template in `project-manager`); no branch before it exists.
+- `master` = `upstream/master` + fork tooling (this file, `.claude/`, `tasks/`, `.graphifyignore`)
+  + finished features. It is what gets deployed.
+- `feat|fix|chore/<N>-<slug>` branches off `master` via `gh issue develop N -R
+  valicaa/dankcalendar --name <prefix>/<N>-<slug> --base master --checkout` — every `gh`
+  command carries an explicit `-R`, never `gh repo set-default`. Merged `--no-ff` with
+  `Closes #N` in the merge commit only.
+- `pr/<slug>` is created by the `upstream-pr` skill off `upstream/master`, code commits only —
+  never `CLAUDE.md`, `.claude/`, `tasks/`, `.graphifyignore` or a fork `#N`.
+- Keep `tasks/<N>-<slug>/` edits in their own commits.
 
-## Architecture
-
-Two halves, one binary:
+## Architecture — two halves, one binary
 
 - **`core/`** — Go daemon (module `github.com/AvengeMedia/dankcalendar/core`).
   `cmd/dcal/` is the cobra CLI and composition root (`daemon.go` wires everything via
@@ -80,38 +80,40 @@ DCAL_ENABLE_HOTRELOAD=1 go run ./cmd/dcal run -c ../quickshell
   catch your own mistake, add a dated rule there in the same session.
 - This file holds facts and rules only, within 120 lines. A procedure of more than a few steps
   belongs in a skill under `.claude/skills/`, with a row in the table above.
-- A PreToolUse hook runs `.claude/tools/check-docs.py` before every `git commit`:
-  - It blocks on broken doc references, the line budget, bad skill/agent frontmatter, the
-    skill table or the `.claude/agents/` roster drifting out of sync with source.
-  - If uncommitted code a doc describes changed (staged or not), it blocks the commit until the
-    listed docs are staged, or `.claude/tools/check-docs.py --ack` is run once nothing needs to change.
+- A PreToolUse hook runs `.claude/tools/check-docs.py` on every commit attempt: it blocks on
+  broken doc references, the line budget, bad skill/agent frontmatter, roster drift, and
+  undocumented doc-relevant code changes — stage the listed docs, or run `check-docs.py --ack`
+  once nothing needs to change.
 
 ## Rules
 
 - `CGO_ENABLED=0` must always build — no cgo dependencies.
-- Never edit generated code: `core/ent/*` (except `schema/`, `generate.go`, `migrate/`), `core/internal/mocks/`
-  (mockery: `.mockery.yml` + `make mocks`), `core/internal/shellembed/dist/`, `quickshell/translations/en.json`.
-- Go style: early returns, `switch` over if/else chains, `any` not `interface{}`, sparse comments that explain
-  constraints rather than narrate. Tests: testify, sandboxed (no network/system services), `repo.OpenMemory`,
-  `t.TempDir()`, `humatest`, table-driven for pure functions.
-- QML: every user-facing string is `I18n.tr("text", "translator context")`, reusing existing terms in
-  `translations/en.json` where possible. No `console.*` — use `readonly property var log: Log.scoped("Name")`.
-  Use DankCommon wrappers (`DankListView`, `DankFlickable`, `DankIcon`, `StyledText`, …) not raw Qt equivalents.
-- UI settings the daemon also reads need matching defaults in `SettingsData.qml` and `core/internal/settings/settings.go`.
-- A new DB migration is a one-way door for the user's real database — call it out and get explicit approval
-  before adding one, and back up `~/.local/share/dankcal` before deploying it.
-- Commit subjects follow upstream: `area: lowercase summary` (e.g. `events: free/busy on create`, `settings: …`,
-  `ui: …`). No trailing period.
-- Upstream requires disclosing meaningful AI assistance in PRs, and closes PRs that read like unreviewed
-  output. Match the style of the file you are editing.
+- Never edit generated code: `core/ent/*` (except `schema/`, `generate.go`, `migrate/`),
+  `core/internal/mocks/` (mockery: `.mockery.yml` + `make mocks`, never hand-written),
+  `core/internal/shellembed/dist/`, `quickshell/translations/en.json`.
+- Go: early returns, `switch` over if/else chains, `any` not `interface{}`, sparse comments that
+  explain constraints rather than narrate; tests: testify, sandboxed (no network/system
+  services), `repo.OpenMemory`, `t.TempDir()`, `humatest`, table-driven for pure functions.
+- QML: every user-facing string is `I18n.tr("text", "translator context")`, reusing existing
+  terms in `translations/en.json` where possible. No `console.*` — use
+  `readonly property var log: Log.scoped("Name")`. Use DankCommon wrappers (`DankListView`,
+  `DankFlickable`, `DankIcon`, `StyledText`, …) instead of raw Qt equivalents.
+- UI settings the daemon also reads need matching defaults in `SettingsData.qml` and
+  `core/internal/settings/settings.go`.
+- A new DB migration is a one-way door for the user's real database — call it out and get
+  explicit approval before adding one, and back up `~/.local/share/dankcal` before deploying it.
+- Commit subjects follow upstream: `area: lowercase summary` (e.g. `events: free/busy on
+  create`, `settings: …`, `ui: …`). No trailing period.
+- Upstream requires disclosing meaningful AI assistance in PRs, and closes PRs that read like
+  unreviewed output. Match the style of the file you are editing.
 
 ## Known quirks
 
-- `make dev` / untagged builds have no embedded UI; run them with `-c ../quickshell`. Only one dcal instance
-  per session; a second one exits with "already running".
+- `make dev`/untagged builds lack embedded UI (run with `-c ../quickshell`); only one dcal
+  instance runs per session — a second exits with "already running".
 - `internal/ipc` handlers name their request `req`, shadowing the `req()` ParamSpec helper.
-- Comment in `core/internal/settings/settings.go` points at `quickshell/Services/SettingsData.qml`; the real
-  file is `quickshell/Common/SettingsData.qml`.
-- `golangci-lint` (CI uses v2.11) isn't installed locally; from `core/`, run `GOTOOLCHAIN=go1.26.4 go run
-  github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.11.0 run` (pin matches `go.mod` — system Go 1.27
-  breaks lint v2.11).
+- Comment in `core/internal/settings/settings.go` points at
+  `quickshell/Services/SettingsData.qml`; the real file is `quickshell/Common/SettingsData.qml`.
+- `golangci-lint` (CI uses v2.11) isn't installed locally; from `core/`, run
+  `GOTOOLCHAIN=go1.26.4 go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.11.0 run`
+  (pin matches `go.mod` — system Go 1.27 breaks lint v2.11).

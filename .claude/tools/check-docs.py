@@ -19,7 +19,8 @@ Errors (block the commit):
   - code changed that a doc describes (REVIEW_RULES), none of the named docs is staged, and
     no --ack for this exact change set
   - the commit's branch isn't issue-first (doesn't match feat|fix|chore/<issue-number>-<slug>)
-    and isn't exempt (master, pr/*, a Claude Code worktree-agent branch (worktree-*), detached HEAD)
+    and isn't exempt (master, pr/*, a Claude Code worktree-agent branch (worktree-*), detached
+    HEAD) — checked only for commits in this repo (same git common dir as this script's own repo)
 
 Change set: the command isn't parsed for what it will stage (`-a`, `git add … &&`). Every
 uncommitted file (staged, unstaged or untracked) counts as changed, but only a staged doc
@@ -60,8 +61,8 @@ AGENT_EFFORTS = {"low", "medium", "high", "xhigh", "max"}
 
 # Issue-first branch naming (see CLAUDE.md's Branch model). Exempt: master, pr/* (upstream-pr's
 # cherry-pick branches), worktree-* (a real `isolation: worktree` agent's branch — confirmed by
-# `git worktree list` showing `.claude/worktrees/agent-<id>  [worktree-agent-<id>]` and the
-# installed CLI's own `function bIe(e){return\`worktree-${rft(e)}\`}`), detached HEAD.
+# `git worktree add -b worktree-agent-abc123 <path> master` then `git worktree list` printing
+# `<path>  <sha> [worktree-agent-abc123]`), detached HEAD.
 BRANCH_RE = re.compile(r"^(feat|fix|chore)/\d+-")
 EXEMPT_BRANCHES = {"master"}
 EXEMPT_BRANCH_PREFIXES = ("pr/", "worktree-")
@@ -382,8 +383,9 @@ def check_branch(errors):
             f"branch `{branch}` isn't issue-first: every change starts as a GitHub issue on "
             "valicaa/dankcalendar, and the branch is feat|fix|chore/<issue-number>-<slug>. "
             "Create it from the issue with `gh issue develop <N> -R valicaa/dankcalendar --name "
-            "<prefix>/<N>-<slug> --base master --checkout` (a plain `git branch -m` renames the "
-            "branch but doesn't link it to the issue).")
+            "<prefix>/<N>-<slug> --base master --checkout`, then `git cherry-pick` your commits "
+            "onto it (a plain `git branch -m` renames the branch but doesn't link it to the "
+            "issue).")
 
 
 def check_lessons(warnings):

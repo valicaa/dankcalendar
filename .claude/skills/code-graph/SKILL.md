@@ -8,7 +8,7 @@ description: Use before reading Dank Calendar source to find a call chain, who c
 `graphify-out/graph.json` maps hand-written code, about 3k nodes. `.graphifyignore` drops
 generated Ent code, mocks, the submodule, translations and assets. The graph is local only,
 via `.git/info/exclude`. Go comes from the AST; QML comes from LLM subagents, because graphify
-has no QML parser (upstream issue #1716). Find the chain here, then read only the lines it
+has no QML parser (Graphify-Labs/graphify#1716). Find the chain here, then read only the lines it
 cites. This skill overrides the global graphify skill's "run `graphify query` first" default.
 
 ```bash

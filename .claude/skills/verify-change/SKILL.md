@@ -51,12 +51,12 @@ make build && core/bin/dcal version
 
 ## 4. See it working
 
-Static checks do not prove UI behaviour. Pick one:
+Static checks do not prove UI behaviour. Use a **dev instance**, never `deploy-local` — that
+installs onto the user's real desktop calendar and only runs in `new-feature` phase 6, after
+merge and the user's explicit OK, on `master`:
 
-- **UI iteration (preferred while developing):**
-  `systemctl --user stop dcal`, then from `core/`:
-  `DCAL_ENABLE_HOTRELOAD=1 go run ./cmd/dcal run -c ../quickshell` in the background.
-- **Final check:** run `deploy-local` with the fresh build.
+`systemctl --user stop dcal`, then from `core/`:
+`DCAL_ENABLE_HOTRELOAD=1 go run ./cmd/dcal run -c ../quickshell` in the background.
 
 Then:
 1. `dcal show`, navigate to the feature, and capture with

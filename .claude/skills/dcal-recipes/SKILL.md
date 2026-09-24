@@ -99,7 +99,7 @@ In `quickshell/Modals/`:
 2. `make generate` regenerates `core/ent/`. Commit the generated code.
 3. `make migrate name=add_foo_to_bar` writes `core/ent/migrate/migrations/<ts>_add_foo_to_bar.sql`
    (goose format) plus `atlas.sum`. Review the SQL by hand. SQLite table rebuilds must not
-   lose child rows (see issue #76; migrations run with `foreign_keys(OFF)`).
+   lose child rows (see AvengeMedia#76; migrations run with `foreign_keys(OFF)`).
 4. After a hand-edited or hand-written migration, run `make migrate-checksum`.
 5. Add repo methods in `core/repo/<entity>_queries.go` or `<entity>_mutations.go`, using an `XxxInput`
    struct for writes and `WithTx` for multi-step writes.

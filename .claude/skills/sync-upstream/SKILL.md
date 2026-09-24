@@ -28,9 +28,20 @@ description: Use when pulling new AvengeMedia/dankcalendar commits into the fork
    QML (`.claude/tools/graph-qml.py status`), offer the QML refresh from the `code-graph` skill.
    It costs LLM tokens, so ask first.
 5. **Deploy.** Run `deploy-local`, which handles the migration backup.
-6. **Push** after the user confirms it works: `git push origin master`.
+6. **Push** after the user confirms it works. First check whether upstream's own commits close
+   or cross-link a same-numbered fork issue (upstream and fork issue numbers can collide):
+   ```bash
+   git log --format=%B master..upstream/master | grep -inE '(close|fix|resolve)[sd]? #[0-9]+'
+   ```
+   Review any hit with the user before pushing, then `git push origin master`.
 7. **Update open feature branches.** For each unmerged `feat/*`/`fix/*`/`chore/*` branch, offer
-   `git switch <branch> && git merge master`. For each open `pr/*` branch, offer
-   `git rebase upstream/master` followed by a force-push, and confirm before force-pushing.
-8. If upstream merged one of our PRs, delete the matching `pr/<slug>` branch locally and on
-   origin, after confirming with the user.
+   `git switch <branch> && git merge master`.
+8. **Rebase open `pr/*` branches — never in the main checkout.** Each lives in its own
+   `git worktree` (see `upstream-pr`); recreate it if missing
+   (`git worktree add <path> pr/<slug>`), then rebase inside it and confirm before force-pushing:
+   ```bash
+   git -C <pr worktree path> rebase upstream/master
+   git -C <pr worktree path> push --force-with-lease
+   ```
+9. If upstream merged one of our PRs, remove its worktree and delete the matching `pr/<slug>`
+   branch locally and on `origin`, after confirming with the user.

@@ -8,43 +8,79 @@ description: Use when turning a finished Dank Calendar feature into a pull reque
 Upstream reviews strictly and closes PRs that look like unreviewed AI output. Everything
 below exists to make the PR look like a careful human contribution. The user owns it.
 
+**A subagent's cwd resets between Bash calls.** Every command below is `git -C "$W" …` (or
+`cd "$W" && …` inside one call) — never a bare `cd "$W"` in one call followed by a relative
+command in the next.
+
 ## 1. Build a clean branch
 
-Build `pr/<slug>` in its own `git worktree`, not with `git switch` in the main checkout: `pr/<slug>`
-is based on `upstream/master`, so it lacks `.claude/tools/check-docs.py`, and switching the main
-checkout onto it would delete that file out from under the PreToolUse hook — every subsequent
-Bash call would then fail trying to run a hook script that no longer exists on disk.
+Build `pr/<slug>` in its own `git worktree`, not with `git switch` in the main checkout:
+`pr/<slug>` is based on `upstream/master`, so it lacks `.claude/tools/check-docs.py`, and
+switching the main checkout onto it would delete that file out from under the PreToolUse hook
+— every subsequent Bash call would then fail trying to run a hook script that no longer exists
+on disk.
 
 The feature's own commits are between the merge commit's two parents, not `master..<branch>`
-(the branch is gone or has moved on after merge). Find the merge commit by its `Closes #N`:
+(the branch is gone or has moved on after merge). Find the merge commit by its `Closes #N`,
+anchored so `#7` doesn't also match `#70`:
 
 ```bash
 git fetch upstream
-M=$(git log master --merges --grep "Closes #<N>" -1 --format=%H)   # the --no-ff merge for issue N
-git worktree add -b pr/<slug> ../dankcalendar-pr-<slug> upstream/master
-cd ../dankcalendar-pr-<slug>
-# code commits only, oldest first — skip anything touching fork-only paths
-git log --reverse --no-merges --format=%H "$M"^1.."$M"^2 -- . ':!tasks' ':!.claude' ':!CLAUDE.md' ':!.graphifyignore'
-git cherry-pick <those hashes>
+M=$(git log master --first-parent --merges -E --grep "^Closes #<N>$" -1 --format=%H)
+[ -n "$M" ] || { echo "no merge for #<N>"; exit 1; }
 ```
 
-If a commit mixes fork-only paths with code (check each hash with `git show --stat`), cherry-pick it with `-n`, run
-`git restore --staged --worktree -- tasks .claude CLAUDE.md .graphifyignore`, then commit.
+Set the worktree path once, as an absolute path, and use it in every later command:
+
+```bash
+W="$(git rev-parse --show-toplevel)/../dankcalendar-pr-<slug>"
+git worktree add -b pr/<slug> "$W" upstream/master
+git -C "$W" submodule update --init --recursive
+```
+
+Cherry-pick, oldest first, skipping anything touching fork-only paths:
+
+```bash
+git -C "$(git rev-parse --show-toplevel)" log --reverse --no-merges --format=%H "$M"^1.."$M"^2 \
+  -- . ':!tasks' ':!.claude' ':!CLAUDE.md' ':!.graphifyignore'
+git -C "$W" cherry-pick <those hashes>
+```
+
+If a commit mixes fork-only paths with code (check each hash with
+`git -C "$(git rev-parse --show-toplevel)" show --stat <hash>`), cherry-pick it with `-n`,
+strip the fork-only paths from both the index and the worktree, then commit — `git restore`
+alone isn't enough for a path that shouldn't exist at all in `pr/<slug>`:
+
+```bash
+git -C "$W" cherry-pick -n <hash>
+git -C "$W" rm -rq --cached --ignore-unmatch -- tasks .claude CLAUDE.md .graphifyignore
+rm -rf "$W/tasks" "$W/.claude" "$W/CLAUDE.md" "$W/.graphifyignore"
+git -C "$W" commit -m "<original subject, fork-only paths dropped>"
+```
 
 Confirm that nothing fork-only leaked, including a fork issue reference (feature commits never
-carry `#N` — only the fork's merge commit does, and that commit isn't cherry-picked). Review each
-hit by eye (a hex colour like `#333` is a false positive, not a leak):
+carry `#N` — only the fork's merge commit does, and that commit isn't cherry-picked). Review
+each hit by eye (a hex colour like `#333` is a false positive, not a leak):
+
 ```bash
-git diff --name-only upstream/master..HEAD | grep -E '^(tasks/|\.claude/|CLAUDE\.md|\.graphifyignore)' && echo LEAK
-git log --format=%B upstream/master..HEAD | grep -iE '#[0-9]+|valicaa/dankcalendar(/issues/|/pull/)[0-9]+|\bGH-[0-9]+' && echo "review each hit above for a fork issue reference"
+git -C "$W" diff --name-only upstream/master..HEAD | grep -E '^(tasks/|\.claude/|CLAUDE\.md|\.graphifyignore)' && echo LEAK
+git -C "$W" log --format=%B upstream/master..HEAD | grep -iE '#[0-9]+|valicaa/dankcalendar(/issues/|/pull/)[0-9]+|\bGH-[0-9]+' && echo "review each hit above for a fork issue reference"
 ```
 
-When done (PR opened or abandoned), remove the worktree: `git worktree remove
-../dankcalendar-pr-<slug>` (add `--force` if it has uncommitted changes you're discarding).
+Keep the worktree until the PR is merged or closed on GitHub, not just opened — review fixes
+land in it too (step 4). When it's done, remove it (a submodule checkout needs `--force`; the
+branch usually isn't locally merged, so needs `-D`):
+
+```bash
+git -C "$(git rev-parse --show-toplevel)" worktree remove --force "$W"
+git -C "$(git rev-parse --show-toplevel)" branch -D pr/<slug>
+```
 
 ## 2. Polish for review
 
-- Re-read the whole diff (`git diff upstream/master...HEAD`) as an upstream reviewer would:
+- Re-read the whole diff (`git -C "$W" diff upstream/master...HEAD`) as an upstream reviewer
+  would — `...` here, since it's the full symmetric diff for reading, not the `..` log grep
+  above:
   - no narrating comments
   - no dead code
   - no invented APIs
@@ -53,7 +89,7 @@ When done (PR opened or abandoned), remove the worktree: `git worktree remove
   - tests for Go changes
 - Squash the fixups into logical commits with `area: summary` subjects, and ask the user before
   rewriting history.
-- Run `verify-change` on this branch. It must pass against `upstream/master`.
+- Run `verify-change` on this worktree. It must pass against `upstream/master`.
 - For UI changes, take before/after screenshots with `grim` for the PR body.
 
 ## 3. Draft and confirm
@@ -92,10 +128,11 @@ grep -iE '#[0-9]+|valicaa/dankcalendar(/issues/|/pull/)[0-9]+|\bGH-[0-9]+' <scra
 ## 4. Open it (only after explicit user approval)
 
 ```bash
-git push -u origin pr/<slug>
+git -C "$W" push -u origin pr/<slug>
 gh pr create -R AvengeMedia/dankcalendar --head valicaa:pr/<slug> --base master \
   --title "<title>" --body-file <scratchpad>/pr-body.md
 ```
 
-Report the PR URL. Later review fixes go on `pr/<slug>` (in its worktree). Port them back to
-`<feat|fix|chore>/<N>-<slug>` or `master` too, so the fork doesn't drift.
+Report the PR URL. Later review fixes land in the same worktree (`git -C "$W" …`) and get
+pushed again. Port them back to `<feat|fix|chore>/<N>-<slug>` or `master` too, so the fork
+doesn't drift. Remove the worktree and branch (step 1) once the PR is merged or closed.
