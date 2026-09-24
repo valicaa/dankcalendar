@@ -13,3 +13,5 @@ Format: `- YYYY-MM-DD — <what went wrong> → <rule>`
 - 2026-09-24 — `graphify install` silently rewrote a line in `~/.claude/CLAUDE.md` → back up and diff config files before running any installer.
 - 2026-09-24 — A context-free reviewer found 12 real problems in docs I had already "verified" → after writing docs or tools, have a fresh subagent follow them literally before reporting done.
 - 2026-09-24 — The main session wrote and tested tooling itself instead of delegating, filling its context with file dumps → the main session is the PM (`project-manager` skill): it delegates all technical work to the `.claude/agents/` roster and verifies the evidence in their reports.
+- 2026-09-24 — Builder exempted `claude/*` as the worktree branch prefix from a binary string; real agent worktrees are `worktree-agent-<id>` → prove naming/format assumptions by creating the real thing, not by grepping for strings.
+- 2026-09-24 — `gh`'s default repo was upstream AvengeMedia while docs had bare `gh issue` commands → every `gh` command in docs and hook messages carries an explicit `-R`; never rely on `gh repo set-default`.
