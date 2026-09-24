@@ -14,7 +14,7 @@ execution in 6 itself. `dcal-builder` (or `dcal-architect` for L, schema or prov
 does 2–3 and, once the PM has that OK, the merge/deploy/graph-refresh steps in 6;
 `dcal-verifier` does 4 and confirms the deploy in 6; `dcal-reviewer` does 5.
 
-## 1. Understand and spec
+## 1. Issue — the spec
 
 1. Read `tasks/lessons.md` (if it exists) for past corrections.
 2. Clarify intent with the user until you can state: what the user sees, where it lives in the
@@ -37,20 +37,27 @@ does 2–3 and, once the PM has that OK, the merge/deploy/graph-refresh steps in
    files/risks. Use the `<-` and `~ call sites` lines from `graph-calls.py`, plus
    `graphify affected <node-id> --relation calls --depth 3` for transitive callers. Grep for
    interface implementations and callbacks, which the graph can't see.
-5. Write `tasks/<slug>/spec.md` with: goal, UX description, layers, files to touch, test plan,
-   risks, upstream-PR fitness (would AvengeMedia plausibly want this?). Keep it short.
-6. Write `tasks/<slug>/todo.md` as checkable steps. **Show the spec to the user and wait for
-   approval before writing code.**
+5. Write the spec using `project-manager`'s issue body template (Problem, Goal/Non-goals,
+   Story, Scenarios, Constraints, Acceptance, Risks, Size), then create the issue:
+   `gh issue create -R valicaa/dankcalendar --title "<area>: <summary>" --body-file
+   <scratchpad>/issue-body.md --label <enhancement|bug|chore> --label <size:S|size:M|size:L>`.
+   **Show the spec to the user and wait for approval before creating the issue.**
+6. Write `tasks/<N>-<slug>/todo.md` as checkable steps, `<N>` the issue number.
 
 ## 2. Branch
 
+Create the branch from the issue so GitHub links it, dogfooding the same command the issue
+itself asked for:
+
 ```bash
 git switch master && git pull --ff-only origin master
-git switch -c feat/<slug>
-git add tasks/<slug> && git commit -m "tasks: spec for <slug>"
+gh issue develop <N> -R valicaa/dankcalendar --name <feat|fix|chore>/<N>-<slug> --base master --checkout
+git add tasks/<N>-<slug> && git commit -m "tasks: notes for <slug>"
 ```
 
-Planning docs stay in their own commits (the `upstream-pr` skill drops them).
+Prefix by issue label: `feat/` for `enhancement`, `fix/` for `bug`, `chore/` otherwise.
+Planning docs stay in their own commits (the `upstream-pr` skill drops them); `tasks/<N>-<slug>/`
+holds only working notes (`todo.md`, review notes) — the spec lives in the issue, not a file.
 
 ## 3. Implement
 
@@ -59,19 +66,23 @@ Planning docs stay in their own commits (the `upstream-pr` skill drops them).
 - Every new user-facing string: `I18n.tr("…", "context")`, then `make i18n-extract` and commit
   the `translations/en.json` diff with the change that introduced the strings.
 - Commit in small, self-contained steps: `area: lowercase summary`. No `tasks/` files mixed
-  into code commits. Tick items in `todo.md` as you go (commit those separately or at the end).
+  into code commits, and no `#N` or `Closes #N` in feature commits — cherry-picked upstream,
+  `#N` would point at the wrong issue there; only the merge commit references the issue. Tick
+  items in `todo.md` as you go (commit those separately or at the end).
 - If something goes sideways (design doesn't fit, unexpected complexity): stop, update the
-  spec, and re-check with the user.
+  issue, and re-check with the user.
 
 ## 4. Verify
 
 Run the `verify-change` skill. All checks must pass, and the feature must be seen working
-in the running app (screenshot) — not just compiled.
+in the running app (screenshot) — not just compiled. Post the verifier report as a comment on
+the issue.
 
 ## 5. Review
 
-Dispatch `dcal-reviewer` on `git diff master...HEAD` with the spec path, so it checks the
-acceptance criteria and CLAUDE.md's rules. Fix real findings; re-run `verify-change`.
+Dispatch `dcal-reviewer` on `git diff master...HEAD` with the issue number, so it checks the
+acceptance criteria and CLAUDE.md's rules. Fix real findings; re-run `verify-change`. Post the
+findings and how they were resolved as a comment on the issue.
 
 ## 6. Merge and deploy
 
@@ -79,16 +90,19 @@ The PM gets the user's explicit OK to merge and deploy; it does not run any of t
 Once granted, brief `dcal-builder` to:
 
 ```bash
-git switch master && git merge --no-ff feat/<slug> -m "merge: <slug>"
-git push origin master feat/<slug>
+git switch master && git merge --no-ff <feat|fix|chore>/<N>-<slug> -m "merge: <slug>
+
+Closes #<N>"
+git push origin master <feat|fix|chore>/<N>-<slug>
 ```
 
-then run `deploy-local`, refresh the graph (`GRAPHIFY_VIZ_NODE_LIMIT=0
-~/.local/share/graphify-venv/bin/graphify update .`, plus the QML refresh if
-`.claude/tools/graph-qml.py status` lists many files), append a `## Result` section to
-`tasks/<slug>/spec.md` (what shipped, deviations from spec, follow-ups) and commit it as
-`tasks: result for <slug>`. Then send `dcal-verifier` to confirm the deploy actually landed:
-the installed version, the `dcal` service is running, and a screenshot of it working.
+`Closes #N` belongs only in this merge commit message — never in a feature commit — so pushing
+`master` closes the issue. Then run `deploy-local`, refresh the graph
+(`GRAPHIFY_VIZ_NODE_LIMIT=0 ~/.local/share/graphify-venv/bin/graphify update .`, plus the QML
+refresh if `.claude/tools/graph-qml.py status` lists many files), and commit any `tasks/<N>-<slug>/`
+follow-up notes as `tasks: result for <slug>`. Then send `dcal-verifier` to confirm the deploy
+actually landed: the installed version, the `dcal` service is running, and a screenshot of it
+working.
 
 ## 7. Offer upstream
 

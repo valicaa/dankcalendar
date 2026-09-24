@@ -14,16 +14,18 @@ below exists to make the PR look like a careful human contribution. The user own
 git fetch upstream
 git switch -c pr/<slug> upstream/master
 # code commits only, oldest first — skip merges and anything touching fork-only paths
-git log --reverse --no-merges --format=%H master..feat/<slug> -- . ':!tasks' ':!.claude' ':!CLAUDE.md' ':!.graphifyignore'
+git log --reverse --no-merges --format=%H master..<feat|fix|chore>/<N>-<slug> -- . ':!tasks' ':!.claude' ':!CLAUDE.md' ':!.graphifyignore'
 git cherry-pick <those hashes>
 ```
 
 If a commit mixes fork-only paths with code (check each hash with `git show --stat`), cherry-pick it with `-n`, run
 `git restore --staged --worktree -- tasks .claude CLAUDE.md .graphifyignore`, then commit.
 
-Confirm that nothing fork-only leaked:
+Confirm that nothing fork-only leaked, including a fork issue reference (feature commits never
+carry `#N`/`Closes #N` — only the fork's merge commit does, and that commit isn't cherry-picked):
 ```bash
 git diff --name-only upstream/master...HEAD | grep -E '^(tasks/|\.claude/|CLAUDE\.md|\.graphifyignore)' && echo LEAK
+git log --format=%B upstream/master...HEAD | grep -iE '#[0-9]+|Closes #' && echo "fork issue reference leaked — reword the commit"
 ```
 
 ## 2. Polish for review
@@ -42,7 +44,9 @@ git diff --name-only upstream/master...HEAD | grep -E '^(tasks/|\.claude/|CLAUDE
 
 ## 3. Draft and confirm
 
-Write the PR title and body, and show them to the user **before** creating anything:
+Write the PR title and body, and show them to the user **before** creating anything. The body
+may reuse the issue's text but must not link the fork issue by bare `#N` or `Closes #N` — those
+numbers mean nothing on `AvengeMedia/dankcalendar` and could hit an unrelated upstream issue:
 
 ```
 <area>: <summary>
@@ -74,5 +78,6 @@ gh pr create --repo AvengeMedia/dankcalendar --head valicaa:pr/<slug> --base mas
   --title "<title>" --body-file <scratchpad>/pr-body.md
 ```
 
-Report the PR URL. Later review fixes go on `pr/<slug>`. Port them back to `feat/<slug>` or
+Before pushing, re-run the grep check above on the drafted PR body file too. Report the PR URL.
+Later review fixes go on `pr/<slug>`. Port them back to `<feat|fix|chore>/<N>-<slug>` or
 `master` too, so the fork doesn't drift.

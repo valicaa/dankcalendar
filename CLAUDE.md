@@ -11,9 +11,9 @@ go upstream as PRs, so all code follows `CONTRIBUTING.md` (read it before a firs
 
 ## Working mode — the main session is the project manager
 
-The main session follows the `project-manager` skill: it elicits and specs with the user, then
-delegates all technical work (code reading, edits, tests, debugging, review) to the `.claude/agents/`
-roster and accepts only evidence. A subagent ignores this section and does its brief directly.
+The main session follows the `project-manager` skill: it elicits and specs (as a GitHub issue)
+with the user, then delegates all technical work to the `.claude/agents/` roster and accepts only
+evidence. A subagent ignores this section and does its brief directly.
 
 ## Skills — use them, every feature goes through the same path
 
@@ -30,13 +30,13 @@ roster and accepts only evidence. A subagent ignores this section and does its b
 
 ## Branch model
 
-- `master` = `upstream/master` + fork tooling (this file, `.claude/`, `tasks/`, `.graphifyignore`) + finished
-  features. It is what gets deployed.
-- `feat/<slug>` branches off `master`, one feature each, merged back with `--no-ff`.
-- `pr/<slug>` branches off `upstream/master` and carries only a feature's code commits —
-  never `CLAUDE.md`, `.claude/`, `tasks/` or `.graphifyignore`. Created by the `upstream-pr` skill.
-- Keep planning-doc edits (`tasks/`) in their own commits so feature commits cherry-pick
-  cleanly onto upstream.
+- **Issue-first:** every change starts as an issue on `valicaa/dankcalendar` (body = spec,
+  template in `project-manager`); no branch before it exists. `master` = `upstream/master` +
+  fork tooling (this file, `.claude/`, `tasks/`, `.graphifyignore`) + finished features.
+- `feat|fix|chore/<N>-<slug>` branches off `master` (`gh issue develop N --name <prefix>/<N>-<slug>
+  --base master --checkout`), merged `--no-ff` with `Closes #N` in the merge commit only.
+- `pr/<slug>` branches off `upstream/master`, code commits only — never `CLAUDE.md`, `.claude/`,
+  `tasks/`, `.graphifyignore` or a fork `#N`. Keep `tasks/<N>-<slug>/` edits in their own commits.
 
 ## Architecture
 
@@ -89,8 +89,8 @@ DCAL_ENABLE_HOTRELOAD=1 go run ./cmd/dcal run -c ../quickshell
 
 - `CGO_ENABLED=0` must always build — no cgo dependencies.
 - Never edit generated code: `core/ent/*` (except `schema/`, `generate.go`, `migrate/`),
-  `core/internal/mocks/`, `core/internal/shellembed/dist/`, `quickshell/translations/en.json`.
-- Mocks come from mockery (`.mockery.yml` + `make mocks`), never hand-written.
+  `core/internal/mocks/` (from mockery: `.mockery.yml` + `make mocks`), `core/internal/shellembed/dist/`,
+  `quickshell/translations/en.json`.
 - Go style: early returns, `switch` over if/else chains, `any` not `interface{}`, sparse
   comments that explain constraints rather than narrate.
 - Go tests: testify, sandboxed (no network/system services), `repo.OpenMemory`,
@@ -113,8 +113,8 @@ DCAL_ENABLE_HOTRELOAD=1 go run ./cmd/dcal run -c ../quickshell
 - `make dev` / untagged builds have no embedded UI; run them with `-c ../quickshell`.
 - Only one dcal instance per session; a second one exits with "already running".
 - `internal/ipc` handlers name their request `req`, shadowing the `req()` ParamSpec helper.
-- Comment in `core/internal/settings/settings.go` points at `quickshell/Services/SettingsData.qml`;
-  the real file is `quickshell/Common/SettingsData.qml`.
-- `golangci-lint` (CI uses v2.11) is not installed locally; run it via
+- Comment in `core/internal/settings/settings.go` points at the wrong path; the real settings
+  file is `quickshell/Common/SettingsData.qml`. `golangci-lint` (CI uses v2.11) isn't installed
+  locally; from `core/`, run
   `GOTOOLCHAIN=go1.26.4 go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.11.0 run`
-  from `core/`. The toolchain pin (match `go.mod`) is required: system Go 1.27 breaks lint v2.11.
+  (the pin matches `go.mod` — system Go 1.27 breaks lint v2.11).

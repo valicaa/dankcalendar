@@ -18,6 +18,8 @@ Errors (block the commit):
     an agent file not mentioned in .claude/skills/project-manager/SKILL.md (roster drift)
   - code changed that a doc describes (REVIEW_RULES), none of the named docs is staged, and
     no --ack for this exact change set
+  - the commit's branch isn't issue-first (doesn't match feat|fix|chore/<issue-number>-<slug>)
+    and isn't exempt (master, pr/*, a Claude Code worktree branch (claude/*), detached HEAD)
 
 Change set: the command isn't parsed for what it will stage (`-a`, `git add … &&`). Every
 uncommitted file (staged, unstaged or untracked) counts as changed, but only a staged doc
@@ -55,6 +57,14 @@ CLAUDE_MD_BUDGET = 120
 SKILL_BUDGET = 250
 AGENT_MODELS = {"sonnet", "opus", "haiku", "fable", "inherit"}
 AGENT_EFFORTS = {"low", "medium", "high", "xhigh", "max"}
+
+# Issue-first branch naming (see CLAUDE.md's Branch model). Exempt: master, pr/* (upstream-pr's
+# cherry-pick branches), claude/* (Claude Code's own worktree/remote-agent branches: the CLI
+# binary's default branch-naming prompt asks for "claude/<slug>", e.g. "claude/fix-mobile-login-
+# button" — verified by `strings` on the installed `claude` binary), detached HEAD.
+BRANCH_RE = re.compile(r"^(feat|fix|chore)/\d+-")
+EXEMPT_BRANCHES = {"master"}
+EXEMPT_BRANCH_PREFIXES = ("pr/", "claude/")
 
 # changed path (regex) -> docs that describe it. A hit with none of those docs staged
 # needs a review (update the doc, or --ack).
@@ -344,6 +354,25 @@ def check_budget(errors):
         errors.append(f"CLAUDE.md is {n} lines (budget {CLAUDE_MD_BUDGET}): move a procedure into a skill")
 
 
+def current_branch():
+    """The checked-out branch, or None for detached HEAD (e.g. a rebase or cherry-pick in progress)."""
+    result = subprocess.run(["git", "symbolic-ref", "-q", "--short", "HEAD"],
+                            cwd=ROOT, capture_output=True, text=True)
+    return result.stdout.strip() if result.returncode == 0 else None
+
+
+def check_branch(errors):
+    branch = current_branch()
+    if branch is None or branch in EXEMPT_BRANCHES or branch.startswith(EXEMPT_BRANCH_PREFIXES):
+        return
+    if not BRANCH_RE.match(branch):
+        errors.append(
+            f"branch `{branch}` isn't issue-first: every change starts as a GitHub issue on "
+            "valicaa/dankcalendar, and the branch is feat|fix|chore/<issue-number>-<slug>. "
+            "Create it from the issue with `gh issue develop <N> --name <prefix>/<N>-<slug> "
+            "--base master --checkout`, or rename this one with `git branch -m <prefix>/<N>-<slug>`.")
+
+
 def check_lessons(warnings):
     if not LESSONS.is_file():
         warnings.append("tasks/lessons.md is missing")
@@ -388,6 +417,7 @@ def check_commit(cwd, command, match):
     if not use_repo(commit_dir(cwd, command, match)):
         return 0
     errors, warnings = run_checks()
+    check_branch(errors)
     staged, changed = change_set()
     needed = reviews_needed(changed, credited=staged)
     acked = bool(needed) and is_acked()

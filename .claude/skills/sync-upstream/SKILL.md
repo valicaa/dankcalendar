@@ -29,8 +29,8 @@ description: Use when pulling new AvengeMedia/dankcalendar commits into the fork
    It costs LLM tokens, so ask first.
 5. **Deploy.** Run `deploy-local`, which handles the migration backup.
 6. **Push** after the user confirms it works: `git push origin master`.
-7. **Update open feature branches.** For each unmerged `feat/*` branch, offer
-   `git switch feat/<slug> && git merge master`. For each open `pr/*` branch, offer
+7. **Update open feature branches.** For each unmerged `feat/*`/`fix/*`/`chore/*` branch, offer
+   `git switch <branch> && git merge master`. For each open `pr/*` branch, offer
    `git rebase upstream/master` followed by a force-push, and confirm before force-pushing.
 8. If upstream merged one of our PRs, delete the matching `pr/<slug>` branch locally and on
    origin, after confirming with the user.

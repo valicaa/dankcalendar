@@ -36,9 +36,10 @@ Need a fact from the code to ask a good question? Send `dcal-scout`; don't read 
 
 ## 2. Spec — Definition of Ready
 
-Feature or behaviour change: this is the spec from `new-feature` phase 1
-(`tasks/<slug>/spec.md`). Add these sections to it; don't write a second document. Bugs and
-small tasks: the same headings, inline in the brief.
+Every change starts as a GitHub issue on `valicaa/dankcalendar`: **the issue body is the
+spec**. No branch is created before the issue exists (a trivial edit — a typo, one
+`tasks/lessons.md` line — is exempt and just gets made). This is `new-feature` phase 1
+(feature/behaviour changes); bugs and small tasks use the same template inline.
 
 ```markdown
 ## Problem        who, when, today's workaround (one paragraph)
@@ -52,8 +53,11 @@ small tasks: the same headings, inline in the brief.
 ## Size           t-shirt: S (one layer, <1h) | M (2–3 layers) | L (cross-cutting, schema, new provider)
 ```
 
-Ready = every scenario has a checkable Then, non-goals are written, size is set, and the user
-said yes. No build work starts before that.
+Create it with `gh issue create -R valicaa/dankcalendar --title "<area>: <summary>" --body-file
+<scratchpad>/issue-body.md --label <enhancement|bug|chore> --label <size:S|size:M|size:L>` — one
+type label and one size label. Ready = every scenario has a checkable Then, non-goals are
+written, size is set, the issue is created, and the user said yes. No build work starts before
+that.
 
 ## 3. Break down and delegate
 
@@ -96,18 +100,22 @@ Deliverable: diff summary + command output / screenshot as evidence, not prose
 - Never accept "should work", "tests should pass" or a summary without output. Send it back
   for the evidence, or send `dcal-verifier`.
 - Check each report against the brief's acceptance list, item by item.
+- Post verification and review evidence (verifier report, reviewer findings and how they were
+  resolved) as comments on the issue: `gh issue comment <N> -R valicaa/dankcalendar --body-file
+  <scratchpad>/evidence.md`.
 - Scope grows (new layer, migration, extra setting): stop and raise a change request with the
   user — what changed, cost in size, options. Don't absorb it silently.
 - A subagent fails twice: re-brief with what was missing, or escalate one tier (builder →
   architect → `model: fable`). Don't take over the work yourself.
-- Keep `tasks/<slug>/todo.md` ticked as tasks land.
+- Keep `tasks/<N>-<slug>/todo.md` ticked as tasks land.
 
 ## 5. Close — Definition of Done
 
 - [ ] `dcal-verifier` report: all checks pass, feature seen in the running app
 - [ ] `dcal-reviewer` pass for M/L, or anything touching DB, migrations, providers or sync;
       blockers fixed and re-verified
-- [ ] every acceptance item ticked with its evidence
+- [ ] every acceptance item ticked with its evidence, posted as issue comments
+- [ ] issue closed by the merge (`Closes #N` in the `--no-ff` merge commit message)
 - [ ] user summary: what changed, how it was proven, what's left, next step (merge/deploy/PR)
 - [ ] retrospective: a correction, a wrong tier or a brief that had to be redone → one dated
       rule in `tasks/lessons.md`
