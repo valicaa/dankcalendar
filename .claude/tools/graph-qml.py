@@ -21,7 +21,26 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-OUT = ROOT / "graphify-out"
+
+
+def find_graphify_out():
+    """graphify-out/ lives only in the checkout that built it (excluded via .git/info/exclude,
+    so a linked worktree never has its own). Prefer this checkout's; otherwise fall back to the
+    main checkout's, found as the parent of the common .git dir."""
+    local = ROOT / "graphify-out"
+    if local.exists():
+        return local
+    try:
+        common_dir = subprocess.run(
+            ["git", "-C", str(ROOT), "rev-parse", "--path-format=absolute", "--git-common-dir"],
+            capture_output=True, text=True, check=True,
+        ).stdout.strip()
+    except (subprocess.CalledProcessError, OSError):
+        return local
+    return Path(common_dir).parent / "graphify-out"
+
+
+OUT = find_graphify_out()
 GRAPH = OUT / "graph.json"
 FILE_TYPES = {"code", "document", "paper", "image", "rationale", "concept"}
 os.chdir(ROOT)

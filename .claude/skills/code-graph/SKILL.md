@@ -11,6 +11,17 @@ via `.git/info/exclude`. Go comes from the AST; QML comes from LLM subagents, be
 has no QML parser (Graphify-Labs/graphify#1716). Find the chain here, then read only the lines it
 cites. This skill overrides the global graphify skill's "run `graphify query` first" default.
 
+**Linked worktrees.** `graphify-out/` is excluded from git, so it only exists in the checkout
+that built it — normally the main checkout. `graph-calls.py` and `graph-qml.py` resolve it as:
+this checkout's `graphify-out/` if present, else the main checkout's, found via `git
+rev-parse --path-format=absolute --git-common-dir` (its parent dir). Running these tools from a
+linked worktree therefore transparently uses the main checkout's graph — same command, same
+output. That graph reflects the main checkout's branch (normally `master`), not the worktree's,
+so it can be stale for anything the worktree's branch changed; treat call chains it shows for
+those files as a starting point to verify against source, not ground truth. If no graph exists
+in either place, the tools point at this "Keeping QML current" section rather than a bare full
+rebuild.
+
 ```bash
 .claude/tools/graph-calls.py core/internal/sync/                 # call map + node ids + grep gap-fill
 .claude/tools/graph-calls.py quickshell/Services/DankCalService.qml --grep events.delete  # -> Go handler

@@ -25,6 +25,25 @@ import sys
 from pathlib import Path
 
 root = Path(__file__).resolve().parents[2]
+
+
+def find_graphify_out():
+    """graphify-out/ lives only in the checkout that built it (excluded via .git/info/exclude,
+    so a linked worktree never has its own). Prefer this checkout's; otherwise fall back to the
+    main checkout's, found as the parent of the common .git dir."""
+    local = root / "graphify-out"
+    if local.exists():
+        return local
+    try:
+        common_dir = subprocess.run(
+            ["git", "-C", str(root), "rev-parse", "--path-format=absolute", "--git-common-dir"],
+            capture_output=True, text=True, check=True,
+        ).stdout.strip()
+    except (subprocess.CalledProcessError, OSError):
+        return local
+    return Path(common_dir).parent / "graphify-out"
+
+
 parser = argparse.ArgumentParser(usage=__doc__)
 parser.add_argument("prefix")
 parser.add_argument("--grep", dest="word", default=None)
@@ -37,9 +56,12 @@ if Path(prefix).exists():
     prefix = rel + "/" if Path(prefix).is_dir() else rel
 word = opts.word.lower() if opts.word else None
 
-graph_path = root / "graphify-out" / "graph.json"
+graph_path = find_graphify_out() / "graph.json"
 if not graph_path.exists():
-    sys.exit(f"{graph_path} missing: run /graphify (full build) or `graphify update .`")
+    sys.exit(
+        f"{graph_path} missing: refresh it with the QML-preserving procedure in the "
+        "code-graph skill (.claude/skills/code-graph/SKILL.md), not a bare full /graphify build"
+    )
 g = json.loads(graph_path.read_text())
 nodes = {n["id"]: n for n in g["nodes"]}
 edges = g.get("links") or g.get("edges") or []
