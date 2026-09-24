@@ -12,10 +12,6 @@ cached per file in graphify's semantic cache, and merged back with this tool.
 
 Flow: status -> one general-purpose subagent per ~20 changed files, each given the output of
 `prompt` -> merge. Only changed files cost tokens; unchanged ones come from the cache.
-
-status and prompt are read-only and work from a linked worktree against the main checkout's
-graph. merge writes graph.json; from a worktree it refuses, since it would merge that
-checkout's (possibly different-branch) QML into the main checkout's graph — run it from there.
 """
 import glob
 import json
@@ -29,7 +25,11 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import graphpaths  # noqa: E402
 
-OUT = graphpaths.resolve(ROOT)
+if graphpaths.is_linked_worktree(ROOT):
+    sys.exit(f"graph-qml.py maintains the main checkout's graph; run it from "
+              f"{graphpaths.main_checkout(ROOT)} (see the code-graph skill)")
+
+OUT = ROOT / "graphify-out"
 GRAPH = OUT / "graph.json"
 FILE_TYPES = {"code", "document", "paper", "image", "rationale", "concept"}
 os.chdir(ROOT)
@@ -110,7 +110,6 @@ def prompt(n, files):
 
 
 def merge():
-    graphpaths.refuse_if_fallback(ROOT, OUT)
     for c in sorted(glob.glob(str(OUT / ".qml_chunk_*.json"))):
         d = json.loads(Path(c).read_text())
         bad = [x["id"] for x in d.get("nodes", []) if x.get("file_type") not in FILE_TYPES]
