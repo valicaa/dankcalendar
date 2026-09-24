@@ -20,9 +20,10 @@ Errors (block the commit):
     no --ack for this exact change set
   - the commit's branch is outside CLAUDE.md's branch model — checked only for commits in this
     repo (same git common dir as this script's own repo):
-      feat|fix|chore/<issue-number>-<slug>, sync/*   allowed
-      docs/*        allowed while every uncommitted path is docs-only (verify-change section 0;
-                    not checked while a merge is in progress)
+      feat|fix|chore/<issue-number>-<slug>, sync/upstream-<hex hash, 7+>   allowed
+      docs/*        allowed while every uncommitted path is a doc (.claude/**.md, tasks/,
+                    CLAUDE.md, a root *.md); not checked while merging a commit that is already
+                    on origin/master
       master        blocked on a commit (it moves only by merging a PR on GitHub); a manual run
                     doesn't flag it
       pr/*, worktree-* (a Claude Code worktree-agent branch), detached HEAD   exempt
@@ -64,17 +65,20 @@ SKILL_BUDGET = 250
 AGENT_MODELS = {"sonnet", "opus", "haiku", "fable", "inherit"}
 AGENT_EFFORTS = {"low", "medium", "high", "xhigh", "max"}
 
-# Branch model (see CLAUDE.md). Issue-first feat|fix|chore/<N>-<slug> and sync-upstream's sync/*
-# are allowed; docs/* (project-manager step 0's trivial changes, no issue) only for docs-only
-# changes; master never takes a commit, since it moves only by merging a PR on GitHub. Exempt:
+# Branch model (see CLAUDE.md). Issue-first feat|fix|chore/<N>-<slug> and sync-upstream's
+# sync/upstream-<hash> are allowed; docs/* (project-manager step 0's trivial changes, no issue)
+# only for doc files; master never takes a commit, since it moves only by merging a PR. Exempt:
 # pr/* (upstream-pr's cherry-pick branches), detached HEAD, and worktree-*: a real
 # `isolation: worktree` agent probe showed `git worktree list` printing
 # `.claude/worktrees/agent-afa1f28e45b87f1ec [worktree-agent-afa1f28e45b87f1ec]`, cut from master
 # (0c98d7e) while the main checkout was on a feature branch. Writing agents never run that way
 # (project-manager); read-only ones may, and don't commit, so the exemption is harmless.
-BRANCH_RE = re.compile(r"^((feat|fix|chore)/\d+-|sync/)")
+BRANCH_RE = re.compile(r"^((feat|fix|chore)/\d+-|sync/upstream-[0-9a-f]{7,}$)")
 TRIVIAL_PREFIX = "docs/"
-DOCS_ONLY = re.compile(r"^(\.claude/|tasks/|CLAUDE\.md$|\.graphifyignore$|[^/]+\.md$)")  # verify-change section 0
+# Stricter than verify-change section 0's docs-only test on purpose: that one asks "does this
+# need a build?" (settings.json, tools and .graphifyignore don't), this one asks "is this a
+# trivial edit that may skip the issue?" (a hook script or permission change isn't).
+TRIVIAL_FILES = re.compile(r"^(\.claude/.*\.md$|tasks/|CLAUDE\.md$|[^/]+\.md$)")
 EXEMPT_BRANCH_PREFIXES = ("pr/", "worktree-")
 
 # changed path (regex) -> docs that describe it. A hit with none of those docs staged
@@ -379,8 +383,9 @@ def git_common_dir(path):
     return (path / result.stdout.strip()).resolve() if result.returncode == 0 else None
 
 
-def merging():
-    return subprocess.run(["git", "rev-parse", "-q", "--verify", "MERGE_HEAD"],
+def merging_origin_master():
+    """A merge is in progress and brings in only commits already on origin/master."""
+    return subprocess.run(["git", "merge-base", "--is-ancestor", "MERGE_HEAD", "origin/master"],
                           cwd=ROOT, capture_output=True).returncode == 0
 
 
@@ -398,11 +403,14 @@ def check_branch(errors, committing):
             errors.append(
                 "`master` moves only by merging a PR on GitHub, never by a local commit: commit on "
                 "the issue's feat|fix|chore/<N>-<slug> branch, or on a docs/<slug> branch for "
-                "project-manager step 0's trivial changes, and open a PR (new-feature phase 6).")
+                "project-manager step 0's trivial changes, and open a PR (new-feature phase 6). "
+                "Not committing? The hook also matches the text `git commit` quoted inside another "
+                "command (e.g. `gh issue comment --body \"…git commit…\"`): put such text in a "
+                "file and pass it with --body-file.")
         return
     if branch.startswith(TRIVIAL_PREFIX):
-        code = [p for p in change_set()[1] if not DOCS_ONLY.match(p)]
-        if code and not merging():
+        code = [p for p in change_set()[1] if not TRIVIAL_FILES.match(p)]
+        if code and not merging_origin_master():
             errors.append(
                 f"branch `{branch}` is for project-manager step 0's trivial docs changes, but "
                 f"{', '.join(code)} changed: anything beyond docs needs an issue and a "
@@ -415,7 +423,7 @@ def check_branch(errors, committing):
             "Create it from the issue with `gh issue develop <N> -R valicaa/dankcalendar --name "
             "<prefix>/<N>-<slug> --base master --checkout`, then `git cherry-pick` your commits "
             "onto it (a plain `git branch -m` renames the branch but doesn't link it to the "
-            "issue).")
+            "issue). Upstream syncs use sync/upstream-<7+ hex hash>, trivial doc edits docs/<slug>.")
 
 
 def check_lessons(warnings):
