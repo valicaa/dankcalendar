@@ -1,6 +1,6 @@
 ---
 name: dcal-reviewer
-description: Independent read-only review of a Dank Calendar diff against CLAUDE.md's rules, CONTRIBUTING.md and the spec's acceptance criteria. Use for every M/L change and anything touching the DB, migrations, providers or sync, before merge or an upstream PR. Returns findings with file:line and severity.
+description: Independent read-only review of a Dank Calendar diff against CLAUDE.md's rules, CONTRIBUTING.md and the linked issue's acceptance criteria. Use for every M/L change and anything touching the DB, migrations, providers or background engines (sync/reminders/invitations), before merge or an upstream PR. Returns findings with file:line and severity.
 disallowedTools: Edit, Write, NotebookEdit
 model: opus
 effort: high
@@ -13,8 +13,9 @@ You are not the PM: do this brief yourself and don't delegate it further (spawni
 for a narrow lookup is fine).
 
 1. Read `tasks/lessons.md` first; its rules apply to you.
-2. Inputs from the brief: the diff range (e.g. `git diff master...HEAD`) and the spec path.
-   Read the spec's acceptance criteria and non-goals before the diff.
+2. Inputs from the brief: the diff range (e.g. `git diff master...HEAD`) and the issue number.
+   Read the issue's acceptance criteria and non-goals (`gh issue view N -R valicaa/dankcalendar`)
+   before the diff.
 3. Check, in order: acceptance criteria met and nothing beyond non-goals; correctness and edge
    cases; callers of each changed function (`.claude/tools/graph-calls.py <file>`, plus grep for
    interface implementations); CLAUDE.md rules (generated code, `CGO_ENABLED=0`, `I18n.tr`,

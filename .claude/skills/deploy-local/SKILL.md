@@ -6,17 +6,21 @@ description: Use when installing a new Dank Calendar build onto this machine's r
 # Deploy to the local desktop
 
 The user's real calendar runs `~/.local/bin/dcal` via `~/.config/systemd/user/dcal.service`
-and uses real data in `~/.local/share/dankcal/`.
+and uses real data in `~/.local/share/dankcal/`. `dcal-builder` runs this on the PM's brief, in
+the main checkout, after the user's OK (`new-feature` phase 6, or `sync-upstream`).
 
 ## Steps
 
-1. **Check the branch.** Normally deploy from `master`. Deploying a `feat/*` branch is fine for
-   trying it out, but say so, and redeploy `master` afterwards if the feature is abandoned.
-2. **Check for migrations.** Compare the migrations this build ships with what the deployed binary last had:
+1. **Check the branch.** Only `master` is deployed: `git branch --show-current` must print
+   `master` and `git status --short` nothing. To try out an unmerged branch, use
+   `verify-change`'s dev instance instead — never install it here.
+2. **Check for migrations.** Compare the migrations this build ships with what the deployed
+   binary last had:
    ```bash
-   git diff --name-only "$(~/.local/bin/dcal version | sed -n 's/.*commit \([0-9a-f]*\).*/\1/p')" HEAD -- core/ent/migrate/migrations
+   C=$(~/.local/bin/dcal version | sed -n 's/.*commit \([0-9a-f]*\).*/\1/p'); [ -n "$C" ] && git cat-file -e "$C^{commit}" || { echo "STOP: deployed commit unknown - treat every migration as new, back up first"; exit 1; }
+   git diff --name-only "$C" HEAD -- core/ent/migrate/migrations
    ```
-   If any are listed, back up first and tell the user:
+   If any are listed, or the first line stopped, back up first and tell the user:
    ```bash
    cp -a ~/.local/share/dankcal ~/.local/share/dankcal.bak-$(date +%F-%H%M)
    ```
@@ -39,9 +43,19 @@ and uses real data in `~/.local/share/dankcal/`.
 
 ## Rollback
 
-`git switch` to the previous good commit (e.g. `master~1` or the last tag) and rerun steps 3–4.
+A failed `new-feature` phase-6 deploy whose merge isn't pushed yet is undone as that skill's
+6a says (guarded `git reset --hard origin/master`, then steps 3–4). Otherwise:
+
+Check out the previous good commit detached (a plain `git switch master~1` fails: "a branch is
+expected"), then rerun steps 3–4 — the one time step 1's `master` check doesn't apply:
+
+```bash
+git switch --detach master~1
+```
+
 If a migration ran, stop the service and restore the backup directory before starting the
-older binary.
+older binary. Afterwards return with `git switch master`; the installed binary stays the
+rolled-back one until the next deploy.
 
 ## Don't
 

@@ -8,9 +8,35 @@ description: Use before claiming a Dank Calendar change works, before committing
 Evidence before claims. Report each check with its actual result; if one is skipped, say
 why.
 
+## 0. Docs and tooling
+
+Any change touching `.claude/`, `CLAUDE.md` or `tasks/`: `.claude/tools/check-docs.py` must
+print `docs OK`.
+
+**Docs-only test** (`new-feature` and `project-manager` use this same test). A change is
+docs-only only if this prints nothing for its range — `master...HEAD` on the branch,
+`master~1..master` for a merge:
+
+```bash
+git diff --name-only master...HEAD | grep -vE '^(\.claude/|tasks/|CLAUDE\.md$|\.graphifyignore$|[^/]+\.md$)'
+```
+
+Any path it prints — code, the `dank-qml-common` submodule, `Makefile`, `scripts/`, `assets/`,
+`flake.nix`, `distro/`, `.github/` — means the full checks in sections 1–5. A docs-only change
+stops here, with no build, dev instance or service stop:
+
+```bash
+.claude/tools/check-docs.py
+git diff --check master...HEAD
+git diff master...HEAD
+```
+
+The last one is for reading: each changed command and path must match what it describes.
+
 ## 1. Static checks (mirror upstream pre-commit + CI)
 
-From the repo root:
+From the repo root. In an `upstream-pr` worktree, follow `upstream-pr` step 2 instead of the
+paths and base below.
 
 ```bash
 cd core && go mod tidy && git diff --exit-code go.mod go.sum; cd ..
@@ -51,12 +77,13 @@ make build && core/bin/dcal version
 
 ## 4. See it working
 
-Static checks do not prove UI behaviour. Pick one:
+Static checks do not prove UI behaviour. Use a **dev instance**, never `deploy-local` — that
+installs onto the user's real desktop calendar and only ever deploys `master`, after the user's
+explicit OK (`new-feature` phase 6, or after `sync-upstream`). An unmerged branch is tried
+here, never deployed:
 
-- **UI iteration (preferred while developing):**
-  `systemctl --user stop dcal`, then from `core/`:
-  `DCAL_ENABLE_HOTRELOAD=1 go run ./cmd/dcal run -c ../quickshell` in the background.
-- **Final check:** run `deploy-local` with the fresh build.
+`systemctl --user stop dcal`, then from `core/`:
+`DCAL_ENABLE_HOTRELOAD=1 go run ./cmd/dcal run -c ../quickshell` in the background.
 
 Then:
 1. `dcal show`, navigate to the feature, and capture with
@@ -65,8 +92,8 @@ Then:
    output.
 2. Check logs for new errors: `journalctl --user -u dcal -n 50 --no-pager -p warning` (or the
    dev process output).
-3. Exercise edge cases from the spec's test plan (empty state, offline account, all-day events,
-   24h vs 12h clock, long titles).
+3. Exercise edge cases from the issue's Scenarios and Acceptance (empty state, offline account,
+   all-day events, 24h vs 12h clock, long titles).
 4. When done with a dev run, kill it and `systemctl --user start dcal` so the user's calendar
    is back.
 

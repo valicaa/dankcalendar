@@ -11,9 +11,8 @@ go upstream as PRs, so all code follows `CONTRIBUTING.md` (read it before a firs
 
 ## Working mode — the main session is the project manager
 
-The main session follows the `project-manager` skill: it elicits and specs with the user, then
-delegates all technical work (code reading, edits, tests, debugging, review) to the `.claude/agents/`
-roster and accepts only evidence. A subagent ignores this section and does its brief directly.
+The main session follows `project-manager`: it elicits, specs (a GitHub issue), delegates to
+`.claude/agents/`, and accepts only evidence. Subagents skip this, working their brief directly.
 
 ## Skills — use them, every feature goes through the same path
 
@@ -30,17 +29,20 @@ roster and accepts only evidence. A subagent ignores this section and does its b
 
 ## Branch model
 
-- `master` = `upstream/master` + fork tooling (this file, `.claude/`, `tasks/`, `.graphifyignore`) + finished
-  features. It is what gets deployed.
-- `feat/<slug>` branches off `master`, one feature each, merged back with `--no-ff`.
-- `pr/<slug>` branches off `upstream/master` and carries only a feature's code commits —
-  never `CLAUDE.md`, `.claude/`, `tasks/` or `.graphifyignore`. Created by the `upstream-pr` skill.
-- Keep planning-doc edits (`tasks/`) in their own commits so feature commits cherry-pick
-  cleanly onto upstream.
+- **Issue-first:** every change except `project-manager` step 0's trivial ones starts as an
+  issue on `valicaa/dankcalendar` (body = spec, template there); no branch before it exists.
+- `master` = `upstream/master` + fork tooling (this file, `.claude/`, `tasks/`,
+  `.graphifyignore`) and finished features. It is the only branch that gets deployed.
+- `feat|fix|chore/<N>-<slug>` branches off `master` via `gh issue develop N -R
+  valicaa/dankcalendar --name <prefix>/<N>-<slug> --base master --checkout` — every `gh`
+  command carries an explicit `-R`, never `gh repo set-default`. Merged `--no-ff` with
+  `Closes #N` in the merge commit only.
+- `pr/<slug>` is created by the `upstream-pr` skill off `upstream/master`, code commits only —
+  never `CLAUDE.md`, `.claude/`, `tasks/`, `.graphifyignore` or a fork `#N`.
+- One feature in flight, in the main checkout; writing agents work on its branch one at a time
+  (never `isolation: worktree`). `tasks/` edits go in their own `tasks:` commits, by the PM.
 
-## Architecture
-
-Two halves, one binary:
+## Architecture — two halves, one binary
 
 - **`core/`** — Go daemon (module `github.com/AvengeMedia/dankcalendar/core`).
   `cmd/dcal/` is the cobra CLI and composition root (`daemon.go` wires everything via
@@ -79,22 +81,20 @@ DCAL_ENABLE_HOTRELOAD=1 go run ./cmd/dcal run -c ../quickshell
   catch your own mistake, add a dated rule there in the same session.
 - This file holds facts and rules only, within 120 lines. A procedure of more than a few steps
   belongs in a skill under `.claude/skills/`, with a row in the table above.
-- A PreToolUse hook runs `.claude/tools/check-docs.py` before every `git commit`:
-  - It blocks on broken doc references, the line budget, bad skill/agent frontmatter, the
-    skill table or the `.claude/agents/` roster drifting out of sync with source.
-  - If uncommitted code a doc describes changed (staged or not), it blocks the commit until the
-    listed docs are staged, or `.claude/tools/check-docs.py --ack` is run once nothing needs to change.
+- A PreToolUse hook runs `.claude/tools/check-docs.py` on every commit attempt: it blocks on
+  broken doc references, the line budget, bad skill/agent frontmatter, roster drift, and
+  undocumented doc-relevant code changes — stage the listed docs, or run `check-docs.py --ack`
+  once nothing needs to change.
 
 ## Rules
 
 - `CGO_ENABLED=0` must always build — no cgo dependencies.
 - Never edit generated code: `core/ent/*` (except `schema/`, `generate.go`, `migrate/`),
-  `core/internal/mocks/`, `core/internal/shellembed/dist/`, `quickshell/translations/en.json`.
-- Mocks come from mockery (`.mockery.yml` + `make mocks`), never hand-written.
-- Go style: early returns, `switch` over if/else chains, `any` not `interface{}`, sparse
-  comments that explain constraints rather than narrate.
-- Go tests: testify, sandboxed (no network/system services), `repo.OpenMemory`,
-  `t.TempDir()`, `humatest`, table-driven for pure functions.
+  `core/internal/mocks/` (mockery: `.mockery.yml` + `make mocks`, never hand-written),
+  `core/internal/shellembed/dist/`, `quickshell/translations/en.json`.
+- Go: early returns, `switch` over if/else chains, `any` not `interface{}`, sparse comments that
+  explain constraints rather than narrate; tests: testify, sandboxed (no network/system
+  services), `repo.OpenMemory`, `t.TempDir()`, `humatest`, table-driven for pure functions.
 - QML: every user-facing string is `I18n.tr("text", "translator context")`, reusing existing
   terms in `translations/en.json` where possible. No `console.*` — use
   `readonly property var log: Log.scoped("Name")`. Use DankCommon wrappers (`DankListView`,
@@ -110,11 +110,11 @@ DCAL_ENABLE_HOTRELOAD=1 go run ./cmd/dcal run -c ../quickshell
 
 ## Known quirks
 
-- `make dev` / untagged builds have no embedded UI; run them with `-c ../quickshell`.
-- Only one dcal instance per session; a second one exits with "already running".
+- `make dev`/untagged builds lack embedded UI (run with `-c ../quickshell`); only one dcal
+  instance runs per session — a second exits with "already running".
 - `internal/ipc` handlers name their request `req`, shadowing the `req()` ParamSpec helper.
-- Comment in `core/internal/settings/settings.go` points at `quickshell/Services/SettingsData.qml`;
-  the real file is `quickshell/Common/SettingsData.qml`.
-- `golangci-lint` (CI uses v2.11) is not installed locally; run it via
+- Comment in `core/internal/settings/settings.go` points at
+  `quickshell/Services/SettingsData.qml`; the real file is `quickshell/Common/SettingsData.qml`.
+- `golangci-lint` (CI uses v2.11) isn't installed locally; from `core/`, run
   `GOTOOLCHAIN=go1.26.4 go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.11.0 run`
-  from `core/`. The toolchain pin (match `go.mod`) is required: system Go 1.27 breaks lint v2.11.
+  (pin matches `go.mod` — system Go 1.27 breaks lint v2.11).
