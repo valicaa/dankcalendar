@@ -1,13 +1,14 @@
 ---
 name: deploy-local
-description: Use when installing a new Dank Calendar build onto this machine's running desktop calendar — after merging a feature, after syncing upstream, or when the user says "install it", "deploy", "update my calendar".
+description: Use when installing a new Dank Calendar build onto this machine's running desktop calendar — after the owner merged a feature or upstream-sync PR, or when the user says "install it", "deploy", "update my calendar".
 ---
 
 # Deploy to the local desktop
 
 The user's real calendar runs `~/.local/bin/dcal` via `~/.config/systemd/user/dcal.service`
 and uses real data in `~/.local/share/dankcal/`. `dcal-builder` runs this on the PM's brief, in
-the main checkout, after the user's OK (`new-feature` phase 6, or `sync-upstream`).
+the main checkout, once the owner has merged the PR on GitHub (`new-feature` 6.4, or
+`sync-upstream` step 5) — that merge is the OK, nobody asks again in chat.
 
 ## Steps
 
@@ -43,19 +44,19 @@ the main checkout, after the user's OK (`new-feature` phase 6, or `sync-upstream
 
 ## Rollback
 
-A failed `new-feature` phase-6 deploy whose merge isn't pushed yet is undone as that skill's
-6a says (guarded `git reset --hard origin/master`, then steps 3–4). Otherwise:
-
-Check out the previous good commit detached (a plain `git switch master~1` fails: "a branch is
-expected"), then rerun steps 3–4 — the one time step 1's `master` check doesn't apply:
+Reinstall the last good commit: for a failed deploy of a PR's merge commit `<M>`, that is
+`<M>~1`, `master` just before the merge. Check it out detached (a plain `git switch <M>~1`
+fails: "a branch is expected"), then rerun steps 3–4 — the one time step 1's `master` check
+doesn't apply:
 
 ```bash
-git switch --detach master~1
+git switch --detach <M>~1
 ```
 
 If a migration ran, stop the service and restore the backup directory before starting the
 older binary. Afterwards return with `git switch master`; the installed binary stays the
-rolled-back one until the next deploy.
+rolled-back one until the next deploy. `master` itself is never reset — it moves only by merged
+PRs — so the fix goes up as a new PR (`new-feature` 6.4, "If the deploy fails").
 
 ## Don't
 

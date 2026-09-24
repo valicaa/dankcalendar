@@ -3,7 +3,7 @@
 Fork of `AvengeMedia/dankcalendar`: this machine's daily driver and a base for features that may
 go upstream as PRs, so all code follows `CONTRIBUTING.md` (read it before a first change).
 
-- `origin` = `valicaa/dankcalendar` (push here), `upstream` = `AvengeMedia/dankcalendar`.
+- `origin` = `valicaa/dankcalendar` (branches + PRs), `upstream` = `AvengeMedia/dankcalendar`.
 - Installed build: `~/.local/bin/dcal`, run by `~/.config/systemd/user/dcal.service`
   (no AUR package, no autostart entry — never re-enable the in-app "Start at login").
 - User data: `~/.local/share/dankcal/` (SQLite `dankcal.db` + keyring), UI settings:
@@ -32,11 +32,12 @@ The main session follows `project-manager`: it elicits, specs (a GitHub issue), 
 - **Issue-first:** every change except `project-manager` step 0's trivial ones starts as an
   issue on `valicaa/dankcalendar` (body = spec, template there); no branch before it exists.
 - `master` = `upstream/master` + fork tooling (this file, `.claude/`, `tasks/`,
-  `.graphifyignore`) and finished features. It is the only branch that gets deployed.
+  `.graphifyignore`) and finished features; the only branch deployed. It moves only when the
+  owner merges a PR on GitHub — that merge is the OK to deploy, never asked in chat.
 - `feat|fix|chore/<N>-<slug>` branches off `master` via `gh issue develop N -R
-  valicaa/dankcalendar --name <prefix>/<N>-<slug> --base master --checkout` — every `gh`
-  command carries an explicit `-R`, never `gh repo set-default`. Merged `--no-ff` with
-  `Closes #N` in the merge commit only.
+  valicaa/dankcalendar --name <prefix>/<N>-<slug> --base master --checkout` (every `gh` command
+  carries `-R`, never `gh repo set-default`) and ends as a PR (`Closes #N` in its body only),
+  the checkout back on `master`. Other PR branches: `docs/<slug>` (step 0), `sync/upstream-<hash>`.
 - `pr/<slug>` is created by the `upstream-pr` skill off `upstream/master`, code commits only —
   never `CLAUDE.md`, `.claude/`, `tasks/`, `.graphifyignore` or a fork `#N`.
 - One feature in flight, in the main checkout; writing agents work on its branch one at a time
@@ -81,10 +82,9 @@ DCAL_ENABLE_HOTRELOAD=1 go run ./cmd/dcal run -c ../quickshell
   catch your own mistake, add a dated rule there in the same session.
 - This file holds facts and rules only, within 120 lines. A procedure of more than a few steps
   belongs in a skill under `.claude/skills/`, with a row in the table above.
-- A PreToolUse hook runs `.claude/tools/check-docs.py` on every commit attempt: it blocks on
-  broken doc references, the line budget, bad skill/agent frontmatter, roster drift, and
-  undocumented doc-relevant code changes — stage the listed docs, or run `check-docs.py --ack`
-  once nothing needs to change.
+- A PreToolUse hook runs `.claude/tools/check-docs.py` on every commit: it blocks on broken doc
+  references, the line budget, bad frontmatter, roster drift, commits off the branch model, and
+  undocumented doc-relevant code changes — stage the listed docs, or `check-docs.py --ack`.
 
 ## Rules
 

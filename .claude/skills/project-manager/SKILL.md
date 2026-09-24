@@ -15,44 +15,55 @@ systematic-debugging by `dcal-architect`.
 
 **The PM does itself:** talk to the user; read CLAUDE.md, skills, `tasks/lessons.md`, issues
 and subagent reports; write the issue body and briefs; create and update the issue
-(`gh issue create|comment|edit -R valicaa/dankcalendar`); create the branch (step 2 — the only
-branch operation the PM runs); write `tasks/<N>-<slug>/todo.md`, keep it ticked, and make every
-`tasks:` commit — `tasks: plan for <slug>` in step 2 and `tasks: result for <slug>` before
-phase 6 (no code; no agent commits `tasks/`, except the one phase-6 merge commit that resolves a
-`tasks/lessons.md` conflict); post every issue comment (agents never post); cheap read-only
-status checks needed to decide (`git status`, `git log --oneline`, `check-docs.py`). Everything
-else goes to a subagent, including "quick" lookups.
+(`gh issue create|comment|edit|reopen -R valicaa/dankcalendar`); create the branch (step 2, or a
+step-0 `docs/<slug>` branch — the only branch operations the PM runs); write
+`tasks/<N>-<slug>/todo.md`, keep it ticked, and make every `tasks:` commit —
+`tasks: plan for <slug>` in step 2 and `tasks: result for <slug>` in `new-feature` 6.1 (no code;
+no agent commits `tasks/`, except phase 6's merge of `origin/master` that resolves a
+`tasks/lessons.md` conflict); write PR bodies; post every issue and PR comment (agents never
+post); cheap read-only status checks needed to decide (`git status`, `git log --oneline`,
+`check-docs.py`, `gh pr view`). Everything else goes to a subagent, including "quick" lookups.
 
-**Branches.** One feature is in flight in the main checkout at a time. In `new-feature` phases
-3–5 (implement, verify, review) no agent creates or switches branches: they work on the branch
-the PM created. The branch-operating procedures — the phase-6 merge, `sync-upstream`,
-`deploy-local` (and its rollback) and `upstream-pr` — are run by `dcal-builder` on the PM's
-brief, in the main checkout (`upstream-pr` in its own `pr/<slug>` worktree).
+**Branches.** One feature is in flight at a time, from its branch's creation until `new-feature`
+6.4 is done or its PR is closed. In phases 3–5 no agent creates or switches branches: they work
+on the branch the PM created. The branch-operating procedures — phase 6, step 0's trivial PR,
+`sync-upstream`, `deploy-local` (and its rollback) and `upstream-pr` — are run by `dcal-builder`
+on the PM's brief, in the main checkout (`upstream-pr` in its own `pr/<slug>` worktree).
+`master` moves only when the owner merges a PR on GitHub: nobody commits on it (the check-docs
+hook blocks it) or pushes it, and the main checkout returns to it whenever a PR is open.
 
 ## 0. Does this need an issue at all?
 
 A question or a read-only lookup ("where is X", "why does Y happen") needs neither an issue nor
 a branch — answer it (send `dcal-scout` if it needs the code) and stop here. Only an actual
-change goes on. Two trivial changes skip the issue; everything else goes through steps 1–5:
+change goes on. Two trivial changes skip the issue, but not the PR — every change reaches
+`master` as a PR the owner merges; everything else goes through steps 1–5:
 
 - **Anything in `tasks/lessons.md`** (a new rule, or a typo inside one): always the PM, as a
-  `tasks: <summary>` commit. With a feature in flight it rides along in that feature's next
-  `tasks:` commit on the feature branch; otherwise it goes on `master` as below.
+  `tasks: <summary>` commit. While a feature branch is checked out (phases 2–5) it rides along
+  in that feature's next `tasks:` commit; otherwise it goes on a trivial branch as below.
 - **A typo in any other doc** (CLAUDE.md, a skill, an agent): a `dcal-builder`, as a
-  `docs: <summary>` commit on `master` — only when no feature is in flight; otherwise it waits
-  until the feature is merged.
+  `docs: <summary>` commit on a trivial branch — only while the main checkout is on `master`;
+  otherwise it waits until that feature's PR is open.
 
-Straight onto `master` means, in the main checkout, before editing:
+A trivial branch is `docs/<slug>` (no issue; the check-docs hook takes commits on it only while
+every uncommitted path passes `verify-change` section 0's docs-only test), made by the committer:
 
 ```bash
-git branch --show-current                      # must print master
-git status --short                             # must print nothing
+[ -f CLAUDE.md ] && [ "$(git rev-parse --show-toplevel)" = "$PWD" ] && [ "$(git branch --show-current)" = master ] && [ -z "$(git status --short)" ] || { echo "STOP: not the main checkout on a clean master"; exit 1; }
 git pull --ff-only origin master
+git switch -c docs/<slug> || exit 1
 ```
 
-and, just before committing, `git rev-list --count origin/master..master` must print 0.
-Whoever committed it pushes it (`git push origin master`) once the user OKs it (the same kind
-of OK a merge gets — see step 5).
+Then `dcal-builder` runs `new-feature` 6.2 with `<branch>` = `docs/<slug>`, except that the PR
+takes the commit subject as title and a PM-written body with no `Closes` (what, why, attribution):
+
+```bash
+gh pr create -R valicaa/dankcalendar --base master --head docs/<slug> --title "$(git log -1 --format=%s docs/<slug>)" --body-file <scratchpad>/pr-docs-<slug>.md
+```
+
+The PM gives the owner the link. Once merged, `dcal-builder` runs 6.4's first block; docs-only,
+so nothing is deployed.
 
 ## 1. Elicit (BABOK elicitation, Jobs-to-be-Done)
 
@@ -118,8 +129,8 @@ summary keeps its 2–5 most specific words, dropping articles and filler:
 `ui: show week numbers in the month view header` → `week-numbers-month-header`.
 
 Then create the branch — in the main checkout, which must be on `master` with a clean tree
-(one feature in flight at a time; if another feature's branch is checked out, finish it first,
-or with the user's OK have `dcal-builder` park it — commit its work, then `git switch master`):
+(one feature in flight — see Branches; with the user's OK a checked-out feature can be parked:
+`dcal-builder` commits its work, then `git switch master`):
 
 ```bash
 git branch --show-current                      # must print master
@@ -133,12 +144,12 @@ gh issue develop <N> -R valicaa/dankcalendar --name <feat|fix|chore>/<N>-<slug> 
 Prefix by issue label: `feat/` for `enhancement`, `fix/` for `bug`, `chore/` otherwise.
 `gh issue develop` creates the branch on GitHub from origin's `master`: the pull brings a
 local `master` that is behind up to date (phases 4–5 diff against it), and a local-only commit
-would be missing from the branch — if the count is nonzero, ask the user to OK pushing
-`master` first. If the pull refuses (diverged), stop and take it to the user.
+would be missing from the branch. `master` never holds local commits, so a nonzero count or a
+refused pull (diverged) means something went wrong: stop and take it to the user.
 
 Write `tasks/<N>-<slug>/todo.md` — the work breakdown from step 3, one line per task,
 `- [ ] <deliverable> — <agent>` — and commit it as
-`tasks: plan for <slug>`. It is not pushed on its own; it reaches GitHub with `master` in phase 6.
+`tasks: plan for <slug>`. It is not pushed on its own; phase 6 pushes it with the branch.
 
 ## 3. Break down and delegate
 
@@ -150,24 +161,20 @@ task needs:
 |---|---|---|
 | Lookup, "where is X", callers, summarise a file, graph query | `dcal-scout` | haiku / low |
 | Recipe-shaped edit, standard feature step, tests, docs/tooling | `dcal-builder` | sonnet / medium |
-| Branch-operating procedure: phase-6 merge, `deploy-local`, `sync-upstream`, `upstream-pr` | `dcal-builder` | sonnet / medium |
+| Branch-operating procedure: phase-6 PR and post-merge, `deploy-local`, `sync-upstream`, `upstream-pr` | `dcal-builder` | sonnet / medium |
 | Design, L plan, cross-cutting change, unclear bug, schema/migration, provider/engine | `dcal-architect` | opus / high |
 | Review a diff against the issue + CLAUDE.md (M/L, DB, providers, migrations, engines) | `dcal-reviewer` | opus / high |
 | Run `verify-change`, prove it in a dev instance, confirm a deploy | `dcal-verifier` | sonnet / low |
 
 The Agent tool's `model` param overrides the agent's frontmatter: use `fable` for the hardest
 problems (architect failed, subtle concurrency or data-loss risk), `haiku` for bulk mechanical
-steps. For a `new-feature` run: the PM owns phases 1–2 and 7, the `tasks:` commits, and
-getting the user's one OK before phase 6 (merge, deploy, and — if any `.qml` file changed — the
-graph refresh, asked together). `dcal-builder` (or `dcal-architect` for L, schema or provider
-work) does phase 3 on the branch the PM created; `dcal-verifier` does phase 4; `dcal-reviewer`
-does phase 5 when the review rule below calls for it. Phase 6 is two `dcal-builder` briefs:
-**6a** — pull, merge, deploy, QML graph check, then **stop before pushing** and report;
-`dcal-verifier` confirms the deploy; **6b** — push and delete the merged branch (a new brief,
-or SendMessage to the same builder). A docs-only change (`verify-change` section 0's docs-only
-test prints nothing) has no deploy, so 6a and 6b run as one brief (merge, then push).
-`sync-upstream` and `upstream-pr` likewise go to `dcal-builder`; the PM gets the user's OKs
-those skills ask for and relays them in the brief.
+steps. For a `new-feature` run: the PM owns phases 1–2 and 7, the `tasks:` commits and the PR
+body. `dcal-builder` (or `dcal-architect` for L, schema or provider work) does phase 3 on the
+branch the PM created; `dcal-verifier` does phase 4; `dcal-reviewer` does phase 5 when the review
+rule below calls for it. Phase 6 is two `dcal-builder` briefs around the owner's merge on
+GitHub: **6.2** push, open the PR, back to `master`; **6.4** pull, delete the branch, deploy
+unless docs-only, then `dcal-verifier` confirms. `sync-upstream` (which also ends in a PR) and
+`upstream-pr` go to `dcal-builder`; the PM relays any OK those skills ask the user for.
 
 **Review rule (this overrides any other phrasing):** send `dcal-reviewer` for every M/L
 change, and for anything touching the DB, migrations, providers or the background engines
@@ -223,19 +230,21 @@ Deliverable: diff summary + command output / screenshot as evidence, not prose
       `gh issue view N -R valicaa/dankcalendar --json body -q .body > <scratchpad>/body.md`,
       tick the boxes in that file, then
       `gh issue edit N -R valicaa/dankcalendar --body-file <scratchpad>/body.md`
+- [ ] retrospective: a correction, a wrong tier or a brief that had to be redone → one dated
+      rule in `tasks/lessons.md`, in the `tasks: result` commit (a later one: step 0)
 - [ ] `tasks: result for <slug>` committed on the feature branch (skipped when
       `git status --short tasks/` prints nothing)
-- [ ] phase 6 done in order: 6a merge with `Closes #N` → deploy → stop; `dcal-verifier`
-      confirms the deploy; 6b push `master` (this closes the issue — never before the deploy
-      is confirmed) and delete the merged branch. Docs-only (same test): merge, then push
-- [ ] a final issue comment: merge commit hash + deploy confirmation (version, service state)
-- [ ] user summary: what changed, how it was proven, what's left, next step (deploy/PR)
-- [ ] retrospective: a correction, a wrong tier or a brief that had to be redone → one dated
-      rule in `tasks/lessons.md`
+- [ ] PR open on `valicaa/dankcalendar` (body: `Closes #N` first, evidence comment links,
+      attribution last), its URL posted on the issue, main checkout back on an up-to-date
+      `master`
+- [ ] user summary: what changed, how it was proven, the PR link, what's left — no merge
+      question
+- [ ] after the owner merges (the merge closes the issue): pulled, local branch deleted,
+      deployed unless docs-only and confirmed by `dcal-verifier`; a final issue comment with
+      the merge commit hash + deploy confirmation (version, service state) or "docs-only". A
+      failed deploy: rollback, reopen, new PR (`new-feature` phase 6)
 
-Merging, deploying (`deploy-local`) and upstream PRs wait for the user's go-ahead — one
-question covers merge + deploy + the QML graph refresh (if any `.qml` file changed). The PM's
-own part is that go-ahead, the `tasks: result` commit, the two phase-6 briefs and the final
-comment; `dcal-builder` runs 6a (merge, deploy, graph refresh — stopping before the push) and
-6b (push, branch deletion), and `dcal-verifier` confirms the deploy (version, service,
-screenshot) in between.
+The PM never asks for a merge, push or deploy OK in chat: the owner merges the PR on GitHub, and
+that is the OK to deploy (the PM learns of it from the owner or
+`gh pr view <PR> -R valicaa/dankcalendar --json state,mergeCommit`). Only the QML graph refresh
+(LLM cost) and `upstream-pr` still wait for the user's word.
