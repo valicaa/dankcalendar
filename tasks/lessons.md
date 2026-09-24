@@ -19,3 +19,4 @@ Format: `- YYYY-MM-DD — <what went wrong> → <rule>`
 - 2026-09-24 — `git log --grep "Closes #7"` matched "Closes #70" → anchor any grep for a number (`-E '^Closes #7$'`).
 - 2026-09-24 — Two reviews passed the skills as consistent, but a literal walkthrough found owner and order contradictions → run the fresh-agent walkthrough in the same round as the first review, not after.
 - 2026-09-24 — A builder's round reports twice claimed fixes that `git diff` didn't contain → check every claimed fix against the diff (or have the reviewer do it) before accepting a report; after two false reports escalate a tier.
+- 2026-09-24 — Guarded shell blocks only against unset variables; an empty or wrong substituted path still let `rm -rf` run in $HOME → any destructive block first asserts it is in the expected repo/branch (`git rev-parse --show-toplevel`, `git branch --show-current`) with `|| exit 1`, and uses git commands over bare `rm -rf`.
