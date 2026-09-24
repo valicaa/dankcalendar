@@ -15,3 +15,6 @@ Format: `- YYYY-MM-DD — <what went wrong> → <rule>`
 - 2026-09-24 — The main session wrote and tested tooling itself instead of delegating, filling its context with file dumps → the main session is the PM (`project-manager` skill): it delegates all technical work to the `.claude/agents/` roster and verifies the evidence in their reports.
 - 2026-09-24 — Builder exempted `claude/*` as the worktree branch prefix from a binary string; real agent worktrees are `worktree-agent-<id>` → prove naming/format assumptions by creating the real thing, not by grepping for strings.
 - 2026-09-24 — `gh`'s default repo was upstream AvengeMedia while docs had bare `gh issue` commands → every `gh` command in docs and hook messages carries an explicit `-R`; never rely on `gh repo set-default`.
+- 2026-09-24 — Moved upstream-pr into a worktree with `cd ../wt` then relative commands; a subagent's cwd resets between Bash calls → any procedure that works in another directory uses an absolute path variable and `git -C "$W"` (or `cd "$W" &&`) in every command.
+- 2026-09-24 — `git log --grep "Closes #7"` matched "Closes #70" → anchor any grep for a number (`-E '^Closes #7$'`).
+- 2026-09-24 — Two reviews passed the skills as consistent, but a literal walkthrough found owner and order contradictions → run the fresh-agent walkthrough in the same round as the first review, not after.
