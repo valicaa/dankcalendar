@@ -1,0 +1,65 @@
+---
+name: verify-change
+description: Use before claiming a Dank Calendar change works, before committing a finished step, and before merging or opening a PR. Runs the same checks as upstream's pre-commit hooks and CI, then proves the feature works in the running app.
+---
+
+# Verify a change
+
+Evidence before claims. Report each check with its actual result; if one is skipped, say
+why.
+
+## 1. Static checks (mirror upstream pre-commit + CI)
+
+From the repo root:
+
+```bash
+cd core && go mod tidy && git diff --exit-code go.mod go.sum; cd ..
+test -z "$(cd core && gofmt -s -l $(git ls-files '*.go' | grep -v '^ent/'))" || echo "gofmt needed"
+make vet
+make test
+(cd core && GOTOOLCHAIN=go1.26.4 go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.11.0 run)  # pin toolchain: system Go 1.27 export data breaks lint v2.11
+git diff master...HEAD -- 'quickshell/*.qml' | grep -n '^+.*console\.' && echo "console.* in QML — use Log.scoped"
+git diff --check master...HEAD
+```
+
+Skip the Go checks only if the branch touches nothing under `core/`.
+
+## 2. QML checks (when `quickshell/` changed)
+
+- `qmllint` on changed files (`/usr/bin/qmllint quickshell/<file>.qml`). Treat new warnings
+  on lines you touched as failures; pre-existing noise is fine — say so.
+- `make i18n-extract` then `git status quickshell/translations` — must be clean (i.e. the
+  extracted catalog was already committed). Every new visible string must be in `I18n.tr`.
+- No raw `Flickable`/`ListView`/`ScrollView` added where a DankCommon wrapper exists.
+
+## 3. Build
+
+```bash
+make build && core/bin/dcal version
+```
+
+## 4. See it working
+
+Static checks do not prove UI behaviour. Pick one:
+
+- **UI iteration (preferred while developing):**
+  `systemctl --user stop dcal`, then from `core/`:
+  `DCAL_ENABLE_HOTRELOAD=1 go run ./cmd/dcal run -c ../quickshell` in the background.
+- **Final check:** run `deploy-local` with the fresh build.
+
+Then:
+1. `dcal show`, navigate to the feature, and capture with
+   `grim <scratchpad>/verify-<slug>.png`; Read the image and confirm what you expected is
+   visible. For backend-only changes, exercise it with `dcal ipc <method> key=value` and show the
+   output.
+2. Check logs for new errors: `journalctl --user -u dcal -n 50 --no-pager -p warning` (or the
+   dev process output).
+3. Exercise edge cases from the spec's test plan (empty state, offline account, all-day events,
+   24h vs 12h clock, long titles).
+4. When done with a dev run, kill it and `systemctl --user start dcal` so the user's calendar
+   is back.
+
+## 5. Report
+
+Summarise as a checklist: each check, pass/fail, and the evidence (command output excerpt
+or screenshot). Anything that failed or was skipped is stated plainly.
