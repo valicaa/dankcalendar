@@ -10,9 +10,15 @@ from pathlib import Path
 
 
 def resolve(root):
-    """graphify-out/ for `root`: this checkout's if present, else the main checkout's."""
+    """graphify-out/ for `root`: this checkout's if it has a graph, else the main checkout's.
+
+    Checks for graph.json specifically, not just the directory: graphify's semantic-cache
+    functions anchor their own cache dir to `root` regardless of where the graph itself lives
+    (they take no `cache_root` here), so a read-only `status`/`prompt` run against a fallback
+    graph can leave a bare graphify-out/cache/ in a worktree with no graph.json in it. Treating
+    that as "this checkout's own graph" would silently defeat the fallback on the next run."""
     local = root / "graphify-out"
-    if local.exists():
+    if (local / "graph.json").exists():
         return local
     try:
         common_dir = subprocess.run(
