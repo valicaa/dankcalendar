@@ -19,7 +19,7 @@ Errors (block the commit):
   - code changed that a doc describes (REVIEW_RULES), none of the named docs is staged, and
     no --ack for this exact change set
   - the commit's branch isn't issue-first (doesn't match feat|fix|chore/<issue-number>-<slug>)
-    and isn't exempt (master, pr/*, a Claude Code worktree branch (claude/*), detached HEAD)
+    and isn't exempt (master, pr/*, a Claude Code worktree-agent branch (worktree-*), detached HEAD)
 
 Change set: the command isn't parsed for what it will stage (`-a`, `git add … &&`). Every
 uncommitted file (staged, unstaged or untracked) counts as changed, but only a staged doc
@@ -59,12 +59,12 @@ AGENT_MODELS = {"sonnet", "opus", "haiku", "fable", "inherit"}
 AGENT_EFFORTS = {"low", "medium", "high", "xhigh", "max"}
 
 # Issue-first branch naming (see CLAUDE.md's Branch model). Exempt: master, pr/* (upstream-pr's
-# cherry-pick branches), claude/* (Claude Code's own worktree/remote-agent branches: the CLI
-# binary's default branch-naming prompt asks for "claude/<slug>", e.g. "claude/fix-mobile-login-
-# button" — verified by `strings` on the installed `claude` binary), detached HEAD.
+# cherry-pick branches), worktree-* (a real `isolation: worktree` agent's branch — confirmed by
+# `git worktree list` showing `.claude/worktrees/agent-<id>  [worktree-agent-<id>]` and the
+# installed CLI's own `function bIe(e){return\`worktree-${rft(e)}\`}`), detached HEAD.
 BRANCH_RE = re.compile(r"^(feat|fix|chore)/\d+-")
 EXEMPT_BRANCHES = {"master"}
-EXEMPT_BRANCH_PREFIXES = ("pr/", "claude/")
+EXEMPT_BRANCH_PREFIXES = ("pr/", "worktree-")
 
 # changed path (regex) -> docs that describe it. A hit with none of those docs staged
 # needs a review (update the doc, or --ack).
@@ -361,7 +361,19 @@ def current_branch():
     return result.stdout.strip() if result.returncode == 0 else None
 
 
+def git_common_dir(path):
+    """The repo's shared .git dir (same across all its worktrees), or None if `path` isn't a repo."""
+    result = subprocess.run(["git", "rev-parse", "--git-common-dir"], cwd=path,
+                            capture_output=True, text=True)
+    return (path / result.stdout.strip()).resolve() if result.returncode == 0 else None
+
+
 def check_branch(errors):
+    # Issue-first branch naming is this repo's own convention (see CLAUDE.md), not something to
+    # impose on some other project that happens to reuse this script (or a worktree/clone of it
+    # with its own CLAUDE.md + .claude/skills). Only gate commits that share this repo's .git.
+    if git_common_dir(ROOT) != git_common_dir(SCRIPT_ROOT):
+        return
     branch = current_branch()
     if branch is None or branch in EXEMPT_BRANCHES or branch.startswith(EXEMPT_BRANCH_PREFIXES):
         return
@@ -369,8 +381,9 @@ def check_branch(errors):
         errors.append(
             f"branch `{branch}` isn't issue-first: every change starts as a GitHub issue on "
             "valicaa/dankcalendar, and the branch is feat|fix|chore/<issue-number>-<slug>. "
-            "Create it from the issue with `gh issue develop <N> --name <prefix>/<N>-<slug> "
-            "--base master --checkout`, or rename this one with `git branch -m <prefix>/<N>-<slug>`.")
+            "Create it from the issue with `gh issue develop <N> -R valicaa/dankcalendar --name "
+            "<prefix>/<N>-<slug> --base master --checkout` (a plain `git branch -m` renames the "
+            "branch but doesn't link it to the issue).")
 
 
 def check_lessons(warnings):
@@ -477,6 +490,7 @@ def main():
               "(re-run --ack after any further edit, or after staging or unstaging anything)")
         return 0
     errors, warnings = run_checks()
+    check_branch(errors)
     _, changed = change_set()
     needed = reviews_needed(changed, credited=changed)
     print(report(errors, warnings, needed, bool(needed) and is_acked()) or "docs OK")

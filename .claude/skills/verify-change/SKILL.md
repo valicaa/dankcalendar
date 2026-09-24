@@ -65,8 +65,8 @@ Then:
    output.
 2. Check logs for new errors: `journalctl --user -u dcal -n 50 --no-pager -p warning` (or the
    dev process output).
-3. Exercise edge cases from the spec's test plan (empty state, offline account, all-day events,
-   24h vs 12h clock, long titles).
+3. Exercise edge cases from the issue's Scenarios and Acceptance (empty state, offline account,
+   all-day events, 24h vs 12h clock, long titles).
 4. When done with a dev run, kill it and `systemctl --user start dcal` so the user's calendar
    is back.
 

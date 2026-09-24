@@ -13,14 +13,18 @@ This skill decides *who* does the work; process skills (e.g. superpowers brainst
 systematic-debugging) may still be used *inside* a step — brainstorming within Elicit,
 systematic-debugging by `dcal-architect`.
 
-**The PM does itself:** talk to the user; read CLAUDE.md, skills, `tasks/lessons.md`, specs
-and subagent reports; write specs, briefs and `tasks/` docs; cheap read-only status checks
+**The PM does itself:** talk to the user; read CLAUDE.md, skills, `tasks/lessons.md`, issues
+and subagent reports; write the issue body, briefs and `tasks/` notes; create and update the
+issue (`gh issue create|comment|edit -R valicaa/dankcalendar`); cheap read-only status checks
 needed to decide (`git status`, `git log --oneline`, `.claude/tools/check-docs.py`); trivial doc
-edits (a typo, a lessons line). Everything else goes to a subagent, including "quick" lookups.
+edits (a typo, a lessons line — the only work exempt from needing an issue at all). Everything
+else goes to a subagent, including "quick" lookups.
 
 ## 1. Elicit (BABOK elicitation, Jobs-to-be-Done)
 
-Trivial or unambiguous asks: state your interpretation in one line and go to step 3.
+Trivial or unambiguous asks still get an issue (step 2) before any branch — only a typo or a
+single `tasks/lessons.md` line skips it entirely. For anything else trivial or unambiguous:
+state your interpretation in one line and go to step 2.
 
 Otherwise:
 1. Restate the request as the problem, not the solution ("You want X so that Y — right?"),
@@ -38,8 +42,10 @@ Need a fact from the code to ask a good question? Send `dcal-scout`; don't read 
 
 Every change starts as a GitHub issue on `valicaa/dankcalendar`: **the issue body is the
 spec**. No branch is created before the issue exists (a trivial edit — a typo, one
-`tasks/lessons.md` line — is exempt and just gets made). This is `new-feature` phase 1
-(feature/behaviour changes); bugs and small tasks use the same template inline.
+`tasks/lessons.md` line — is exempt and just gets made, with no issue at all). This is
+`new-feature` phase 1 for a feature or behaviour change; a bug or small task uses the same
+template and the same `gh issue create` below, then goes straight to `new-feature` phase 2
+(`gh issue develop`) for its branch — it just skips phases 1's deeper code-mapping steps.
 
 ```markdown
 ## Problem        who, when, today's workaround (one paragraph)
@@ -82,8 +88,8 @@ confirms the deploy in 6; reviewer does 5.
 **Brief template** — give each subagent only what its task needs:
 
 ```markdown
-Context:     one paragraph; spec path; files and graph pointers (node ids or
-             `graph-calls.py <path> --grep <name>` lines from a scout report)
+Context:     one paragraph; issue number (`gh issue view N -R valicaa/dankcalendar`); files and
+             graph pointers (node ids or `graph-calls.py <path> --grep <name>` from a scout report)
 Goal:        the one deliverable
 Constraints: scope limit, rules that apply, what not to touch, commit or not
 Acceptance:  the scenarios/criteria this task must satisfy
@@ -114,7 +120,8 @@ Deliverable: diff summary + command output / screenshot as evidence, not prose
 - [ ] `dcal-verifier` report: all checks pass, feature seen in the running app
 - [ ] `dcal-reviewer` pass for M/L, or anything touching DB, migrations, providers or sync;
       blockers fixed and re-verified
-- [ ] every acceptance item ticked with its evidence, posted as issue comments
+- [ ] every acceptance item ticked with its evidence, posted as issue comments and ticked in
+      the issue body itself (`gh issue edit N -R valicaa/dankcalendar --body-file <updated>.md`)
 - [ ] issue closed by the merge (`Closes #N` in the `--no-ff` merge commit message)
 - [ ] user summary: what changed, how it was proven, what's left, next step (merge/deploy/PR)
 - [ ] retrospective: a correction, a wrong tier or a brief that had to be redone → one dated

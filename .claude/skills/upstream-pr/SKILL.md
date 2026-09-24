@@ -10,11 +10,21 @@ below exists to make the PR look like a careful human contribution. The user own
 
 ## 1. Build a clean branch
 
+Build `pr/<slug>` in its own `git worktree`, not with `git switch` in the main checkout: `pr/<slug>`
+is based on `upstream/master`, so it lacks `.claude/tools/check-docs.py`, and switching the main
+checkout onto it would delete that file out from under the PreToolUse hook — every subsequent
+Bash call would then fail trying to run a hook script that no longer exists on disk.
+
+The feature's own commits are between the merge commit's two parents, not `master..<branch>`
+(the branch is gone or has moved on after merge). Find the merge commit by its `Closes #N`:
+
 ```bash
 git fetch upstream
-git switch -c pr/<slug> upstream/master
-# code commits only, oldest first — skip merges and anything touching fork-only paths
-git log --reverse --no-merges --format=%H master..<feat|fix|chore>/<N>-<slug> -- . ':!tasks' ':!.claude' ':!CLAUDE.md' ':!.graphifyignore'
+M=$(git log master --merges --grep "Closes #<N>" -1 --format=%H)   # the --no-ff merge for issue N
+git worktree add -b pr/<slug> ../dankcalendar-pr-<slug> upstream/master
+cd ../dankcalendar-pr-<slug>
+# code commits only, oldest first — skip anything touching fork-only paths
+git log --reverse --no-merges --format=%H "$M"^1.."$M"^2 -- . ':!tasks' ':!.claude' ':!CLAUDE.md' ':!.graphifyignore'
 git cherry-pick <those hashes>
 ```
 
@@ -22,11 +32,15 @@ If a commit mixes fork-only paths with code (check each hash with `git show --st
 `git restore --staged --worktree -- tasks .claude CLAUDE.md .graphifyignore`, then commit.
 
 Confirm that nothing fork-only leaked, including a fork issue reference (feature commits never
-carry `#N`/`Closes #N` — only the fork's merge commit does, and that commit isn't cherry-picked):
+carry `#N` — only the fork's merge commit does, and that commit isn't cherry-picked). Review each
+hit by eye (a hex colour like `#333` is a false positive, not a leak):
 ```bash
-git diff --name-only upstream/master...HEAD | grep -E '^(tasks/|\.claude/|CLAUDE\.md|\.graphifyignore)' && echo LEAK
-git log --format=%B upstream/master...HEAD | grep -iE '#[0-9]+|Closes #' && echo "fork issue reference leaked — reword the commit"
+git diff --name-only upstream/master..HEAD | grep -E '^(tasks/|\.claude/|CLAUDE\.md|\.graphifyignore)' && echo LEAK
+git log --format=%B upstream/master..HEAD | grep -iE '#[0-9]+|valicaa/dankcalendar(/issues/|/pull/)[0-9]+|\bGH-[0-9]+' && echo "review each hit above for a fork issue reference"
 ```
+
+When done (PR opened or abandoned), remove the worktree: `git worktree remove
+../dankcalendar-pr-<slug>` (add `--force` if it has uncommitted changes you're discarding).
 
 ## 2. Polish for review
 
@@ -70,14 +84,18 @@ AI disclosure: parts of this change were written with Claude Code; I reviewed an
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 ```
 
+Before pushing anything, re-run the leak grep on the drafted body file itself:
+```bash
+grep -iE '#[0-9]+|valicaa/dankcalendar(/issues/|/pull/)[0-9]+|\bGH-[0-9]+' <scratchpad>/pr-body.md && echo "review each hit above for a fork issue reference"
+```
+
 ## 4. Open it (only after explicit user approval)
 
 ```bash
 git push -u origin pr/<slug>
-gh pr create --repo AvengeMedia/dankcalendar --head valicaa:pr/<slug> --base master \
+gh pr create -R AvengeMedia/dankcalendar --head valicaa:pr/<slug> --base master \
   --title "<title>" --body-file <scratchpad>/pr-body.md
 ```
 
-Before pushing, re-run the grep check above on the drafted PR body file too. Report the PR URL.
-Later review fixes go on `pr/<slug>`. Port them back to `<feat|fix|chore>/<N>-<slug>` or
-`master` too, so the fork doesn't drift.
+Report the PR URL. Later review fixes go on `pr/<slug>` (in its worktree). Port them back to
+`<feat|fix|chore>/<N>-<slug>` or `master` too, so the fork doesn't drift.

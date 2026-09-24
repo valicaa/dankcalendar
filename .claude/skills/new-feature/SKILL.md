@@ -33,8 +33,8 @@ does 2–3 and, once the PM has that OK, the merge/deploy/graph-refresh steps in
    - [ ] Provider behaviour (google/caldav/microsoft/evolution/local/ical)
    - [ ] HTTP API / CLI subcommand
 
-   For each existing function you will change, list its callers and put them in the spec's
-   files/risks. Use the `<-` and `~ call sites` lines from `graph-calls.py`, plus
+   For each existing function you will change, list its callers in the issue's Risks section.
+   Use the `<-` and `~ call sites` lines from `graph-calls.py`, plus
    `graphify affected <node-id> --relation calls --depth 3` for transitive callers. Grep for
    interface implementations and callbacks, which the graph can't see.
 5. Write the spec using `project-manager`'s issue body template (Problem, Goal/Non-goals,
@@ -42,21 +42,24 @@ does 2–3 and, once the PM has that OK, the merge/deploy/graph-refresh steps in
    `gh issue create -R valicaa/dankcalendar --title "<area>: <summary>" --body-file
    <scratchpad>/issue-body.md --label <enhancement|bug|chore> --label <size:S|size:M|size:L>`.
    **Show the spec to the user and wait for approval before creating the issue.**
-6. Write `tasks/<N>-<slug>/todo.md` as checkable steps, `<N>` the issue number.
 
 ## 2. Branch
 
 Create the branch from the issue so GitHub links it, dogfooding the same command the issue
-itself asked for:
+itself asked for. `master` here means GitHub's `master` — check local `master` is not ahead of
+`origin/master` first (`git rev-list --count origin/master..master`); if it's ahead, stop and
+ask the PM before pushing anything:
 
 ```bash
 git switch master && git pull --ff-only origin master
+git rev-list --count origin/master..master   # must print 0, or stop and ask the PM
 gh issue develop <N> -R valicaa/dankcalendar --name <feat|fix|chore>/<N>-<slug> --base master --checkout
-git add tasks/<N>-<slug> && git commit -m "tasks: notes for <slug>"
 ```
 
-Prefix by issue label: `feat/` for `enhancement`, `fix/` for `bug`, `chore/` otherwise.
-Planning docs stay in their own commits (the `upstream-pr` skill drops them); `tasks/<N>-<slug>/`
+Prefix by issue label: `feat/` for `enhancement`, `fix/` for `bug`, `chore/` otherwise. Whoever
+then works the branch writes `tasks/<N>-<slug>/todo.md` as checkable steps and commits it
+(`tasks: notes for <slug>`) in its own commit, kept separate from code commits so it doesn't
+follow feature commits upstream (the `upstream-pr` skill drops `tasks/`). `tasks/<N>-<slug>/`
 holds only working notes (`todo.md`, review notes) — the spec lives in the issue, not a file.
 
 ## 3. Implement
@@ -106,8 +109,8 @@ working.
 
 ## 7. Offer upstream
 
-If the spec marked it upstream-worthy, offer to run `upstream-pr`. Never open a PR without
-the user's go-ahead.
+If the issue's Constraints marked it upstream-PR fit, offer to run `upstream-pr`. Never open a
+PR without the user's go-ahead.
 
 ## Lessons
 

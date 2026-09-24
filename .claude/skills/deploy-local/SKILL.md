@@ -10,8 +10,8 @@ and uses real data in `~/.local/share/dankcal/`.
 
 ## Steps
 
-1. **Check the branch.** Normally deploy from `master`. Deploying a `feat/*` branch is fine for
-   trying it out, but say so, and redeploy `master` afterwards if the feature is abandoned.
+1. **Check the branch.** Normally deploy from `master`. Deploying a `feat|fix|chore/*` branch is
+   fine for trying it out, but say so, and redeploy `master` afterwards if the feature is abandoned.
 2. **Check for migrations.** Compare the migrations this build ships with what the deployed binary last had:
    ```bash
    git diff --name-only "$(~/.local/bin/dcal version | sed -n 's/.*commit \([0-9a-f]*\).*/\1/p')" HEAD -- core/ent/migrate/migrations
