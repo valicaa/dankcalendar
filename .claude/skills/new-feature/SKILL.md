@@ -6,16 +6,19 @@ description: Use when starting any change to Dank Calendar — a new feature, en
 # New feature workflow
 
 Every change follows these phases in order — features (`feat/`), bug fixes (`fix/`) and chores
-(`chore/`) alike. Do not skip a phase; if one does not apply, say so under Size in the issue.
+(`chore/`) alike — except the two trivial changes in `project-manager` step 0 (a
+`tasks/lessons.md` edit, a typo in another doc), which skip the issue. Do not skip a phase; if
+one does not apply, say so under Size in the issue.
 
-Who does each phase (`project-manager` skill): the PM owns 1, 2 and 7, every `tasks:` commit,
-and getting the user's one OK (merge + deploy + graph refresh) before 6. `dcal-builder` (or
+Who does each phase (`project-manager` skill): the PM owns 1, 2 and 7, every `tasks:` commit, and
+getting the user's one OK (merge + deploy + graph refresh) before 6. `dcal-builder` (or
 `dcal-architect` for L, schema or provider work) does 3 on the branch the PM created in phase 2.
-`dcal-verifier` does 4. `dcal-reviewer` does 5 when `project-manager`'s review rule calls for
-it. In phase 6 `dcal-builder` merges, deploys and refreshes the graph, `dcal-verifier` confirms
-the deploy, then `dcal-builder` pushes. Phases 3–5 never create or switch branches, and agents
-never commit `tasks/`. Writing agents run one at a time in the main checkout, never with
-`isolation: worktree`.
+`dcal-verifier` does 4. `dcal-reviewer` does 5 when `project-manager`'s review rule calls for it.
+Phase 6 is two `dcal-builder` briefs — 6a merges, deploys and refreshes the graph, then stops
+before pushing; `dcal-verifier` confirms the deploy; 6b pushes. The PM posts every issue comment.
+Phases 3–5 never create or switch branches, and agents never commit `tasks/` (one exception:
+resolving a `tasks/lessons.md` conflict in the 6a merge). Writing agents run one at a time in the
+main checkout, never with `isolation: worktree`.
 
 ## 1. Issue — the spec
 
@@ -23,12 +26,14 @@ never commit `tasks/`. Writing agents run one at a time in the main checkout, ne
 2. Clarify intent with the user until you can state: what the user sees, where it lives in the
    UI, what persists, and what is out of scope. Ask one question at a time; prefer
    multiple choice.
-3. Locate the closest existing feature and read it end-to-end — new code must look like it.
+3. `dcal-scout` (briefed by the PM) locates the closest existing feature and reads it
+   end-to-end — new code must look like it.
    `dcal-recipes` lists worked examples per feature type. Map it with the code graph first
    (`code-graph` skill): `.claude/tools/graph-calls.py <dir> [--grep name]` gives the
    chain across layers with node ids, then read only the lines it cites. Check
    `graphify-out/memory/` for an earlier trace of the same flow.
-4. Decide the layers touched — this goes in the issue's Risks section as a tick list:
+4. From the scout's report, decide the layers touched — this goes in the issue's Risks section as
+   a tick list:
    - [ ] QML only (view/widget/modal)
    - [ ] UI setting (`SettingsData`) — daemon reads it too?
    - [ ] New IPC method(s)
@@ -70,9 +75,11 @@ work breakdown and its `tasks: plan for <slug>` commit). Phase 3 starts on that 
 
 Run the `verify-change` skill. All checks must pass, and the feature must be seen working in a
 **dev instance** (`verify-change` section 4) — never `deploy-local`, which installs only
-`master` (phase 6, after the user's merge OK, or after `sync-upstream`). Post the verifier
-report as an issue comment (`project-manager`'s format); if `project-manager`'s review rule
-doesn't require phase 5, say so in that comment.
+`master` (phase 6, after the user's merge OK, or after `sync-upstream`). A change that touches
+nothing under `core/` or `quickshell/` (docs, skills, tooling) has no build, dev instance or
+service stop: `verify-change` section 0 covers it. The verifier reports to the PM, and the PM
+posts the report as an issue comment (`project-manager`'s format); if `project-manager`'s
+review rule doesn't require phase 5, the PM says so in that comment.
 
 ## 5. Review
 
@@ -80,15 +87,17 @@ When `project-manager`'s review rule calls for it (every M/L change, and anythin
 DB, migrations, providers or the background engines
 `core/internal/{sync,reminders,invitations}` — this phase is otherwise optional), dispatch
 `dcal-reviewer` on `git diff master...HEAD` with the issue number, so it checks the acceptance
-criteria and CLAUDE.md's rules. Fix real findings; re-run `verify-change`. Post the findings
-and how they were resolved as an issue comment.
+criteria and CLAUDE.md's rules. Fix real findings; re-run `verify-change`. The PM posts the
+findings and how they were resolved as an issue comment.
 
 ## 6. Merge and deploy
 
 The PM gets the user's one explicit OK — merge, deploy, and the graph refresh together. The PM
 then commits any `tasks/` notes on the feature branch as `tasks: result for <slug>` (skipped
-when `git status --short tasks/` prints nothing) and briefs `dcal-builder`, which runs, in the
-main checkout:
+when `git status --short tasks/` prints nothing). Phase 6 is then two `dcal-builder` briefs,
+both in the main checkout, with `dcal-verifier` in between.
+
+### 6a — merge and deploy, then stop
 
 1. Merge onto an up-to-date `master`:
 
@@ -96,37 +105,64 @@ main checkout:
    git status --short                      # must print nothing
    git switch master
    git pull --ff-only origin master
-   git merge --no-ff <feat|fix|chore>/<N>-<slug> -m "merge: <slug>" -m "Closes #<N>"
+   git -c merge.conflictStyle=merge merge --no-ff <feat|fix|chore>/<N>-<slug> -m "merge: <slug>" -m "Closes #<N>"
    ```
 
    The second `-m` puts `Closes #<N>` on its own line at column 0. It belongs only in this
    merge commit message — never in a feature commit — so pushing `master` closes the issue.
-   If the merge stops on a conflict in `tasks/lessons.md` alone (both sides appended rules),
-   keep both sides; the commit keeps the `-m` message:
+   If the merge stops on a conflict, resolve it only if `tasks/lessons.md` is the sole
+   conflicted file (both sides appended rules) by keeping both sides; anything else aborts:
 
    ```bash
+   [ "$(git diff --name-only --diff-filter=U)" = tasks/lessons.md ] || { git merge --abort; echo "STOP: conflict beyond tasks/lessons.md"; exit 1; }
    sed -i '/^\(<<<<<<< \|=======$\|>>>>>>> \)/d' tasks/lessons.md
-   git add tasks/lessons.md && git commit --no-edit --cleanup=strip
+   ! grep -nE '^(<<<<<<<|=======|>>>>>>>|\|{7})' tasks/lessons.md || exit 1
+   git add tasks/lessons.md
    ```
 
-   Any other conflict: `git merge --abort`, and report it to the PM.
-2. Run `deploy-local`.
+   Then, in a separate call, `git commit --no-edit --cleanup=strip` (it keeps the `-m`
+   message). This merge commit is the one exception to "only the PM commits `tasks/`". The
+   check-docs hook may block it, because the merged files trip its doc rules: the docs were
+   already reviewed on the branch, so `.claude/tools/check-docs.py --ack` and committing again
+   is expected here. On a STOP, report the conflict to the PM.
+2. Deploy — only if the merge touched `core/` or `quickshell/`
+   (`git diff --name-only master~1..master -- core quickshell` lists files): run
+   `deploy-local`. Otherwise there is nothing to deploy; go straight to 6b in the same brief.
 3. If any `.qml` file changed in the merge (`git diff --name-only master~1..master -- '*.qml'`),
    refresh the graph: `GRAPHIFY_VIZ_NODE_LIMIT=0 ~/.local/share/graphify-venv/bin/graphify
    update .`, plus the QML refresh from the `code-graph` skill if
    `.claude/tools/graph-qml.py status` lists many files — this is the LLM-costing step the PM's
    one question already covered.
+4. **Stop before pushing** and report the merge hash and the deploy output to the PM.
 
 Then `dcal-verifier` confirms the deploy actually landed (installed version, `dcal` service
-running, a screenshot). Only then does `dcal-builder` push — this closes the issue:
+running, a screenshot).
+
+**If the deploy fails**, nothing is pushed and the issue stays open. The PM briefs
+`dcal-builder` to undo the local merge — only if the merge is the one commit `master` has
+over `origin/master`:
 
 ```bash
-git push origin master <feat|fix|chore>/<N>-<slug>
+[ "$(git branch --show-current)" = master ] && [ "$(git rev-list --first-parent --count origin/master..master)" = 1 ] && [ "$(git log -1 --format=%s master)" = "merge: <slug>" ] || { echo "STOP: master holds more than the merge"; exit 1; }
+git log --oneline --first-parent origin/master..master
+git reset --hard origin/master
 ```
 
-If the deploy fails, don't push: the issue stays open, `deploy-local`'s Rollback restores the
-calendar, and the PM takes the failure to the user. After the push the PM posts the final issue
-comment (merge hash + deploy confirmation, per `project-manager` step 5).
+and to reinstall the previous `master` with `deploy-local` steps 3–4 (restoring the backup
+first if a migration ran, per its Rollback). The fix goes on the feature branch (phases 3–5
+again), then phase 6 reruns.
+
+### 6b — push (a new brief, or SendMessage to the same builder)
+
+```bash
+git branch --show-current                  # must print master
+git push origin master
+git push origin --delete <feat|fix|chore>/<N>-<slug>
+git branch -d <feat|fix|chore>/<N>-<slug>
+```
+
+Pushing `master` closes the issue. After it the PM posts the final issue comment (merge hash +
+deploy confirmation, per `project-manager` step 5).
 
 ## 7. Offer upstream
 

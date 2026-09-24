@@ -18,9 +18,10 @@ and subagent reports; write the issue body and briefs; create and update the iss
 (`gh issue create|comment|edit -R valicaa/dankcalendar`); create the branch (step 2 — the only
 branch operation the PM runs); write `tasks/<N>-<slug>/todo.md`, keep it ticked, and make every
 `tasks:` commit — `tasks: plan for <slug>` in step 2 and `tasks: result for <slug>` before
-phase 6 (no code, and no agent ever commits `tasks/`); cheap read-only status checks needed to
-decide (`git status`, `git log --oneline`, `check-docs.py`). Everything else goes to a
-subagent, including "quick" lookups.
+phase 6 (no code; no agent commits `tasks/`, except the one phase-6 merge commit that resolves a
+`tasks/lessons.md` conflict); post every issue comment (agents never post); cheap read-only
+status checks needed to decide (`git status`, `git log --oneline`, `check-docs.py`). Everything
+else goes to a subagent, including "quick" lookups.
 
 **Branches.** One feature is in flight in the main checkout at a time. In `new-feature` phases
 3–5 (implement, verify, review) no agent creates or switches branches: they work on the branch
@@ -32,16 +33,26 @@ brief, in the main checkout (`upstream-pr` in its own `pr/<slug>` worktree).
 
 A question or a read-only lookup ("where is X", "why does Y happen") needs neither an issue nor
 a branch — answer it (send `dcal-scout` if it needs the code) and stop here. Only an actual
-change goes on. A trivial change — a typo, one `tasks/lessons.md` line — also skips the issue,
-but only goes straight onto `master` when the main checkout is on `master` with a clean tree
-(`git branch --show-current` prints `master`, `git status --short` prints nothing):
-- a lessons line: the PM commits it as `tasks: <summary>`;
-- a typo in docs: a `dcal-builder` edits and commits it as `docs: <summary>`.
+change goes on. Two trivial changes skip the issue; everything else goes through steps 1–5:
 
+- **Anything in `tasks/lessons.md`** (a new rule, or a typo inside one): always the PM, as a
+  `tasks: <summary>` commit. With a feature in flight it rides along in that feature's next
+  `tasks:` commit on the feature branch; otherwise it goes on `master` as below.
+- **A typo in any other doc** (CLAUDE.md, a skill, an agent): a `dcal-builder`, as a
+  `docs: <summary>` commit on `master` — only when no feature is in flight; otherwise it waits
+  until the feature is merged.
+
+Straight onto `master` means, in the main checkout, before editing:
+
+```bash
+git branch --show-current                      # must print master
+git status --short                             # must print nothing
+git pull --ff-only origin master
+```
+
+and, just before committing, `git rev-list --count origin/master..master` must print 0.
 Whoever committed it pushes it (`git push origin master`) once the user OKs it (the same kind
-of OK a merge gets — see step 5). While a feature
-is in flight, a lessons line rides along in that feature's next `tasks:` commit, and a typo
-waits until the feature is merged. Everything else goes through steps 1–5.
+of OK a merge gets — see step 5).
 
 ## 1. Elicit (BABOK elicitation, Jobs-to-be-Done)
 
@@ -67,7 +78,8 @@ Need a fact from the code to ask a good question? Send `dcal-scout`; don't read 
 
 Every change starts as a GitHub issue on `valicaa/dankcalendar`: **the issue body is the
 spec**. Features, bugs and chores all follow `new-feature`'s phases; this step is its phase 1
-and 2 (a bug or small chore skips phase 1's deeper code-mapping steps).
+and 2. A bug or small chore skips phase 1 steps 3–4 (reading the closest feature, mapping
+layers and callers); when they apply, `dcal-scout` does them for the PM.
 
 ```markdown
 ## Problem        who, when, today's workaround (one paragraph)
@@ -95,13 +107,14 @@ gh issue create -R valicaa/dankcalendar --title "<area>: <summary>" --body-file 
   <scratchpad>/issue-body.md --label <enhancement|bug|chore> --label <size:S|size:M|size:L>
 ```
 
-The title is `area: lowercase summary`, with `area` from the same vocabulary as commit
-subjects — upstream's most used are `ui`, `i18n`, `core`, `events`, `providers`, `caldav`,
-`settings`, `sync`, `reminders`, `notifications`, `keyring`, `ipc`, `nix`, `flatpak`, `ci`;
-fork-only work uses `tooling` or `docs`. One type label, one size label. `N` is the number at
-the end of the URL this command prints. The slug is the summary (without `area:`) as lowercase
-kebab-case, 2–5 words: `events: add free/busy check` → `add-free-busy-check`. A longer summary
-keeps its 2–5 most specific words, dropping articles and filler:
+The title is `area: lowercase summary`, with `area` from the same vocabulary as commit subjects —
+upstream's most used are `ui`, `i18n`, `core`, `events`, `providers`, `caldav`, `settings`,
+`sync`, `reminders`, `notifications`, `keyring`, `ipc`, `nix`, `flatpak`, `ci`; fork-only work
+uses `docs` (CLAUDE.md, skills, agents) or `tooling` (scripts, hooks). One type label, one size
+label. `N` is the number at the end of the URL this command prints. The slug is the summary
+(without `area:`) as lowercase kebab-case, 2–5 words (a hyphenated or slashed word like
+`free/busy` counts as one): `events: add free/busy check` → `add-free-busy-check`. A longer
+summary keeps its 2–5 most specific words, dropping articles and filler:
 `ui: show week numbers in the month view header` → `week-numbers-month-header`.
 
 Then create the branch — in the main checkout, which must be on `master` with a clean tree
@@ -112,23 +125,26 @@ or with the user's OK have `dcal-builder` park it — commit its work, then `git
 git branch --show-current                      # must print master
 git status --short                             # must print nothing
 git fetch origin
+git pull --ff-only origin master
 git rev-list --count origin/master..master     # must print 0
 gh issue develop <N> -R valicaa/dankcalendar --name <feat|fix|chore>/<N>-<slug> --base master --checkout
 ```
 
 Prefix by issue label: `feat/` for `enhancement`, `fix/` for `bug`, `chore/` otherwise.
-`gh issue develop` creates the branch on GitHub from origin's `master`, so a local-only commit
-on `master` would be missing from it — if the count is nonzero, ask the user to OK pushing
-`master` first.
+`gh issue develop` creates the branch on GitHub from origin's `master`: the pull brings a
+local `master` that is behind up to date (phases 4–5 diff against it), and a local-only commit
+would be missing from the branch — if the count is nonzero, ask the user to OK pushing
+`master` first. If the pull refuses (diverged), stop and take it to the user.
 
-Write `tasks/<N>-<slug>/todo.md` — the work breakdown from step 3 — and commit it as
-`tasks: plan for <slug>`. It is not pushed on its own; it reaches GitHub with the branch and
-`master` in phase 6.
+Write `tasks/<N>-<slug>/todo.md` — the work breakdown from step 3, one line per task,
+`- [ ] <deliverable> — <agent>` — and commit it as
+`tasks: plan for <slug>`. It is not pushed on its own; it reaches GitHub with `master` in phase 6.
 
 ## 3. Break down and delegate
 
 The work breakdown (WBS) in `todo.md` is a list of tasks, each with one deliverable, one owner
-agent and a checkbox. Pick the agent by the hardest thing the task needs:
+agent and a checkbox (`- [ ] <deliverable> — <agent>`). Pick the agent by the hardest thing the
+task needs:
 
 | Task type | Agent | Model / effort |
 |---|---|---|
@@ -145,8 +161,11 @@ steps. For a `new-feature` run: the PM owns phases 1–2 and 7, the `tasks:` com
 getting the user's one OK before phase 6 (merge, deploy, and — if any `.qml` file changed — the
 graph refresh, asked together). `dcal-builder` (or `dcal-architect` for L, schema or provider
 work) does phase 3 on the branch the PM created; `dcal-verifier` does phase 4; `dcal-reviewer`
-does phase 5 when the review rule below calls for it. Phase 6 is `dcal-builder` (merge, deploy,
-graph refresh, then the push), with `dcal-verifier` confirming the deploy before the push.
+does phase 5 when the review rule below calls for it. Phase 6 is two `dcal-builder` briefs:
+**6a** — pull, merge, deploy, QML graph check, then **stop before pushing** and report;
+`dcal-verifier` confirms the deploy; **6b** — push and delete the merged branch (a new brief,
+or SendMessage to the same builder). A change that touches nothing under `core/` or
+`quickshell/` has no deploy, so 6a and 6b run as one brief (merge, then push).
 `sync-upstream` and `upstream-pr` likewise go to `dcal-builder`; the PM gets the user's OKs
 those skills ask for and relays them in the brief.
 
@@ -178,7 +197,8 @@ Deliverable: diff summary + command output / screenshot as evidence, not prose
   for the evidence, or send `dcal-verifier`.
 - Check each claimed fix against `git diff` (or have `dcal-reviewer` do it) before accepting a
   report, and check the report against the issue's acceptance list, item by item.
-- Post evidence as an issue comment, short and concrete:
+- The PM posts every issue comment; verifier and reviewer only report back. Post evidence as
+  an issue comment, short and concrete:
   ```markdown
   ## <Verifier|Reviewer> report
   Verdict: pass | blockers found (N) | review skipped — <why>
@@ -194,7 +214,8 @@ Deliverable: diff summary + command output / screenshot as evidence, not prose
 
 ## 5. Close — Definition of Done
 
-- [ ] `dcal-verifier` report posted: all checks pass, feature seen in a dev instance
+- [ ] `dcal-verifier` report posted: all checks pass, feature seen in a dev instance (a
+      docs/tooling-only change: `check-docs.py`, `git diff --check` and a read of the diff)
 - [ ] `dcal-reviewer` pass posted when the review rule called for it; blockers fixed and
       re-verified
 - [ ] every acceptance item ticked with its evidence, and ticked in the issue body itself:
@@ -203,8 +224,9 @@ Deliverable: diff summary + command output / screenshot as evidence, not prose
       `gh issue edit N -R valicaa/dankcalendar --body-file <scratchpad>/body.md`
 - [ ] `tasks: result for <slug>` committed on the feature branch (skipped when
       `git status --short tasks/` prints nothing)
-- [ ] phase 6 done in order: merge with `Closes #N` → deploy → `dcal-verifier` confirms the
-      deploy → push `master`, which closes the issue — never before the deploy is confirmed
+- [ ] phase 6 done in order: 6a merge with `Closes #N` → deploy → stop; `dcal-verifier`
+      confirms the deploy; 6b push `master` (this closes the issue — never before the deploy
+      is confirmed) and delete the merged branch. Docs/tooling-only: merge, then push
 - [ ] a final issue comment: merge commit hash + deploy confirmation (version, service state)
 - [ ] user summary: what changed, how it was proven, what's left, next step (deploy/PR)
 - [ ] retrospective: a correction, a wrong tier or a brief that had to be redone → one dated
@@ -212,6 +234,7 @@ Deliverable: diff summary + command output / screenshot as evidence, not prose
 
 Merging, deploying (`deploy-local`) and upstream PRs wait for the user's go-ahead — one
 question covers merge + deploy + the QML graph refresh (if any `.qml` file changed). The PM's
-own part is that go-ahead, the `tasks: result` commit and the final comment; `dcal-builder`
-runs the merge, deploy, graph refresh and push, and `dcal-verifier` confirms the deploy
-(version, service, screenshot) in between.
+own part is that go-ahead, the `tasks: result` commit, the two phase-6 briefs and the final
+comment; `dcal-builder` runs 6a (merge, deploy, graph refresh — stopping before the push) and
+6b (push, branch deletion), and `dcal-verifier` confirms the deploy (version, service,
+screenshot) in between.

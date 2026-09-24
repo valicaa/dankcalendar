@@ -22,6 +22,9 @@ description: Use when pulling new AvengeMedia/dankcalendar commits into the fork
    lists upstream commits that would close or cross-link a same-numbered fork issue once pushed
    (upstream and fork issue numbers collide); no output means none. It must run before step 3:
    after the merge, `master..upstream/master` is empty.
+
+   **Stop here** and return the preview to the PM. Steps 3–6 (merge, verify, deploy, push)
+   continue only on the user's OK, relayed by the PM — one OK covers the merge and the deploy.
 3. **Merge into master:**
    ```bash
    git switch master
@@ -45,20 +48,26 @@ description: Use when pulling new AvengeMedia/dankcalendar commits into the fork
 7. **Update open feature branches.** For each unmerged `feat/*`/`fix/*`/`chore/*` branch, offer
    `git switch <branch> && git merge master`. End on the branch noted in step 1.
 8. **Rebase open `pr/*` branches — never in the main checkout.** Each lives in its own
-   `git worktree` (see `upstream-pr`, whose `<main>`/`<W>` placeholders apply here: literal
-   absolute paths, one self-contained Bash call per block). Recreate a missing one first:
+   `git worktree` (see `upstream-pr`, whose `<main>`/`<W>` placeholders and guard lines apply
+   here: literal absolute paths, one self-contained Bash call per block, and a `STOP` means
+   the step failed). Recreate a missing one first:
    ```bash
-   git -C <main> worktree add <W> pr/<slug>
-   git -C <W> submodule update --init --recursive
+   [[ "<W>" == /*/dankcalendar-pr-<slug> && ! -e "<W>" ]] || { echo "STOP: bad worktree path"; exit 1; }
+   cd "<main>" && [ -f CLAUDE.md ] && [ "$(git rev-parse --show-toplevel)" = "$PWD" ] || { echo "STOP: not the main checkout"; exit 1; }
+   git worktree add "<W>" pr/<slug>
+   cd "<W>" && [ "$(git branch --show-current)" = "pr/<slug>" ] && [ "$(git rev-parse --show-toplevel)" = "$PWD" ] || { echo "STOP: not the pr/<slug> worktree"; exit 1; }
+   git submodule update --init --recursive
    ```
    Then rebase inside it:
    ```bash
-   git -C <W> rebase upstream/master
-   git -C <W> submodule update --init --recursive
+   cd "<W>" && [ "$(git branch --show-current)" = "pr/<slug>" ] && [ "$(git rev-parse --show-toplevel)" = "$PWD" ] || { echo "STOP: not the pr/<slug> worktree"; exit 1; }
+   git rebase upstream/master
+   git submodule update --init --recursive
    ```
    and confirm with the user before force-pushing:
    ```bash
-   git -C <W> push --force-with-lease origin pr/<slug>
+   cd "<W>" && [ "$(git branch --show-current)" = "pr/<slug>" ] && [ "$(git rev-parse --show-toplevel)" = "$PWD" ] || { echo "STOP: not the pr/<slug> worktree"; exit 1; }
+   git push --force-with-lease origin pr/<slug>
    ```
 9. If upstream merged one of our PRs, remove its worktree and delete the matching `pr/<slug>`
    branch locally and on `origin`, after confirming with the user.

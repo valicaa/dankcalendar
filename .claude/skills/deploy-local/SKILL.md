@@ -14,11 +14,13 @@ the main checkout, after the user's OK (`new-feature` phase 6, or `sync-upstream
 1. **Check the branch.** Only `master` is deployed: `git branch --show-current` must print
    `master` and `git status --short` nothing. To try out an unmerged branch, use
    `verify-change`'s dev instance instead — never install it here.
-2. **Check for migrations.** Compare the migrations this build ships with what the deployed binary last had:
+2. **Check for migrations.** Compare the migrations this build ships with what the deployed
+   binary last had:
    ```bash
-   git diff --name-only "$(~/.local/bin/dcal version | sed -n 's/.*commit \([0-9a-f]*\).*/\1/p')" HEAD -- core/ent/migrate/migrations
+   C=$(~/.local/bin/dcal version | sed -n 's/.*commit \([0-9a-f]*\).*/\1/p'); [ -n "$C" ] && git cat-file -e "$C^{commit}" || { echo "STOP: deployed commit unknown - treat every migration as new, back up first"; exit 1; }
+   git diff --name-only "$C" HEAD -- core/ent/migrate/migrations
    ```
-   If any are listed, back up first and tell the user:
+   If any are listed, or the first line stopped, back up first and tell the user:
    ```bash
    cp -a ~/.local/share/dankcal ~/.local/share/dankcal.bak-$(date +%F-%H%M)
    ```
@@ -40,6 +42,9 @@ the main checkout, after the user's OK (`new-feature` phase 6, or `sync-upstream
 5. **Report** version, commit, service state, and anything unusual.
 
 ## Rollback
+
+A failed `new-feature` phase-6 deploy whose merge isn't pushed yet is undone as that skill's
+6a says (guarded `git reset --hard origin/master`, then steps 3–4). Otherwise:
 
 Check out the previous good commit detached (a plain `git switch master~1` fails: "a branch is
 expected"), then rerun steps 3–4 — the one time step 1's `master` check doesn't apply:

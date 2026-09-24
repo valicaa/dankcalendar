@@ -8,6 +8,20 @@ description: Use before claiming a Dank Calendar change works, before committing
 Evidence before claims. Report each check with its actual result; if one is skipped, say
 why.
 
+## 0. Docs and tooling
+
+Any change touching `.claude/`, `CLAUDE.md` or `tasks/`: `.claude/tools/check-docs.py` must
+print `docs OK`. A change that touches nothing under `core/` or `quickshell/` stops here, with
+no build, dev instance or service stop:
+
+```bash
+.claude/tools/check-docs.py
+git diff --check master...HEAD
+git diff master...HEAD
+```
+
+The last one is for reading: each changed command and path must match what it describes.
+
 ## 1. Static checks (mirror upstream pre-commit + CI)
 
 From the repo root. In an `upstream-pr` worktree, follow `upstream-pr` step 2 instead of the

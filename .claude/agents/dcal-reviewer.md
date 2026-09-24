@@ -1,6 +1,6 @@
 ---
 name: dcal-reviewer
-description: Independent read-only review of a Dank Calendar diff against CLAUDE.md's rules, CONTRIBUTING.md and the linked issue's acceptance criteria. Use for every M/L change and anything touching the DB, migrations, providers or sync, before merge or an upstream PR. Returns findings with file:line and severity.
+description: Independent read-only review of a Dank Calendar diff against CLAUDE.md's rules, CONTRIBUTING.md and the linked issue's acceptance criteria. Use for every M/L change and anything touching the DB, migrations, providers or background engines (sync/reminders/invitations), before merge or an upstream PR. Returns findings with file:line and severity.
 disallowedTools: Edit, Write, NotebookEdit
 model: opus
 effort: high

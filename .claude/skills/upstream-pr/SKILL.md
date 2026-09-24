@@ -20,6 +20,11 @@ from an earlier call:
 - `<M>` — the merge commit hash printed in step 1
 - `<N>` — the fork issue number, `<slug>` — its slug
 
+**Every block starts with a guard line** that `cd`s into the directory it works on and stops
+unless that is really the main checkout or the `pr/<slug>` worktree. An empty or wrong path
+then prints `STOP: …` and changes nothing — never delete the guard, and treat a `STOP` as a
+failed step, not as "no output = clean".
+
 ## 1. Build a clean branch
 
 Build `pr/<slug>` in its own `git worktree`, not with `git switch` in the main checkout:
@@ -33,34 +38,42 @@ The feature's own commits are between the merge commit's two parents, not `maste
 anchored so `#7` doesn't also match `#70`:
 
 ```bash
-git -C <main> fetch upstream
-git -C <main> log master --first-parent --merges -E --grep '^[[:space:]]*Closes #<N>$' -1 --format=%H
+cd "<main>" && [ -f CLAUDE.md ] && [ "$(git rev-parse --show-toplevel)" = "$PWD" ] || { echo "STOP: not the main checkout"; exit 1; }
+git fetch upstream
+git log master --first-parent --merges -E --grep '^[[:space:]]*Closes #<N>$' -1 --format=%H
 ```
 
 It must print one hash: that is `<M>`. No output means no merge closes #N — stop and report.
 
-Create the worktree and its submodule:
+Create the worktree and its submodule (the first line also refuses a `<W>` that exists already
+or isn't `…/dankcalendar-pr-<slug>`):
 
 ```bash
-git -C <main> worktree add -b pr/<slug> <W> upstream/master
-git -C <W> submodule update --init --recursive
+[[ "<W>" == /*/dankcalendar-pr-<slug> && ! -e "<W>" ]] || { echo "STOP: bad worktree path"; exit 1; }
+cd "<main>" && [ -f CLAUDE.md ] && [ "$(git rev-parse --show-toplevel)" = "$PWD" ] || { echo "STOP: not the main checkout"; exit 1; }
+git worktree add -b pr/<slug> "<W>" upstream/master
+cd "<W>" && [ "$(git branch --show-current)" = "pr/<slug>" ] && [ "$(git rev-parse --show-toplevel)" = "$PWD" ] || { echo "STOP: not the pr/<slug> worktree"; exit 1; }
+git submodule update --init --recursive
 ```
 
 List the feature's commits, oldest first, each classified by what it touches:
 
 ```bash
-for c in $(git -C <main> rev-list --reverse --no-merges <M>^1..<M>^2); do
-  code=$(git -C <main> diff-tree --no-commit-id --name-only -r "$c" -- . ':!tasks' ':!.claude' ':!CLAUDE.md' ':!.graphifyignore')
-  fork=$(git -C <main> diff-tree --no-commit-id --name-only -r "$c" -- tasks .claude CLAUDE.md .graphifyignore)
+cd "<main>" && [ -f CLAUDE.md ] && [ "$(git rev-parse --show-toplevel)" = "$PWD" ] || { echo "STOP: not the main checkout"; exit 1; }
+git cat-file -e "<M>^2" || { echo "STOP: <M> is not a merge commit"; exit 1; }
+for c in $(git rev-list --reverse --no-merges "<M>^1..<M>^2"); do
+  code=$(git diff-tree --no-commit-id --name-only -r "$c" -- . ':!tasks' ':!.claude' ':!CLAUDE.md' ':!.graphifyignore')
+  fork=$(git diff-tree --no-commit-id --name-only -r "$c" -- tasks .claude CLAUDE.md .graphifyignore)
   kind=code; [ -n "$fork" ] && kind=mixed; [ -z "$code" ] && kind=fork-only
-  echo "$c $kind $(git -C <main> log -1 --format=%s "$c")"
+  echo "$c $kind $(git log -1 --format=%s "$c")"
 done
 ```
 
 Go down the list in order. Skip `fork-only`. Cherry-pick each run of `code` commits:
 
 ```bash
-git -C <W> cherry-pick <hash> [<hash>…]
+cd "<W>" && [ "$(git branch --show-current)" = "pr/<slug>" ] && [ "$(git rev-parse --show-toplevel)" = "$PWD" ] || { echo "STOP: not the pr/<slug> worktree"; exit 1; }
+git cherry-pick <hash> [<hash>…]
 ```
 
 A `mixed` commit is cherry-picked with `-n`. If it modifies a fork-only file (e.g.
@@ -68,19 +81,21 @@ A `mixed` commit is cherry-picked with `-n`. If it modifies a fork-only file (e.
 block resolves it:
 
 ```bash
-git -C <W> cherry-pick -n <hash>
+cd "<W>" && [ "$(git branch --show-current)" = "pr/<slug>" ] && [ "$(git rev-parse --show-toplevel)" = "$PWD" ] || { echo "STOP: not the pr/<slug> worktree"; exit 1; }
+git cherry-pick -n <hash>
 ```
 
-Strip the fork-only paths. A path upstream doesn't have is removed from the index and the
-worktree (`git restore` alone isn't enough for a path that shouldn't exist in `pr/<slug>`); a
-path upstream does have is reset to upstream's version rather than deleted:
+Strip the fork-only paths with git only (no bare `rm -rf`): a path upstream doesn't have is
+removed from the index and the worktree; a path upstream does have is reset to upstream's
+version rather than deleted:
 
 ```bash
-cd <W> && for p in tasks .claude CLAUDE.md .graphifyignore; do
+cd "<W>" && [ "$(git branch --show-current)" = "pr/<slug>" ] && [ "$(git rev-parse --show-toplevel)" = "$PWD" ] || { echo "STOP: not the pr/<slug> worktree"; exit 1; }
+for p in tasks .claude CLAUDE.md .graphifyignore; do
   if git cat-file -e "upstream/master:$p" 2>/dev/null; then
     git restore --source=upstream/master --staged --worktree -- "$p"; echo "reset $p to upstream"
   else
-    git rm -rq --cached --ignore-unmatch -- "$p"; rm -rf -- "$p"
+    git rm -rqf --ignore-unmatch -- "$p"
   fi
 done; git status --short
 ```
@@ -90,23 +105,22 @@ done; git status --short
 stop and report it to the PM. Otherwise commit with the original author and message:
 
 ```bash
-git -C <W> commit -C <hash>
+cd "<W>" && [ "$(git branch --show-current)" = "pr/<slug>" ] && [ "$(git rev-parse --show-toplevel)" = "$PWD" ] || { echo "STOP: not the pr/<slug> worktree"; exit 1; }
+git commit -C <hash>
 ```
 
 If that message talks about the fork-only files, fix it with
-`git -C <W> commit --amend -m "<subject>" -m "<body>"`.
+`git commit --amend -m "<subject>" -m "<body>"` (after the same guard line).
 
 Confirm that nothing fork-only leaked, including a fork issue reference (feature commits never
-carry `#N` — only the fork's merge commit does, and that commit isn't cherry-picked). Each
-command prints nothing when clean (grep exits 1). Review each hit by eye — a hex colour like
-`#333` is a false positive, not a leak:
+carry `#N` — only the fork's merge commit does, and that commit isn't cherry-picked). Past the
+guard, the block prints nothing when clean (both greps exit 1). Review each hit by eye — a hex
+colour like `#333` is a false positive, not a leak:
 
 ```bash
-git -C <W> diff --name-only upstream/master...HEAD | grep -E '^(tasks/|\.claude/|CLAUDE\.md$|\.graphifyignore$)'
-```
-
-```bash
-git -C <W> log --format=%B upstream/master..HEAD | grep -niE '#[0-9]+|valicaa/dankcalendar(/issues/|/pull/)[0-9]+|\bGH-[0-9]+'
+cd "<W>" && [ "$(git branch --show-current)" = "pr/<slug>" ] && [ "$(git rev-parse --show-toplevel)" = "$PWD" ] || { echo "STOP: not the pr/<slug> worktree"; exit 1; }
+git diff --name-only upstream/master...HEAD | grep -E '^(tasks/|\.claude/|CLAUDE\.md$|\.graphifyignore$)'
+git log --format=%B upstream/master..HEAD | grep -niE '#[0-9]+|valicaa/dankcalendar(/issues/|/pull/)[0-9]+|\bGH-[0-9]+'
 ```
 
 Keep the worktree until the PR is merged or closed on GitHub, not just opened — review fixes
@@ -114,15 +128,17 @@ land in it too (step 4). When it's done, remove it (a submodule checkout needs `
 branch usually isn't locally merged, so needs `-D`):
 
 ```bash
-git -C <main> worktree remove --force <W>
-git -C <main> branch -D pr/<slug>
+[[ "<W>" == /*/dankcalendar-pr-<slug> ]] || { echo "STOP: bad worktree path"; exit 1; }
+cd "<main>" && [ -f CLAUDE.md ] && [ "$(git rev-parse --show-toplevel)" = "$PWD" ] || { echo "STOP: not the main checkout"; exit 1; }
+git worktree remove --force "<W>"
+git branch -D pr/<slug>
 ```
 
 ## 2. Polish for review
 
-- Re-read the whole diff (`git -C <W> diff upstream/master...HEAD`) as an upstream reviewer
-  would. For a diff, `A...B` means "from the merge base of A and B to B" — only this branch's
-  changes, even after upstream moves on; for a log, `A..B` lists the same commits:
+- Re-read the whole diff (the worktree guard line, then `git diff upstream/master...HEAD`) as an
+  upstream reviewer would. For a diff, `A...B` means "from the merge base of A and B to B" — only
+  this branch's changes, even after upstream moves on; for a log, `A..B` lists the same commits:
   - no narrating comments
   - no dead code
   - no invented APIs
@@ -131,8 +147,8 @@ git -C <main> branch -D pr/<slug>
   - tests for Go changes
 - Squash the fixups into logical commits with `area: summary` subjects; rewriting history needs
   the user's OK (via the PM).
-- Run `verify-change` in the worktree. Every command runs as `cd <W> && …` (`cd <W>/core && …`
-  for the ones run from `core/`), with `upstream/master...HEAD` wherever it says
+- Run `verify-change` in the worktree. Every call starts with the worktree guard line (then
+  `cd core && …` for the commands run from `core/`), with `upstream/master...HEAD` wherever it says
   `master...HEAD`. Skip its blast-radius step and say so in the report: the code graph and
   `.claude/tools/` exist only in the main checkout. It must pass against `upstream/master`.
 - For UI changes, take before/after screenshots with `grim` for the PR body.
@@ -175,11 +191,12 @@ grep -niE '#[0-9]+|valicaa/dankcalendar(/issues/|/pull/)[0-9]+|\bGH-[0-9]+' <scr
 ## 4. Open it (only after explicit user approval)
 
 ```bash
-git -C <W> push -u origin pr/<slug>
+cd "<W>" && [ "$(git branch --show-current)" = "pr/<slug>" ] && [ "$(git rev-parse --show-toplevel)" = "$PWD" ] || { echo "STOP: not the pr/<slug> worktree"; exit 1; }
+git push -u origin pr/<slug>
 gh pr create -R AvengeMedia/dankcalendar --head valicaa:pr/<slug> --base master \
   --title "<title>" --body-file <scratchpad>/pr-body.md
 ```
 
-Report the PR URL. Later review fixes land in the same worktree (`git -C <W> …`) and get
-pushed again. Port them back to `master` too (as a new issue-first change), so the fork doesn't
-drift. Remove the worktree and branch (step 1) once the PR is merged or closed.
+Report the PR URL. Later review fixes land in the same worktree (each call behind the guard line)
+and get pushed again. Port them back to `master` too (as a new issue-first change), so the fork
+doesn't drift. Remove the worktree and branch (step 1) once the PR is merged or closed.

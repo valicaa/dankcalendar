@@ -29,8 +29,8 @@ The main session follows `project-manager`: it elicits, specs (a GitHub issue), 
 
 ## Branch model
 
-- **Issue-first:** every change starts as an issue on `valicaa/dankcalendar` (body = spec,
-  template in `project-manager`); no branch before it exists.
+- **Issue-first:** every change except `project-manager` step 0's trivial ones starts as an
+  issue on `valicaa/dankcalendar` (body = spec, template there); no branch before it exists.
 - `master` = `upstream/master` + fork tooling (this file, `.claude/`, `tasks/`,
   `.graphifyignore`) and finished features. It is the only branch that gets deployed.
 - `feat|fix|chore/<N>-<slug>` branches off `master` via `gh issue develop N -R
