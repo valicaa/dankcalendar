@@ -224,19 +224,6 @@ Item {
         return ev.title + " · " + SettingsData.formatTime(ev.start) + " – " + SettingsData.formatTime(ev.end) + suffix;
     }
 
-    function overlayPersonLabel(item) {
-        const person = PeopleService.people.find(p => p.email === item.email);
-        return (person && (person.name || person.email)) || item.email;
-    }
-
-    function overlayTooltip(item) {
-        const title = item.title || I18n.tr("Busy", "overlay label for a colleague's free/busy-only or private time block");
-        const suffix = (item.location ? " · " + item.location : "") + " · " + root.overlayPersonLabel(item);
-        if (item.allDay)
-            return title + " · " + I18n.tr("All day", "all-day marker in event tooltip") + suffix;
-        return title + " · " + SettingsData.formatTime(item.start) + " – " + SettingsData.formatTime(item.end) + suffix;
-    }
-
     function dayAt(index) {
         const d = new Date(firstDay);
         d.setDate(d.getDate() + index);
@@ -266,10 +253,8 @@ Item {
         return DankCalService.eventsForDay(day).filter(ev => ev.allDay);
     }
 
-    // Colleague-schedule overlay (PeopleService), drawn on top of the
-    // owner's own (faded) chips rather than sharing lanes with them, so a
-    // simultaneous own event stays exactly where it was before the overlay
-    // existed. Overlay items lane among themselves only.
+    // Colleague items are drawn over the own chips, not in their lanes, so own
+    // chips keep their positions; overlay items lane among themselves only.
     function overlayTimedEventsFor(day) {
         if (!PeopleService.active)
             return [];
@@ -295,9 +280,10 @@ Item {
 
     readonly property int allDayMax: {
         eventsVersion;
+        PeopleService.version;
         let max = 0;
         for (let i = -1; i <= 7; i++)
-            max = Math.max(max, allDayEventsFor(dayAt(i)).length);
+            max = Math.max(max, allDayEventsFor(dayAt(i)).length, overlayAllDayEventsFor(dayAt(i)).length);
         return Math.min(max, 2);
     }
 
@@ -547,7 +533,7 @@ Item {
                                         response: modelData.myResponse
                                         calendarColor: modelData.color
                                         selected: isSelected
-                                        dimmed: PeopleService.active && PeopleService.sharedWith(modelData).length === 0
+                                        dimmed: PeopleService.active && stripeColors.length === 0
                                         hovered: allDayMouseArea.containsMouse
 
                                         StyledText {
@@ -606,9 +592,6 @@ Item {
                                 }
                             }
 
-                            // Colleague-schedule overlay, drawn on top of the
-                            // (faded) own all-day chips above rather than
-                            // pushed below them.
                             Column {
                                 id: overlayAllDayColumn
                                 anchors.fill: parent
@@ -636,11 +619,11 @@ Item {
                                         title: modelData.title
                                         location: modelData.location
                                         personColor: modelData.color
-                                        isPrivate: !!modelData.private
+                                        isPrivate: modelData.private
                                         stripes: modelData.stripes || []
                                         compact: true
                                         titleLines: SettingsData.weekEventTitleLines
-                                        onEntered: chipTooltip.show(root.overlayTooltip(modelData), overlayAllDayChip)
+                                        onEntered: chipTooltip.show(PeopleService.tooltipFor(modelData), overlayAllDayChip)
                                         onExited: chipTooltip.hide()
                                     }
                                 }
@@ -870,7 +853,7 @@ Item {
                                         response: modelData.myResponse
                                         calendarColor: modelData.color
                                         selected: isSelected
-                                        dimmed: PeopleService.active && PeopleService.sharedWith(modelData).length === 0
+                                        dimmed: PeopleService.active && stripeColors.length === 0
                                         hovered: timedMouseArea.containsMouse
 
                                         Column {
@@ -942,9 +925,6 @@ Item {
                                     }
                                 }
 
-                                // Colleague-schedule overlay, drawn on top of
-                                // the (faded) own timed chips above rather
-                                // than sharing their lanes.
                                 Repeater {
                                     model: ScriptModel {
                                         values: dayColumn.overlayTimedEvents
@@ -965,14 +945,11 @@ Item {
                                         title: modelData.title
                                         location: modelData.location
                                         personColor: modelData.color
-                                        isPrivate: !!modelData.private
+                                        isPrivate: modelData.private
                                         stripes: modelData.stripes || []
-                                        // Below an hour there's no room for a location line under
-                                        // the title; a short chip drops it, matching the owner's
-                                        // own timed chip (durationHours >= 1 threshold above).
                                         compact: modelData.durationHours < 1
                                         titleLines: Math.min(SettingsData.weekEventTitleLines, Math.max(1, Math.floor(height / 14)))
-                                        onEntered: chipTooltip.show(root.overlayTooltip(modelData), overlayTimedChip)
+                                        onEntered: chipTooltip.show(PeopleService.tooltipFor(modelData), overlayTimedChip)
                                         onExited: chipTooltip.hide()
                                     }
                                 }
