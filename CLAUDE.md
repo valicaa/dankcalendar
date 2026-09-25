@@ -69,12 +69,12 @@ subscription. There is no separate service layer.
 make build            # release build, UI embedded (runs sync-shell) -> core/bin/dcal
 make test             # go test (CGO_ENABLED=0)
 make fmt && make vet
-make run              # dev build against ./quickshell (stop the service first)
+make run              # dev build against ./quickshell on the REAL data (stop the service first)
 make i18n-extract     # after adding/changing any I18n.tr() string
 make generate         # after editing core/ent/schema
 make migrate name=x   # new DB migration from schema diff
-# hot-reload UI work, from core/ with the service stopped:
-DCAL_ENABLE_HOTRELOAD=1 go run ./cmd/dcal run -c ../quickshell
+# offline dev instance on a copy of the real data, QML hot reload on (verify-change section 4):
+.claude/tools/dev-instance.sh start /abs/checkout   # then: probe, ipc, screenshot, stop
 ```
 
 ## Lessons and keeping these docs current

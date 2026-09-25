@@ -80,22 +80,113 @@ make build && core/bin/dcal version
 Static checks do not prove UI behaviour. Use a **dev instance**, never `deploy-local` — that
 installs onto the user's real desktop calendar and only ever deploys `master`, after the owner
 merged the PR (`new-feature` 6.4, or `sync-upstream`). An unmerged branch is tried here, never
-deployed:
+deployed.
 
-`systemctl --user stop dcal`, then from `core/`:
-`DCAL_ENABLE_HOTRELOAD=1 go run ./cmd/dcal run -c ../quickshell` in the background.
+`.claude/tools/dev-instance.sh` runs the branch's build **offline on a scratch copy of the real
+data**, as the transient user unit `dankcal-dev`. It stops `dcal.service` for the run (the owner
+approved this) and starts it again whenever `dankcal-dev` stops — `stop`, a crash, or the 2h
+limit. **One dev instance per machine**: `start` refuses while `dankcal-dev` runs, and a lock
+lets only one `start` or `stop` run at a time (`stop` waits up to 180s for it). Each block is
+one Bash call from any directory.
+`<checkout>` is the literal absolute path of the checkout under test: the main checkout, or a
+linked worktree `<worktree>` of this repo. This procedure never re-initialises the main
+checkout's submodule. A new worktree has no `dank-qml-common` yet; initialise it from the main
+checkout's clone (local, no network). The first two lines stop unless `<worktree>` is a linked
+worktree of this repo:
+
+```bash
+c=$(git -C <worktree> rev-parse --path-format=absolute --git-common-dir) && g=$(git -C <worktree> rev-parse --absolute-git-dir) || exit 1
+[ "$c" = /home/nozomi/Documents/code/calendar/.git ] && case "$g" in "$c"/worktrees/?*) true ;; *) false ;; esac || { echo "STOP: <worktree> is not a linked worktree of this repo"; exit 1; }
+timeout 60 git -C <worktree> -c protocol.file.allow=always -c submodule.dank-qml-common.url=/home/nozomi/Documents/code/calendar/dank-qml-common submodule update --init
+```
+
+If the error names a commit the local clone lacks (`not our ref <sha>`, `did not contain
+<sha>`), fetch it from GitHub into the worktree's own clone, never into the main checkout's,
+then run the block above again:
+
+```bash
+[ -f <worktree>/dank-qml-common/.git ] || { echo "STOP: no submodule clone; use the remove-and-recreate block"; exit 1; }
+timeout 120 git -C <worktree>/dank-qml-common fetch https://github.com/AvengeMedia/dank-qml-common.git <sha>
+```
+
+On any other failure or a timeout, don't repair the submodule by hand (and never
+`git submodule deinit` in a worktree: it deletes the entries every checkout shares from the
+config). Remove the worktree, which also removes its submodule clone, create it again, and
+rerun the block. The removal stops unless `<worktree>` is a linked worktree of this repo with
+no uncommitted changes (commit or save them first):
+
+```bash
+c=$(git -C <worktree> rev-parse --path-format=absolute --git-common-dir) && g=$(git -C <worktree> rev-parse --absolute-git-dir) || exit 1
+[ "$c" = /home/nozomi/Documents/code/calendar/.git ] && case "$g" in "$c"/worktrees/?*) true ;; *) false ;; esac || { echo "STOP: <worktree> is not a linked worktree of this repo"; exit 1; }
+s=$(git -C <worktree> status --short --ignore-submodules=all) || exit 1
+[ -z "$s" ] || { echo "STOP: <worktree> has uncommitted changes:"; echo "$s"; exit 1; }
+git -C /home/nozomi/Documents/code/calendar worktree remove --force <worktree> && git -C /home/nozomi/Documents/code/calendar worktree prune
+```
+
+Recreate it the way it was made: a detached verification worktree with
+`git -C /home/nozomi/Documents/code/calendar worktree add --detach <worktree> <branch>`, a
+`pr/<slug>` worktree as in `upstream-pr`.
+
+Then start the dev instance and prove it is offline:
+
+```bash
+/home/nozomi/Documents/code/calendar/.claude/tools/dev-instance.sh start <checkout>
+/home/nozomi/Documents/code/calendar/.claude/tools/dev-instance.sh probe
+```
+
+`start` builds `<checkout>/core` (a failed build leaves the live calendar alone), stops
+`dcal.service`, copies `~/.local/share/dankcal`, `~/.config/dankcal` and
+`~/.local/state/dankcal` under `/tmp/claude-1000/dankcal-dev/home` (the real files are only
+read; `sqlite3` opens only the copies; the XDG cache dir is scratch too), and runs the build
+with `-c <checkout>/quickshell` and `PrivateNetwork=yes`: loopback is its only interface, and
+it refuses to start otherwise. Accounts keep their tokens, so they sync as offline
+(`network is unreachable` in the log). `probe` must end with
+`offline: no remote host reachable from the dev instance`.
+
+The D-Bus session bus is shared with the desktop, outside that namespace: `start` refuses while
+a Secret Service (`org.freedesktop.secrets`) or Evolution Data Server is on it, or the data has
+an Evolution account, since those would hand the dev instance real credentials or sync for it.
+One that appears mid-run is not prevented; `stop` reports it as a `FAIL`.
 
 Then:
-1. `dcal show`, navigate to the feature, and capture with
-   `grim <scratchpad>/verify-<slug>.png`; Read the image and confirm what you expected is
-   visible. For backend-only changes, exercise it with `dcal ipc <method> key=value` and show the
-   output.
-2. Check logs for new errors: `journalctl --user -u dcal -n 50 --no-pager -p warning` (or the
-   dev process output).
+1. Navigate to the feature with `ipc` (`ui.show`, `ui.openEvent`, …) and capture the dev window
+   with `screenshot` — plain `grim` captures whatever is on screen, which may not be the dev
+   window. `screenshot` (Hyprland) runs `ui.show`, refuses if the dev window is on a workspace
+   no monitor shows, and captures only the window's area; its `captured …` line names the
+   window and the dev `qs` pid. The PNG is that screen area, so Read it and confirm it shows
+   the calendar window itself, with what you expected. For
+   backend-only changes, exercise it with `ipc <method> key=value` and show the output.
+   `status` prints the dev DB copy's goose and user version. Never use plain `dcal show` or
+   `dcal ipc` here: with no dev instance up they reach, or cold-start, a daemon on the real
+   data.
+   ```bash
+   /home/nozomi/Documents/code/calendar/.claude/tools/dev-instance.sh ipc ui.show
+   /home/nozomi/Documents/code/calendar/.claude/tools/dev-instance.sh screenshot <scratchpad>/verify-<slug>.png
+   /home/nozomi/Documents/code/calendar/.claude/tools/dev-instance.sh status
+   ```
+2. Check this run's logs for new errors:
+   `journalctl --user -u dankcal-dev -I --no-pager | grep -E 'WARN|ERROR|FATAL|panic'` (dcal
+   logs at journal priority info, so `-p warning` shows nothing). The per-account
+   `sync error … network is unreachable` lines and `secret service unavailable` are expected.
 3. Exercise edge cases from the issue's Scenarios and Acceptance (empty state, offline account,
-   all-day events, 24h vs 12h clock, long titles).
-4. When done with a dev run, kill it and `systemctl --user start dcal` so the user's calendar
-   is back.
+   all-day events, 24h vs 12h clock, long titles). Don't sign in, re-authenticate or open links
+   in the dev instance: the desktop portal hands them to the browser outside its namespace.
+4. Always finish with the block below — also when `start` failed or was cut off, since that can
+   leave `dcal.service` stopped — and put its output in the report. It must end with
+   `dev instance stopped cleanly` (exit 0): the real DB's sha256 is unchanged across the time
+   `dcal.service` was stopped, no Secret Service or EDS is on the bus at stop, no process runs
+   the dev build or `<checkout>/quickshell`, `dankcal-dev` is inactive and `dcal` active. A
+   clean stop deletes the scratch copy (`home/`, `after/`) and moves the two `.sha256` files
+   to `/tmp/claude-1000/dankcal-dev/last-run/`, so a repeat `stop` prints `nothing to
+   compare`; a `FAIL` keeps them all for diagnosis. A `stop` that waited for the lock while
+   someone else started a new dev instance leaves it running and says so. Exit 3 means
+   another session's dev instance is running: report the check as not verified, never a
+   pass. If `dcal` runs `<checkout>/quickshell`, `systemctl --user restart dcal` puts it back
+   on its own UI.
+
+```bash
+/home/nozomi/Documents/code/calendar/.claude/tools/dev-instance.sh stop
+```
 
 ## 5. Report
 
