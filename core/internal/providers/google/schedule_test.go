@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+	"golang.org/x/oauth2"
 	"google.golang.org/api/calendar/v3"
 	"google.golang.org/api/option"
 
@@ -21,6 +22,23 @@ func scheduleTestProvider(t *testing.T, handler http.HandlerFunc) *Provider {
 	server := httptest.NewServer(handler)
 	t.Cleanup(server.Close)
 	svc, err := calendar.NewService(context.Background(), option.WithHTTPClient(server.Client()), option.WithEndpoint(server.URL+"/"))
+	require.NoError(t, err)
+	q, _ := fakeQuota()
+	return &Provider{account: cal.Account{ID: "me@acme.com"}, svc: svc, quota: q}
+}
+
+// deadTokenSource always fails to refresh, the way a revoked refresh token
+// does against Google's token endpoint.
+type deadTokenSource struct{ err error }
+
+func (s deadTokenSource) Token() (*oauth2.Token, error) { return nil, s.err }
+
+func scheduleTestProviderDeadToken(t *testing.T) *Provider {
+	t.Helper()
+	client := &http.Client{Transport: &oauth2.Transport{
+		Source: deadTokenSource{err: &oauth2.RetrieveError{ErrorCode: "invalid_grant"}},
+	}}
+	svc, err := calendar.NewService(context.Background(), option.WithHTTPClient(client), option.WithEndpoint("https://schedule-test.invalid/"))
 	require.NoError(t, err)
 	q, _ := fakeQuota()
 	return &Provider{account: cal.Account{ID: "me@acme.com"}, svc: svc, quota: q}
@@ -86,6 +104,9 @@ func TestReadScheduleEventsListDetails(t *testing.T) {
 	require.Equal(t, "2026-09-08T00:00:00Z", first.URL.Query().Get("timeMax"))
 	require.ElementsMatch(t, []string{"default", "focusTime", "outOfOffice"}, first.URL.Query()["eventTypes"])
 	require.NotEmpty(t, first.URL.Query().Get("fields"))
+
+	require.Len(t, requests, 2, "the second page must be fetched with the token the first page returned")
+	require.Equal(t, "p2", requests[1].URL.Query().Get("pageToken"))
 }
 
 func TestReadScheduleFreeBusyReaderFallsBackToBusy(t *testing.T) {
@@ -199,4 +220,80 @@ func TestReadScheduleUnauthorizedIsReauth(t *testing.T) {
 	_, err := p.ReadSchedule(context.Background(), "alice@acme.com", from, to)
 	require.ErrorIs(t, err, cal.ErrReauthRequired)
 	require.False(t, errors.Is(err, cal.ErrScheduleScope))
+}
+
+func TestReadScheduleDeadRefreshTokenIsReauth(t *testing.T) {
+	from := time.Date(2026, 9, 1, 0, 0, 0, 0, time.UTC)
+	to := time.Date(2026, 9, 8, 0, 0, 0, 0, time.UTC)
+
+	p := scheduleTestProviderDeadToken(t)
+
+	_, err := p.ReadSchedule(context.Background(), "alice@acme.com", from, to)
+	require.ErrorIs(t, err, cal.ErrReauthRequired)
+}
+
+func TestReadScheduleForbiddenFallsBackToFreeBusy(t *testing.T) {
+	from := time.Date(2026, 9, 1, 0, 0, 0, 0, time.UTC)
+	to := time.Date(2026, 9, 8, 0, 0, 0, 0, time.UTC)
+
+	p := scheduleTestProvider(t, func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case strings.Contains(r.URL.Path, "/freeBusy"):
+			writeJSON(w, 200, `{"calendars": {"alice@acme.com": {"busy": [
+				{"start": "2026-09-02T10:00:00Z", "end": "2026-09-02T11:00:00Z"}
+			]}}}`)
+		default:
+			writeJSON(w, 403, `{"error": {"code": 403, "errors": [{"reason": "forbidden"}]}}`)
+		}
+	})
+
+	sched, err := p.ReadSchedule(context.Background(), "alice@acme.com", from, to)
+	require.NoError(t, err)
+	require.Equal(t, cal.ScheduleBusy, sched.Access)
+	require.Len(t, sched.Busy, 1)
+}
+
+func TestReadScheduleBadRequestFallsBackToFreeBusy(t *testing.T) {
+	from := time.Date(2026, 9, 1, 0, 0, 0, 0, time.UTC)
+	to := time.Date(2026, 9, 8, 0, 0, 0, 0, time.UTC)
+
+	p := scheduleTestProvider(t, func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case strings.Contains(r.URL.Path, "/freeBusy"):
+			writeJSON(w, 200, `{"calendars": {"alice@acme.com": {"busy": [
+				{"start": "2026-09-02T10:00:00Z", "end": "2026-09-02T11:00:00Z"}
+			]}}}`)
+		default:
+			writeJSON(w, 400, `{"error": {"code": 400, "message": "bad request"}}`)
+		}
+	})
+
+	sched, err := p.ReadSchedule(context.Background(), "alice@acme.com", from, to)
+	require.NoError(t, err)
+	require.Equal(t, cal.ScheduleBusy, sched.Access)
+	require.Len(t, sched.Busy, 1)
+}
+
+func TestReadScheduleRateLimitedReturnsErrorBeforeFreeBusyFallback(t *testing.T) {
+	from := time.Date(2026, 9, 1, 0, 0, 0, 0, time.UTC)
+	to := time.Date(2026, 9, 8, 0, 0, 0, 0, time.UTC)
+
+	freebusyCalled := false
+	p := scheduleTestProvider(t, func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case strings.Contains(r.URL.Path, "/freeBusy"):
+			freebusyCalled = true
+			writeJSON(w, 200, `{}`)
+		default:
+			w.Header().Set("Retry-After", "0")
+			writeJSON(w, 403, `{"error": {"code": 403, "errors": [{"reason": "rateLimitExceeded"}]}}`)
+		}
+	})
+
+	_, err := p.ReadSchedule(context.Background(), "alice@acme.com", from, to)
+	require.Error(t, err)
+	require.False(t, freebusyCalled, "a rate-limited 403 must not fall back to freebusy")
+
+	var deferred *deferredRetry
+	require.True(t, errors.As(err, &deferred), "exhausted read retries must surface as a deferredRetry")
 }

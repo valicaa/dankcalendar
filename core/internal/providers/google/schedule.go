@@ -1,13 +1,12 @@
 package google
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
 	"strings"
 	"time"
-
-	"context"
 
 	"google.golang.org/api/calendar/v3"
 	"google.golang.org/api/googleapi"
@@ -18,10 +17,10 @@ import (
 // scheduleFields is a partial-response Fields() list: data minimisation so a
 // colleague lookup never pulls descriptions, links or conference data into
 // the daemon.
-const scheduleFields = "accessRole,summary,nextPageToken,items(id,iCalUID,recurringEventId,originalStartTime,start,end,summary,location,status,visibility,attendees(email,displayName,responseStatus))"
+const scheduleFields = "accessRole,summary,nextPageToken,items(id,iCalUID,recurringEventId,originalStartTime,start,end,summary,location,status,visibility,transparency,attendees(email,displayName,responseStatus))"
 
-// scheduleAccessRoles are the accessRole values that reveal event details, as
-// opposed to freeBusyReader/none which see only availability.
+// scheduleAccessHasDetails reports whether accessRole reveals event details,
+// as opposed to freeBusyReader/none which see only availability.
 func scheduleAccessHasDetails(accessRole string) bool {
 	switch accessRole {
 	case "reader", "writerWithoutPrivateAccess", "writer", "owner":
@@ -33,7 +32,7 @@ func scheduleAccessHasDetails(accessRole string) bool {
 
 // ReadSchedule reads a colleague's availability: full event details where
 // they share the calendar, otherwise a free/busy fallback. Nothing it reads
-// is persisted, and it never logs an event or an address above debug level.
+// is persisted, and it logs nothing.
 func (p *Provider) ReadSchedule(ctx context.Context, email string, from, to time.Time) (*cal.Schedule, error) {
 	events, accessRole, spans, err := p.scheduleEventsList(ctx, email, from, to)
 	switch {
@@ -45,18 +44,20 @@ func (p *Provider) ReadSchedule(ctx context.Context, email string, from, to time
 		return p.readFreeBusy(ctx, email, from, to, spans)
 	}
 
+	if quotaLimited(err) || errors.As(err, new(*deferredRetry)) {
+		return nil, fmt.Errorf("read google schedule: %w", classifyAuthErr(err))
+	}
+
 	var apiErr *googleapi.Error
 	if errors.As(err, &apiErr) {
 		switch apiErr.Code {
-		case http.StatusUnauthorized:
-			return nil, classifyAuthErr(err)
 		case http.StatusNotFound, http.StatusForbidden, http.StatusBadRequest:
 			if !isInsufficientScope(err) {
 				return p.readFreeBusy(ctx, email, from, to, nil)
 			}
 		}
 	}
-	return nil, fmt.Errorf("read google schedule: %w", err)
+	return nil, fmt.Errorf("read google schedule: %w", classifyAuthErr(err))
 }
 
 // scheduleEventsList pages through events.list for the colleague's primary
@@ -98,7 +99,9 @@ func (p *Provider) scheduleEventsList(ctx context.Context, email string, from, t
 			}
 			ev := fromGoogleEvent(cal.Calendar{}, item)
 			events = append(events, cal.ScheduleEvent{Event: *ev, ICalUID: item.ICalUID})
-			spans = append(spans, cal.TimeSpan{Start: ev.Start, End: ev.End})
+			if item.Transparency != "transparent" {
+				spans = append(spans, cal.TimeSpan{Start: ev.Start, End: ev.End})
+			}
 		}
 
 		if res.NextPageToken == "" {
@@ -146,17 +149,14 @@ func (p *Provider) readFreeBusy(ctx context.Context, email string, from, to time
 		return p.svc.Freebusy.Query(req).Context(ctx).Do()
 	})
 	if err != nil {
-		var apiErr *googleapi.Error
 		switch {
-		case errors.As(err, &apiErr) && apiErr.Code == http.StatusUnauthorized:
-			return nil, classifyAuthErr(err)
 		case isInsufficientScope(err):
 			if len(spans) > 0 {
 				return &cal.Schedule{Access: cal.ScheduleBusy, Busy: spans}, nil
 			}
 			return nil, fmt.Errorf("read google freebusy: %w", cal.ErrScheduleScope)
 		default:
-			return nil, fmt.Errorf("read google freebusy: %w", err)
+			return nil, fmt.Errorf("read google freebusy: %w", classifyAuthErr(err))
 		}
 	}
 
