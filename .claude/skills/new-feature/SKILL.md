@@ -198,7 +198,7 @@ git branch -d <branch>
 Then `verify-change` section 0's docs-only test, on the merge:
 
 ```bash
-git diff --name-only <M>~1..<M> | grep -vE '^(\.claude/|tasks/|CLAUDE\.md$|\.graphifyignore$|[^/]+\.md$)'
+git diff --name-only <M>~1..<M> | grep -vE '^(\.claude/|tasks/|CLAUDE\.md$|\.graphifyignore$|\.github/ISSUE_TEMPLATE/|[^/]+\.md$)'
 ```
 
 - No output: docs-only, nothing to deploy.

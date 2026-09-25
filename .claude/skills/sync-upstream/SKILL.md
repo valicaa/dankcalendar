@@ -37,8 +37,9 @@ block is one Bash call; a `STOP` is a failed step.
    git submodule update --init --recursive
    ```
    Resolve conflicts by keeping upstream's version, then re-applying our feature's intent on
-   top of it. Fork-only files (`CLAUDE.md`, `.claude/`, `tasks/`, `.graphifyignore`) should
-   never conflict. If they do, keep ours: `git checkout --ours -- <path> && git add <path>`.
+   top of it. Fork-only files (`CLAUDE.md`, `.claude/`, `tasks/`, `.graphifyignore`,
+   `.github/ISSUE_TEMPLATE/`) should never conflict. If they do, keep ours:
+   `git checkout --ours -- <path> && git add <path>`.
    Finish with `git commit --no-edit --cleanup=strip` (plain `--no-edit` keeps the
    `# Conflicts:` lines in the message) in its own call — the check-docs hook may ask for
    `.claude/tools/check-docs.py --ack`, as the merged-in upstream files trip its doc rules —
