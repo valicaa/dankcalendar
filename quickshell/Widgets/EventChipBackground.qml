@@ -13,18 +13,20 @@ Rectangle {
     // Faded while a colleague-schedule overlay is drawn on top (PeopleService),
     // so the own chip stays visible but reads as "underneath". RSVP fill,
     // border and hatch are scaled to Theme.overlayDimOpacity (background
-    // only); the title text instead uses textColor/mutedTextColor below,
-    // which stay at Theme.overlayDimTextOpacity so they remain readable.
+    // only). The title text instead stays fully opaque and picks its color
+    // by contrast against the dimmed composite (Theme.overlayDimComposite)
+    // rather than the undimmed fill, so it stays legible over whatever the
+    // 35%-alpha fill actually renders as on top of Theme.background.
     // strikeout (declined, #22) is unaffected either way.
     property bool dimmed: false
 
     readonly property real backgroundOpacity: dimmed ? Theme.overlayDimOpacity : 1
-    readonly property real textOpacity: dimmed ? Theme.overlayDimTextOpacity : 1
+    readonly property color _contrastBg: dimmed ? Theme.overlayDimComposite(calendarColor) : Theme.toColor(calendarColor)
 
     readonly property color fillColor: Theme.blendAlpha(Theme.rsvpFillColor(response, calendarColor), backgroundOpacity)
-    readonly property color textColor: Theme.blendAlpha(Theme.rsvpTextColor(response, calendarColor), textOpacity)
-    readonly property color mutedTextColor: Theme.blendAlpha(Theme.rsvpMutedTextColor(response, calendarColor), textOpacity)
-    readonly property color dotColor: Theme.blendAlpha(Theme.rsvpDotColor(response, calendarColor), textOpacity)
+    readonly property color textColor: dimmed ? Theme.rsvpTextColorAgainst(response, _contrastBg) : Theme.rsvpTextColor(response, calendarColor)
+    readonly property color mutedTextColor: dimmed ? Theme.rsvpMutedTextColorAgainst(response, _contrastBg) : Theme.rsvpMutedTextColor(response, calendarColor)
+    readonly property color dotColor: dimmed ? Theme.rsvpDotColorAgainst(response, _contrastBg, calendarColor) : Theme.rsvpDotColor(response, calendarColor)
     readonly property bool strikeout: Theme.rsvpStrikeout(response)
     // Short chips (month/all-day, ~18-32px) get a 1px ring so it doesn't crowd the text.
     property bool compact: height < 24
