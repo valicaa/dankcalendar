@@ -2,10 +2,8 @@ import QtQuick
 import qs.Common
 import qs.DankCommon.Widgets
 
-// One colleague-schedule overlay item, drawn on top of the owner's faded own
-// chips in Week/Month (PeopleService.overlayForDay). Read-only: no
-// EventMouseArea, so it cannot be clicked, dragged, selected or opened;
-// hovering only shows a tooltip via the entered/exited signals.
+// A colleague-schedule overlay item (PeopleService). Read-only: it swallows
+// presses so nothing under it is clicked or created, and only reports hover.
 Item {
     id: root
 
@@ -13,21 +11,13 @@ Item {
     property string title: ""
     property string location: ""
     property string personColor: Theme.primary
-    // Set for a detail event whose title the source didn't disclose (a
-    // private event under reader access); it reads the same as a
-    // free/busy-only block.
+    // A detail event whose title the source withheld; drawn like busy time.
     property bool isPrivate: false
     property bool compact: false
     property int titleLines: 1
-    // Week/Month chips are small enough to use the chip-sized defaults
-    // below; Day view's lanes are drawn at the same scale as the owner's
-    // Day chips (DayView's ownDayTimedChip), so it passes those sizes
-    // explicitly to match.
     property real titleFontSize: 11
     property real locationFontSize: 10
-    // Colours of every participant when this item is a colleague-colleague
-    // merge (PeopleService.overlayForDay's stripes); empty for an
-    // unmerged item, which draws with no stripe.
+    // Every participant's colour when this item merges a shared meeting.
     property var stripes: []
 
     signal entered
@@ -35,7 +25,9 @@ Item {
 
     readonly property color resolvedColor: Theme.toColor(personColor)
     readonly property bool busyLook: kind !== "event" || isPrivate
-    readonly property color fillColor: busyLook ? Theme.withAlpha(resolvedColor, 0.18) : Theme.rsvpFillColor("", resolvedColor)
+    // Busy time is an opaque tint so an own chip underneath never shows its
+    // title through; the dimmed own chip still shows wherever it is not covered.
+    readonly property color fillColor: busyLook ? Qt.tint(Theme.surface, Theme.withAlpha(resolvedColor, 0.18)) : Theme.rsvpFillColor("", resolvedColor)
     readonly property color textColor: busyLook ? Theme.surfaceText : Theme.rsvpTextColor("", resolvedColor)
     readonly property real stripesWidth: Theme.attendeeStripesWidth(stripes.length, compact)
 
@@ -78,7 +70,7 @@ Item {
 
             StyledText {
                 width: parent.width
-                text: root.busyLook ? I18n.tr("Busy", "overlay label for a colleague's free/busy-only or private time block") : root.title
+                text: root.title
                 font.pixelSize: root.titleFontSize
                 font.weight: Theme.fontWeightMedium
                 color: root.textColor
@@ -99,7 +91,11 @@ Item {
         }
     }
 
-    HoverHandler {
-        onHoveredChanged: hovered ? root.entered() : root.exited()
+    MouseArea {
+        anchors.fill: parent
+        acceptedButtons: Qt.LeftButton | Qt.RightButton
+        hoverEnabled: true
+        onEntered: root.entered()
+        onExited: root.exited()
     }
 }
