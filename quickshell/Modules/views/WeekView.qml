@@ -37,6 +37,7 @@ Item {
     signal eventRescheduleRequested(var event, int dayOffset, int minuteOffset)
     signal shiftDaysRequested(int days)
     signal createTimedRequested(date start, date end)
+    signal viewDayRequested(date day)
 
     function isEventSelected(event) {
         const key = DankCalService.eventKey(event);
@@ -313,9 +314,21 @@ Item {
         return DankCalService.layoutTimedEvents(bands);
     }
 
-    // The all-day row is a list per day, ordered like a month cell.
-    function allDayItemsFor(day) {
-        return PeopleService.mergeWithOwn(allDayEventsFor(day), overlayAllDayEventsFor(day));
+    readonly property int allDaySlots: 2
+
+    // One day's all-day row: at most allDaySlots items. Own items keep their
+    // slots and colleague items fill what is left, so an overlay never pushes
+    // an own event out; `hidden` counts the colleague-day items that did not
+    // fit. A day without colleague items is capped as before, with no count.
+    function allDayCellFor(day) {
+        const own = allDayEventsFor(day);
+        const overlay = overlayAllDayEventsFor(day);
+        const shownOwn = own.slice(0, allDaySlots);
+        const shownOverlay = overlay.slice().sort((a, b) => a.start - b.start).slice(0, allDaySlots - shownOwn.length);
+        return {
+            "items": PeopleService.mergeWithOwn(shownOwn, shownOverlay),
+            "hidden": overlay.length === 0 ? 0 : own.length + overlay.length - shownOwn.length - shownOverlay.length
+        };
     }
 
     function overlayAllDayEventsFor(day) {
@@ -329,9 +342,20 @@ Item {
         PeopleService.version;
         let max = 0;
         for (let i = -1; i <= 7; i++)
-            max = Math.max(max, allDayItemsFor(dayAt(i)).length);
-        return Math.min(max, 2);
+            max = Math.max(max, allDayCellFor(dayAt(i)).items.length);
+        return Math.min(max, allDaySlots);
     }
+
+    readonly property bool allDayOverflow: {
+        eventsVersion;
+        PeopleService.version;
+        for (let i = -1; i <= 7; i++)
+            if (allDayCellFor(dayAt(i)).hidden > 0)
+                return true;
+        return false;
+    }
+
+    readonly property real allDayOverflowHeight: 14
 
     function hiddenInfoFor(day) {
         const list = DankCalService.eventsForDay(day);
@@ -506,7 +530,7 @@ Item {
         Row {
             id: allDayRow
             width: parent.width
-            height: Math.max(1, root.allDayMax) * (root.allDayChipHeight + 4) + 6
+            height: Math.max(1, root.allDayMax) * (root.allDayChipHeight + 4) + 6 + (root.allDayOverflow ? root.allDayOverflowHeight : 0)
             clip: true
 
             Behavior on height {
@@ -538,10 +562,10 @@ Item {
                             required property int index
                             readonly property date day: root.dayAt(index - 1)
                             readonly property bool isDropTarget: root.eventDragging && day.getTime() === root.dragTargetTime
-                            readonly property var dayItems: {
+                            readonly property var dayCell: {
                                 root.eventsVersion;
                                 PeopleService.version;
-                                return root.allDayItemsFor(root.dayAt(index - 1));
+                                return root.allDayCellFor(root.dayAt(index - 1));
                             }
 
                             width: root.dayWidth
@@ -564,7 +588,8 @@ Item {
 
                                 Repeater {
                                     model: ScriptModel {
-                                        values: allDayCell.dayItems.slice(0, 2)
+                                        objectProp: "key"
+                                        values: allDayCell.dayCell.items
                                     }
 
                                     Loader {
@@ -664,6 +689,25 @@ Item {
                                                 }
                                             }
                                         }
+                                    }
+                                }
+
+                                StyledText {
+                                    id: allDayMore
+                                    visible: allDayCell.dayCell.hidden > 0
+                                    width: parent.width
+                                    height: root.allDayOverflowHeight
+                                    leftPadding: 4
+                                    verticalAlignment: Text.AlignVCenter
+                                    text: I18n.tr("+%1 more", "overflow label in month grid day cell, %1 is the number of hidden events").arg(allDayCell.dayCell.hidden)
+                                    font.pixelSize: 10
+                                    color: Theme.surfaceVariantText
+                                    elide: Text.ElideRight
+
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: root.viewDayRequested(allDayCell.day)
                                     }
                                 }
                             }
