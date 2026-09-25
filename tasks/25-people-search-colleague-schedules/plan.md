@@ -595,3 +595,9 @@ The live Google acceptance follows open question 1.
 3. **Week layout:** colleague chips side by side with the owner's faded chips (recommended:
    nothing is hidden and own chips stay clickable), or drawn over them with the owner's chips
    translucent behind?
+
+## Owner decisions after the plan (2026-09-25)
+
+- Time grid: colleague detail events are drawn on top of the owner's faded events, not beside them. In Month cells they are interleaved by start time instead.
+- Busy-only time (free/busy spans and private events shown as "Busy") is drawn in Week as a tinted band behind every chip, labelled "Busy · <name>". Bands for different people sit side by side. Day lanes and Month rows keep busy as blocks or rows.
+- The live check (a real lookup after re-consent) runs after merge and deploy.
