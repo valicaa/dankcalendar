@@ -55,23 +55,32 @@ type scheduleMockProvider struct {
 	*mocks.MockScheduleReader
 }
 
+// peopleFixture seeds two Google accounts, gmail before acme, so a domain
+// match (acme) and a fallback to the first account (gmail) pick different
+// accounts and a test asserting on which one was built actually proves
+// something. It returns the acme account's id, the one every domain-match
+// test expects.
 func peopleFixture(t *testing.T) (icsFixture, string) {
 	t.Helper()
 	f := newIcsFixture(t, account.KindCaldav, false)
 	ctx := context.Background()
 
-	_, err := f.repo.CreateAccount(ctx, repo.CreateAccountInput{ID: "me@acme.com", Kind: account.KindGoogle, DisplayName: "Me"})
+	const acmeID = "me@acme.com"
+	_, err := f.repo.CreateAccount(ctx, repo.CreateAccountInput{ID: "me@gmail.com", Kind: account.KindGoogle, DisplayName: "Me personal"})
 	require.NoError(t, err)
-	_, err = f.repo.CreateAccount(ctx, repo.CreateAccountInput{ID: "me@gmail.com", Kind: account.KindGoogle, DisplayName: "Me personal"})
+	_, err = f.repo.CreateAccount(ctx, repo.CreateAccountInput{ID: acmeID, Kind: account.KindGoogle, DisplayName: "Me"})
 	require.NoError(t, err)
 
-	return f, "me@acme.com"
+	return f, acmeID
 }
 
-func schedulePeopleFactory(t *testing.T, provider calendar.Provider) *mocks.MockProviderFactory {
+// schedulePeopleFactory registers provider only for a Build call for
+// wantAccountID, so a test using it proves which account the daemon actually
+// chose rather than just that some Google account got one.
+func schedulePeopleFactory(t *testing.T, wantAccountID string, provider calendar.Provider) *mocks.MockProviderFactory {
 	factory := mocks.NewMockProviderFactory(t)
 	factory.EXPECT().Kind().Return(calendar.AccountGoogle)
-	factory.EXPECT().Build(mock.Anything, mock.MatchedBy(func(acc calendar.Account) bool { return acc.ID == "me@acme.com" }), mock.Anything).Return(provider, nil)
+	factory.EXPECT().Build(mock.Anything, mock.MatchedBy(func(acc calendar.Account) bool { return acc.ID == wantAccountID }), mock.Anything).Return(provider, nil)
 	return factory
 }
 
@@ -85,6 +94,10 @@ func TestPeopleScheduleValidation(t *testing.T) {
 		"bad to":         {"email": "alice@acme.com", "from": "2026-09-01T00:00:00Z", "to": "nope"},
 		"to before from": {"email": "alice@acme.com", "from": "2026-09-08T00:00:00Z", "to": "2026-09-01T00:00:00Z"},
 		"range too long": {"email": "alice@acme.com", "from": "2026-01-01T00:00:00Z", "to": "2026-06-01T00:00:00Z"},
+		"62 days plus one second rejected": {
+			"email": "alice@acme.com", "from": "2026-01-01T00:00:00Z",
+			"to": time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC).Add(maxScheduleRangeDays*24*time.Hour + time.Second).Format(time.RFC3339),
+		},
 	}
 	for name, params := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -94,8 +107,24 @@ func TestPeopleScheduleValidation(t *testing.T) {
 	}
 }
 
+func TestPeopleScheduleRangeBoundaryAccepted(t *testing.T) {
+	f, acmeID := peopleFixture(t)
+	provider := &scheduleMockProvider{MockProvider: mocks.NewMockProvider(t), MockScheduleReader: mocks.NewMockScheduleReader(t)}
+	provider.MockProvider.EXPECT().Close().Return(nil).Maybe()
+	provider.MockScheduleReader.EXPECT().ReadSchedule(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(&calendar.Schedule{Access: calendar.ScheduleUnavailable}, nil)
+	f.registry.Register(schedulePeopleFactory(t, acmeID, provider))
+
+	from := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+	to := from.Add(maxScheduleRangeDays * 24 * time.Hour)
+	out := routeAndRead(t, Request{ID: 1, Method: "people.schedule", Params: map[string]any{
+		"email": "alice@acme.com", "from": from.Format(time.RFC3339), "to": to.Format(time.RFC3339),
+	}}, f.deps)
+	assert.Empty(t, out["error"], "exactly %d days must be accepted", maxScheduleRangeDays)
+}
+
 func TestPeopleScheduleDomainMatchBuildsAccount(t *testing.T) {
-	f, _ := peopleFixture(t)
+	f, acmeID := peopleFixture(t)
 
 	provider := &scheduleMockProvider{MockProvider: mocks.NewMockProvider(t), MockScheduleReader: mocks.NewMockScheduleReader(t)}
 	provider.MockProvider.EXPECT().Close().Return(nil).Maybe()
@@ -104,12 +133,15 @@ func TestPeopleScheduleDomainMatchBuildsAccount(t *testing.T) {
 			Start: time.Date(2026, 9, 2, 10, 0, 0, 0, time.UTC),
 			End:   time.Date(2026, 9, 2, 11, 0, 0, 0, time.UTC),
 		}}}, nil)
-	f.register(t, calendar.AccountGoogle, provider)
+	// alice@acme.com domain-matches the acme account, not gmail (the first
+	// account, and the fallback if domain matching were broken): registering
+	// the factory to build only for acmeID proves which account was chosen.
+	f.registry.Register(schedulePeopleFactory(t, acmeID, provider))
 
 	result := resultOf(t, routeAndRead(t, Request{ID: 1, Method: "people.schedule", Params: map[string]any{
 		"email": "alice@acme.com", "from": "2026-09-01T00:00:00Z", "to": "2026-09-08T00:00:00Z",
 	}}, f.deps))
-	assert.Equal(t, "me@acme.com", result["accountId"])
+	assert.Equal(t, acmeID, result["accountId"])
 	assert.Equal(t, "busy", result["status"])
 	busy := result["busy"].([]any)
 	require.Len(t, busy, 1)
@@ -121,7 +153,7 @@ func TestPeopleScheduleScopeAndReauthReconnect(t *testing.T) {
 		"dead token":    calendar.ErrReauthRequired,
 	} {
 		t.Run(name, func(t *testing.T) {
-			f, _ := peopleFixture(t)
+			f, acmeID := peopleFixture(t)
 			provider := &scheduleMockProvider{MockProvider: mocks.NewMockProvider(t), MockScheduleReader: mocks.NewMockScheduleReader(t)}
 			provider.MockProvider.EXPECT().Close().Return(nil).Maybe()
 			provider.MockScheduleReader.EXPECT().ReadSchedule(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, providerErr)
@@ -131,7 +163,10 @@ func TestPeopleScheduleScopeAndReauthReconnect(t *testing.T) {
 				"email": "alice@acme.com", "from": "2026-09-01T00:00:00Z", "to": "2026-09-08T00:00:00Z",
 			}}, f.deps))
 			assert.Equal(t, "reconnect", result["status"])
-			assert.Equal(t, "me@acme.com", result["accountId"])
+			assert.Equal(t, acmeID, result["accountId"])
+			assert.Equal(t, "", result["name"])
+			assert.Empty(t, result["events"].([]any))
+			assert.Empty(t, result["busy"].([]any))
 		})
 	}
 }
@@ -149,12 +184,22 @@ func TestPeopleScheduleProviderWithoutScheduleReader(t *testing.T) {
 }
 
 func TestPeopleScheduleOwnerMatch(t *testing.T) {
-	f, _ := peopleFixture(t)
+	f, acmeID := peopleFixture(t)
 	ctx := context.Background()
 
-	visibleCal, err := f.repo.UpsertCalendar(ctx, repo.UpsertCalendarInput{AccountID: "me@acme.com", RemoteID: "primary", Name: "Work", Hidden: false})
+	visibleCal, err := f.repo.UpsertCalendar(ctx, repo.UpsertCalendarInput{AccountID: acmeID, RemoteID: "primary", Name: "Work", Hidden: false})
 	require.NoError(t, err)
-	hiddenCal, err := f.repo.UpsertCalendar(ctx, repo.UpsertCalendarInput{AccountID: "me@acme.com", RemoteID: "extra", Name: "Extra", Hidden: true})
+	hiddenCal, err := f.repo.UpsertCalendar(ctx, repo.UpsertCalendarInput{AccountID: acmeID, RemoteID: "extra", Name: "Extra", Hidden: true})
+	require.NoError(t, err)
+	// A calendar the owner subscribes to, showing alice's own events on the
+	// owner's calendar: its RemoteID is alice's address, not the owner's own
+	// account or "primary", so it must never be indexed as the owner's own.
+	subscribedCal, err := f.repo.UpsertCalendar(ctx, repo.UpsertCalendarInput{AccountID: acmeID, RemoteID: "alice@acme.com", Name: "Alice", Hidden: false})
+	require.NoError(t, err)
+	_, err = f.repo.UpsertEvent(ctx, repo.UpsertEventInput{
+		CalendarID: subscribedCal.ID, UID: "evt-mirror", Summary: "Mirror",
+		Start: time.Date(2026, 9, 5, 9, 0, 0, 0, time.UTC), End: time.Date(2026, 9, 5, 9, 30, 0, 0, time.UTC),
+	})
 	require.NoError(t, err)
 
 	// Single event: owner and colleague share the same Google event id.
@@ -207,9 +252,16 @@ func TestPeopleScheduleOwnerMatch(t *testing.T) {
 				},
 				ICalUID: "ical-hidden",
 			},
+			{
+				Event: calendar.Event{
+					UID: "evt-mirror", Summary: "Mirror",
+					Start: time.Date(2026, 9, 5, 9, 0, 0, 0, time.UTC), End: time.Date(2026, 9, 5, 9, 30, 0, 0, time.UTC),
+				},
+				ICalUID: "ical-mirror",
+			},
 		},
 	}, nil)
-	f.register(t, calendar.AccountGoogle, provider)
+	f.registry.Register(schedulePeopleFactory(t, acmeID, provider))
 
 	result := resultOf(t, routeAndRead(t, Request{ID: 1, Method: "people.schedule", Params: map[string]any{
 		"email": "alice@acme.com", "from": "2026-09-01T00:00:00Z", "to": "2026-09-21T00:00:00Z",
@@ -218,24 +270,32 @@ func TestPeopleScheduleOwnerMatch(t *testing.T) {
 	assert.Equal(t, "Alice Doe", result["name"])
 
 	events := resultEvents(t, result)
-	require.Len(t, events, 3)
+	require.Len(t, events, 4)
 
-	byUID := map[string]map[string]any{}
+	// Keyed by the JSON "key" field (ICalUID|start), not the event's own
+	// UID: several colleague occurrences can share a UID (a recurring
+	// series), so this map identifies rows, it does not identify owner
+	// events.
+	byKey := map[string]map[string]any{}
 	for _, e := range events {
-		byUID[e["key"].(string)] = e
+		byKey[e["key"].(string)] = e
 	}
 
-	single := byUID["ical-1|"+singleOwn.Start.UTC().Format(time.RFC3339)]
+	single := byKey["ical-1|"+singleOwn.Start.UTC().Format(time.RFC3339)]
 	require.NotNil(t, single)
 	assert.NotEmpty(t, single["ownEventId"])
 
-	weekly := byUID["ical-weekly|"+occurrenceStart.UTC().Format(time.RFC3339)]
+	weekly := byKey["ical-weekly|"+occurrenceStart.UTC().Format(time.RFC3339)]
 	require.NotNil(t, weekly)
 	assert.NotEmpty(t, weekly["ownEventId"], "recurring occurrence should match the expanded owner series")
 
-	hidden := byUID["ical-hidden|"+time.Date(2026, 9, 3, 9, 0, 0, 0, time.UTC).Format(time.RFC3339)]
+	hidden := byKey["ical-hidden|"+time.Date(2026, 9, 3, 9, 0, 0, 0, time.UTC).Format(time.RFC3339)]
 	require.NotNil(t, hidden)
 	assert.Nil(t, hidden["ownEventId"], "a match behind a hidden calendar must not be reported")
+
+	mirror := byKey["ical-mirror|"+time.Date(2026, 9, 5, 9, 0, 0, 0, time.UTC).Format(time.RFC3339)]
+	require.NotNil(t, mirror)
+	assert.Nil(t, mirror["ownEventId"], "a calendar subscribed from the colleague's own account must not match as the owner's own event")
 }
 
 func TestPeopleScheduleUnavailableStatus(t *testing.T) {

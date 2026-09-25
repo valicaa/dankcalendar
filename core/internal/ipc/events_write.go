@@ -429,13 +429,7 @@ func providerForCalendar(ctx context.Context, deps Deps, calendarID string) (cal
 		return nil, calendar.Calendar{}, fmt.Errorf("calendar %q is read-only", entCal.Name)
 	}
 
-	domAcc := calendar.Account{
-		ID:          entAcc.ID,
-		Kind:        calendar.AccountKind(entAcc.Kind),
-		DisplayName: entAcc.DisplayName,
-		Settings:    entAcc.Settings,
-	}
-	provider, err := deps.Registry.Build(ctx, domAcc, deps.Secrets)
+	provider, err := deps.Registry.Build(ctx, domainAccount(entAcc), deps.Secrets)
 	if err != nil {
 		return nil, calendar.Calendar{}, err
 	}
