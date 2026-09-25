@@ -459,17 +459,17 @@ Item {
                                 Rectangle {
                                     required property var modelData
                                     readonly property bool isSelected: root.isEventSelected(modelData)
-                                    readonly property bool awaitingReply: modelData.myResponse === "needs-action"
                                     width: parent.width
                                     height: root.eventChipHeight
                                     radius: Theme.cornerRadiusXS
                                     clip: true
-                                    color: awaitingReply ? "transparent" : Theme.withAlpha(modelData.color, isSelected ? 0.32 : 0.18)
-                                    border.color: isSelected ? Theme.primary : (awaitingReply ? modelData.color : "transparent")
-                                    border.width: isSelected ? 2 : (awaitingReply ? 1 : 0)
+                                    opacity: Theme.rsvpFaded(modelData.myResponse)
+                                    color: Theme.rsvpFillColor(modelData.myResponse, modelData.color)
+                                    border.color: isSelected ? Theme.primary : Theme.rsvpBorderColor(modelData.myResponse, modelData.color)
+                                    border.width: isSelected ? 2 : Theme.rsvpBorderWidth(modelData.myResponse)
 
                                     TentativeHatch {
-                                        visible: parent.modelData.myResponse === "tentative"
+                                        visible: Theme.rsvpHatchVisible(parent.modelData.myResponse)
                                         stripeColor: parent.modelData.color
                                     }
 
@@ -485,7 +485,7 @@ Item {
                                             width: 3
                                             height: 12
                                             radius: Theme.fullRadius(width, height)
-                                            color: parent.parent.modelData.color
+                                            color: Theme.rsvpDotColor(parent.parent.modelData.myResponse, parent.parent.modelData.color)
                                             anchors.verticalCenter: parent.verticalCenter
                                         }
 
@@ -493,7 +493,8 @@ Item {
                                             anchors.verticalCenter: parent.verticalCenter
                                             text: parent.parent.modelData.title
                                             font.pixelSize: 11
-                                            color: Theme.surfaceText
+                                            color: Theme.rsvpTextColor(parent.parent.modelData.myResponse, parent.parent.modelData.color)
+                                            font.strikeout: Theme.rsvpStrikeout(parent.parent.modelData.myResponse)
                                             wrapMode: Text.WordWrap
                                             maximumLineCount: SettingsData.monthEventTitleLines
                                             elide: Text.ElideRight
