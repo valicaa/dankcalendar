@@ -61,7 +61,7 @@ body:
     id: risks
     attributes:
       label: Risks
-      description: "Callers/data touched, then the layers-touched line below with [x] for every layer touched, or for docs/tooling replace the line with exactly `Layers touched: none`."
+      description: "Callers/data touched, then the layers-touched line below with [x] for every layer touched, or for no layer touched (fork tooling, docs, CI, packaging, build) replace the line with exactly `Layers touched: none`."
       placeholder: |
         Layers touched: [ ] QML  [ ] UI setting  [ ] IPC  [ ] DB migration  [ ] provider  [ ] background engine  [ ] HTTP/CLI
     validations:

@@ -13,10 +13,10 @@ starts as an issue on `valicaa/dankcalendar` built from the template below.
 Before drafting, confirm the change is needed:
 1. Feature or chore: send `dcal-scout` to check whether the capability already exists in code
    or settings.
-2. Bug: check whether it's already fixed — `git fetch upstream && git log master
-   upstream/master --oneline -i --grep "<keyword>"`, plus closed issues on both repos. If the
-   fix is only on `upstream/master`, offer `sync-upstream` instead of filing. The underlying
-   capability existing is expected for a bug report; it isn't a reason to stop.
+2. Bug: check whether it's already fixed — `git fetch upstream && git log master..upstream/master
+   --oneline -i --grep "<keyword>"` (upstream-only: offer `sync-upstream`) and `git log master
+   --oneline -i --grep "<keyword>"` (already on master: tell the user), plus closed issues on
+   both repos. The underlying capability existing is expected for a bug report; not a stop reason.
 3. All types: search both repos for a duplicate issue — `gh issue list -R valicaa/dankcalendar
    --state all --search "<keywords>"` and `gh issue list -R AvengeMedia/dankcalendar --state all
    --search "<keywords>"`. Ignore the fork's closed issues titled `TEST …` (any TEST-prefixed
@@ -61,8 +61,8 @@ the Quality checklist's `##`/`###` rule).
 ## Layers-touched tick list
 
 Used in Risks and the forms' Risks field: one line, exactly this shape, `[x]` for each layer
-touched (at least one ticked), or for pure fork tooling the whole line replaced with exactly
-`Layers touched: none`:
+touched (at least one ticked), or for no layer touched (fork tooling, docs, CI, packaging,
+build) the whole line replaced with exactly `Layers touched: none`:
 
 `Layers touched: [ ] QML  [ ] UI setting  [ ] IPC  [ ] DB migration  [ ] provider  [ ] background engine  [ ] HTTP/CLI`
 
@@ -84,7 +84,7 @@ drafting. Anything still unknown after asking follows the `Unknown:` rule above 
 ## Title, labels, slug
 
 Title: `area: lowercase summary`, no trailing period. `area` is spelled the way upstream spells
-it, in lowercase (`caldav:`, not `CalDAV:`); the title-case rule applies to the summary, where
+it, in lowercase (`caldav:`, not `CalDAV:`); the lowercase rule applies to the summary, where
 proper nouns and acronyms keep their case as upstream does: `Google`, `CalDAV`, `ICS`, `DST`.
 `area` is the same open vocabulary as commit subjects — use the most specific area upstream uses
 (e.g. `providers/google` is fine) — upstream's most-used areas: `ui`, `i18n`, `core`,
@@ -112,8 +112,8 @@ T-shirt size:
 - Raise to L for any DB migration or a new provider, regardless of the base.
 - Lower to S when the whole change is under 1h, adds no migration and no new provider,
   regardless of the base.
-- Fork tooling (`Layers touched: none`) is sized by effort instead: <1h = S, up to 1 day = M,
-  more = L.
+- No layer touched (fork tooling, docs, CI, packaging, build) (`Layers touched: none`) is sized
+  by effort instead: <1h = S, up to 1 day = M, more = L.
 - A bug whose root cause is still unknown gets a provisional size, marked `(provisional)` —
   re-size once the cause is known.
 - A shared core package with no layer of its own (e.g. `internal/recurrence`, `icalconv`)
@@ -198,7 +198,7 @@ develop`) while a question to the submitter is still open.
       with Then = the expected (fixed) result
 - [ ] Constraints includes `Upstream-worthy: yes` or `Upstream-worthy: no` on its own line
 - [ ] the layers-touched line is present with at least one `[x]`, or is exactly `Layers touched:
-      none` for fork tooling
+      none` for no layer touched (fork tooling, docs, CI, packaging, build)
 - [ ] every Acceptance item is checkable and names its scenario or constraint
 - [ ] no `Unknown:` item that an Acceptance item depends on
 - [ ] Size matches the rule (Size above) and states the skipped-phase note (or that none apply)
