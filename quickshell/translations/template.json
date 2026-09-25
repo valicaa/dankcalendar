@@ -2,14 +2,14 @@
   {
     "term": "%1 AM",
     "translation": "",
-    "context": "core hours dropdown hour label, morning | morning hour label in time gutter",
+    "context": "morning hour label in time gutter",
     "reference": "",
     "comment": ""
   },
   {
     "term": "%1 PM",
     "translation": "",
-    "context": "afternoon hour label in time gutter | core hours dropdown hour label, afternoon",
+    "context": "afternoon hour label in time gutter",
     "reference": "",
     "comment": ""
   },
@@ -408,7 +408,7 @@
   {
     "term": "Add account",
     "translation": "",
-    "context": "account add modal header title | account add modal window title | add account button on accounts page | sidebar button to add a provider account",
+    "context": "account add modal header title | account add modal window title | add account button on accounts page | sidebar button to add a provider account | toast action to re-add an account that failed to reconnect",
     "reference": "",
     "comment": ""
   },
@@ -528,6 +528,13 @@
     "term": "All-day reminder timing",
     "translation": "",
     "context": "per-calendar all-day timing override label",
+    "reference": "",
+    "comment": ""
+  },
+  {
+    "term": "Already added",
+    "translation": "",
+    "context": "people search validation error for a duplicate address",
     "reference": "",
     "comment": ""
   },
@@ -668,6 +675,13 @@
     "term": "Balanced",
     "translation": "",
     "context": "spring bounce option",
+    "reference": "",
+    "comment": ""
+  },
+  {
+    "term": "Busy",
+    "translation": "",
+    "context": "overlay label for a colleague's free/busy-only or private time block",
     "reference": "",
     "comment": ""
   },
@@ -903,6 +917,13 @@
     "comment": ""
   },
   {
+    "term": "Connect a Google account to look up people",
+    "translation": "",
+    "context": "sidebar people search hint shown when no Google account is connected",
+    "reference": "",
+    "comment": ""
+  },
+  {
     "term": "Connect any CalDAV-compatible server.",
     "translation": "",
     "context": "caldav provider description in picker",
@@ -1018,6 +1039,13 @@
     "term": "Could not read that file.",
     "translation": "",
     "context": "error when credentials file cannot be read",
+    "reference": "",
+    "comment": ""
+  },
+  {
+    "term": "Couldn't reconnect. Add the account again to sign in.",
+    "translation": "",
+    "context": "toast when reconnecting an account fails",
     "reference": "",
     "comment": ""
   },
@@ -1512,6 +1540,13 @@
     "comment": ""
   },
   {
+    "term": "End",
+    "translation": "",
+    "context": "event form end date and time label",
+    "reference": "",
+    "comment": ""
+  },
+  {
     "term": "Ends",
     "translation": "",
     "context": "recurrence end condition label",
@@ -1529,6 +1564,20 @@
     "term": "Enter a name for the calendar.",
     "translation": "",
     "context": "new calendar dialog validation when the name is empty",
+    "reference": "",
+    "comment": ""
+  },
+  {
+    "term": "Enter a valid email address",
+    "translation": "",
+    "context": "people search validation error for a malformed address",
+    "reference": "",
+    "comment": ""
+  },
+  {
+    "term": "Enter an email address",
+    "translation": "",
+    "context": "people search validation error for an empty field",
     "reference": "",
     "comment": ""
   },
@@ -1977,6 +2026,13 @@
     "term": "Maybe",
     "translation": "",
     "context": "RSVP tentative button",
+    "reference": "",
+    "comment": ""
+  },
+  {
+    "term": "Me",
+    "translation": "",
+    "context": "day-view lane header label for the owner's own column",
     "reference": "",
     "comment": ""
   },
@@ -2632,6 +2688,13 @@
     "comment": ""
   },
   {
+    "term": "People",
+    "translation": "",
+    "context": "sidebar section header for the colleague-schedule search",
+    "reference": "",
+    "comment": ""
+  },
+  {
     "term": "Pick a color source, palette, or your own theme file.",
     "translation": "",
     "context": "appearance settings section subtitle",
@@ -2781,7 +2844,14 @@
   {
     "term": "Reconnect",
     "translation": "",
-    "context": "account context menu action to re-authorize the account | account row action tooltip",
+    "context": "account context menu action to re-authorize the account | account row action tooltip | sidebar button that reconnects the account used for a colleague lookup",
+    "reference": "",
+    "comment": ""
+  },
+  {
+    "term": "Reconnect %1 to see availability",
+    "translation": "",
+    "context": "sidebar message shown when a colleague lookup needs the account reconnected",
     "reference": "",
     "comment": ""
   },
@@ -2844,7 +2914,7 @@
   {
     "term": "Remove",
     "translation": "",
-    "context": "confirm button for removing an account | remove account confirmation button",
+    "context": "confirm button for removing an account | person chip button to remove a colleague from the schedule search | remove account confirmation button",
     "reference": "",
     "comment": ""
   },
@@ -3020,6 +3090,13 @@
     "term": "Search failed",
     "translation": "",
     "context": "search status title when search errors",
+    "reference": "",
+    "comment": ""
+  },
+  {
+    "term": "Search for people",
+    "translation": "",
+    "context": "sidebar people search field placeholder",
     "reference": "",
     "comment": ""
   },
@@ -3283,6 +3360,13 @@
     "comment": ""
   },
   {
+    "term": "Start",
+    "translation": "",
+    "context": "event form start date and time label",
+    "reference": "",
+    "comment": ""
+  },
+  {
     "term": "Start at login",
     "translation": "",
     "context": "autostart setting label",
@@ -3451,6 +3535,13 @@
     "comment": ""
   },
   {
+    "term": "That's your own account",
+    "translation": "",
+    "context": "people search validation error when the address is one of the user's own accounts",
+    "reference": "",
+    "comment": ""
+  },
+  {
     "term": "The server refused to return some events or tasks, so they were skipped; the rest of the calendar is syncing.",
     "translation": "",
     "context": "account notice when a caldav server refuses individual calendar objects",
@@ -3587,6 +3678,13 @@
     "term": "Typography",
     "translation": "",
     "context": "appearance settings section label",
+    "reference": "",
+    "comment": ""
+  },
+  {
+    "term": "Unavailable",
+    "translation": "",
+    "context": "person chip status label when a colleague's schedule cannot be read",
     "reference": "",
     "comment": ""
   },

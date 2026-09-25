@@ -666,6 +666,30 @@ Singleton {
         return rsvpStrong(response) ? rsvpTextColor(response, color) : toColor(color);
     }
 
+    // rsvp*Color variants for a chip whose fill is not the calendar colour,
+    // such as a dimmed one: contrast is picked against bg.
+    function rsvpTextColorAgainst(response, bg) {
+        if (rsvpStrong(response))
+            return Contrast.readableOn(bg, onContainerCandidates);
+        return response === "declined" ? surfaceVariantText : surfaceText;
+    }
+
+    function rsvpMutedTextColorAgainst(response, bg) {
+        if (rsvpStrong(response))
+            return withAlpha(rsvpTextColorAgainst(response, bg), 0.75);
+        return surfaceVariantText;
+    }
+
+    function rsvpDotColorAgainst(response, bg, color) {
+        return rsvpStrong(response) ? rsvpTextColorAgainst(response, bg) : toColor(color);
+    }
+
+    // The on-screen colour of a strong fill dimmed to overlayDimOpacity over
+    // the views' Theme.surface.
+    function overlayDimComposite(color) {
+        return Qt.tint(surface, withAlpha(toColor(color), overlayDimOpacity));
+    }
+
     function rsvpHatchVisible(response) {
         return response === "tentative";
     }
@@ -674,10 +698,22 @@ Singleton {
         return response === "declined";
     }
 
+    // Fade for own chips while colleague schedules are shown.
+    readonly property real overlayDimOpacity: 0.35
+
     function blendAlpha(c, a) {
         if (!c || c.r === undefined)
             return Qt.rgba(0, 0, 0, 0);
         return Qt.rgba(c.r, c.g, c.b, c.a * a);
+    }
+
+    // Width of an AttendeeStripes group of `count` bars, for callers that
+    // keep chip text clear of it.
+    function attendeeStripesWidth(count, compact) {
+        if (count <= 1)
+            return 0;
+        const bar = compact ? 3 : 4;
+        return count * bar + (count - 1) + 4;
     }
 
     function blend(c1, c2, r) {

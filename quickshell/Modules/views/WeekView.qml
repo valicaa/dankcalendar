@@ -37,6 +37,7 @@ Item {
     signal eventRescheduleRequested(var event, int dayOffset, int minuteOffset)
     signal shiftDaysRequested(int days)
     signal createTimedRequested(date start, date end)
+    signal viewDayRequested(date day)
 
     function isEventSelected(event) {
         const key = DankCalService.eventKey(event);
@@ -253,13 +254,108 @@ Item {
         return DankCalService.eventsForDay(day).filter(ev => ev.allDay);
     }
 
+    // Colleague events with a title are drawn over the own chips, not in their
+    // lanes, so own chips keep their positions; they lane among themselves only.
+    function overlayTimedEventsFor(day) {
+        if (!PeopleService.active)
+            return [];
+        const out = [];
+        const list = PeopleService.overlayForDay(day);
+        for (let i = 0; i < list.length; i++) {
+            const item = list[i];
+            if (item.allDay || PeopleService.isBusyTime(item))
+                continue;
+            const slot = EventUtils.timedSlot(item, day, root.startHour, root.endHour);
+            if (!slot)
+                continue;
+            out.push(Object.assign({}, item, slot));
+        }
+        return DankCalService.layoutTimedEvents(out);
+    }
+
+    // Busy time is drawn as bands behind every chip. One person's overlapping
+    // spans merge into one band; bands of different people that overlap sit
+    // side by side so each label stays readable.
+    function busyBandsFor(day) {
+        if (!PeopleService.active)
+            return [];
+        const byPerson = {};
+        const order = [];
+        const list = PeopleService.overlayForDay(day);
+        for (let i = 0; i < list.length; i++) {
+            const item = list[i];
+            if (item.allDay || !PeopleService.isBusyTime(item))
+                continue;
+            const slot = EventUtils.timedSlot(item, day, root.startHour, root.endHour);
+            if (!slot)
+                continue;
+            if (!byPerson[item.email]) {
+                byPerson[item.email] = [];
+                order.push(item.email);
+            }
+            byPerson[item.email].push(Object.assign({}, item, slot));
+        }
+        const bands = [];
+        for (const email of order) {
+            const spans = byPerson[email].sort((a, b) => a.startHour - b.startHour);
+            let current = null;
+            for (const span of spans) {
+                if (current && span.startHour <= current.startHour + current.durationHours) {
+                    const end = Math.max(current.startHour + current.durationHours, span.startHour + span.durationHours);
+                    current.durationHours = end - current.startHour;
+                    if (span.end > current.end)
+                        current.end = span.end;
+                    continue;
+                }
+                current = span;
+                bands.push(current);
+            }
+        }
+        return DankCalService.layoutTimedEvents(bands);
+    }
+
+    readonly property int allDaySlots: 2
+
+    // One day's all-day row: at most allDaySlots items. Own items keep their
+    // slots and colleague items fill what is left, so an overlay never pushes
+    // an own event out; `hidden` counts the colleague-day items that did not
+    // fit. A day without colleague items is capped as before, with no count.
+    function allDayCellFor(day) {
+        const own = allDayEventsFor(day);
+        const overlay = overlayAllDayEventsFor(day);
+        const shownOwn = own.slice(0, allDaySlots);
+        const shownOverlay = overlay.slice().sort((a, b) => a.start - b.start).slice(0, allDaySlots - shownOwn.length);
+        return {
+            "items": PeopleService.mergeWithOwn(shownOwn, shownOverlay),
+            "hidden": overlay.length === 0 ? 0 : own.length + overlay.length - shownOwn.length - shownOverlay.length
+        };
+    }
+
+    function overlayAllDayEventsFor(day) {
+        if (!PeopleService.active)
+            return [];
+        return PeopleService.overlayForDay(day).filter(item => item.allDay);
+    }
+
     readonly property int allDayMax: {
         eventsVersion;
+        PeopleService.version;
         let max = 0;
         for (let i = -1; i <= 7; i++)
-            max = Math.max(max, allDayEventsFor(dayAt(i)).length);
-        return Math.min(max, 2);
+            max = Math.max(max, allDayCellFor(dayAt(i)).items.length);
+        return Math.min(max, allDaySlots);
     }
+
+    readonly property bool allDayOverflow: {
+        eventsVersion;
+        PeopleService.version;
+        for (let i = -1; i <= 7; i++)
+            if (allDayCellFor(dayAt(i)).hidden > 0)
+                return true;
+        return false;
+    }
+
+    readonly property real allDayOverflowHeight: 14
 
     function hiddenInfoFor(day) {
         const list = DankCalService.eventsForDay(day);
@@ -434,7 +530,7 @@ Item {
         Row {
             id: allDayRow
             width: parent.width
-            height: Math.max(1, root.allDayMax) * (root.allDayChipHeight + 4) + 6
+            height: Math.max(1, root.allDayMax) * (root.allDayChipHeight + 4) + 6 + (root.allDayOverflow ? root.allDayOverflowHeight : 0)
             clip: true
 
             Behavior on height {
@@ -466,9 +562,10 @@ Item {
                             required property int index
                             readonly property date day: root.dayAt(index - 1)
                             readonly property bool isDropTarget: root.eventDragging && day.getTime() === root.dragTargetTime
-                            readonly property var dayEvents: {
+                            readonly property var dayCell: {
                                 root.eventsVersion;
-                                return root.allDayEventsFor(root.dayAt(index - 1));
+                                PeopleService.version;
+                                return root.allDayCellFor(root.dayAt(index - 1));
                             }
 
                             width: root.dayWidth
@@ -491,62 +588,126 @@ Item {
 
                                 Repeater {
                                     model: ScriptModel {
-                                        values: allDayCell.dayEvents.slice(0, 2)
+                                        objectProp: "key"
+                                        values: allDayCell.dayCell.items
                                     }
 
-                                    EventChipBackground {
+                                    Loader {
+                                        id: allDayItem
                                         required property var modelData
-                                        readonly property bool isSelected: root.isEventSelected(modelData)
                                         width: parent.width
                                         height: root.allDayChipHeight
-                                        radius: Theme.cornerRadiusXS
-                                        clip: true
-                                        compact: true
-                                        response: modelData.myResponse
-                                        calendarColor: modelData.color
-                                        selected: isSelected
-                                        hovered: allDayMouseArea.containsMouse
+                                        sourceComponent: modelData.isOverlay ? colleagueAllDayComponent : ownAllDayComponent
 
-                                        StyledText {
-                                            anchors.left: parent.left
-                                            anchors.right: parent.right
-                                            anchors.leftMargin: 4
-                                            anchors.rightMargin: 4
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            text: parent.modelData.title
-                                            font.pixelSize: 10
-                                            color: parent.textColor
-                                            font.strikeout: parent.strikeout
-                                            wrapMode: Text.WordWrap
-                                            maximumLineCount: SettingsData.weekEventTitleLines
-                                            elide: Text.ElideRight
+                                        Component {
+                                            id: colleagueAllDayComponent
+
+                                            PersonEventChip {
+                                                id: overlayAllDayChip
+                                                readonly property var modelData: allDayItem.modelData.event
+                                                kind: modelData.kind
+                                                title: modelData.title
+                                                location: modelData.location
+                                                personColor: modelData.color
+                                                isPrivate: modelData.private
+                                                stripes: modelData.stripes
+                                                compact: true
+                                                titleLines: SettingsData.weekEventTitleLines
+                                                onEntered: chipTooltip.show(PeopleService.tooltipFor(modelData), overlayAllDayChip)
+                                                onExited: chipTooltip.hide()
+                                            }
                                         }
 
-                                        EventMouseArea {
-                                            id: allDayMouseArea
-                                            anchors.fill: parent
-                                            eventData: parent.modelData
-                                            dragEnabled: !parent.modelData.readOnly
-                                            onEntered: chipTooltip.show(root.eventTooltip(parent.modelData), parent)
-                                            onExited: chipTooltip.hide()
-                                            onActivated: (event, modifiers) => {
-                                                chipTooltip.hide();
-                                                root.eventClicked(event, modifiers);
-                                            }
-                                            onContextRequested: (event, anchorItem, x, y) => root.eventContextRequested(event, anchorItem, x, y)
-                                            onDragPressed: root.eventPointerDown = true
-                                            onDragStarted: (event, pointerItem, x, y) => root.startEventDrag(event, pointerItem, x, y)
-                                            onDragMoved: (event, pointerItem, x, y) => root.updateEventDrag(pointerItem, x, y)
-                                            onDropped: (event, pointerItem, x, y) => {
-                                                root.updateEventDrag(pointerItem, x, y);
-                                                root.finishEventDrag(event);
-                                            }
-                                            onDragReleased: {
-                                                root.eventPointerDown = false;
-                                                if (root.eventDragging)
-                                                    root.finishEventDrag(parent.modelData);
+                                        Component {
+                                            id: ownAllDayComponent
+
+                                            EventChipBackground {
+                                                id: ownAllDayChip
+                                                readonly property var modelData: allDayItem.modelData.event
+                                                readonly property bool isSelected: root.isEventSelected(modelData)
+                                                readonly property var stripeColors: PeopleService.active ? PeopleService.stripesFor(modelData) : []
+                                                radius: Theme.cornerRadiusXS
+                                                clip: true
+                                                compact: true
+                                                response: modelData.myResponse
+                                                calendarColor: modelData.color
+                                                selected: isSelected
+                                                dimmed: PeopleService.active && stripeColors.length === 0
+                                                hovered: allDayMouseArea.containsMouse
+
+                                                StyledText {
+                                                    anchors.left: parent.left
+                                                    anchors.right: parent.right
+                                                    anchors.leftMargin: 4
+                                                    anchors.rightMargin: ownAllDayChip.stripeColors.length > 1 ? Theme.attendeeStripesWidth(ownAllDayChip.stripeColors.length, true) + 6 : 4
+                                                    anchors.verticalCenter: parent.verticalCenter
+                                                    text: parent.modelData.title
+                                                    font.pixelSize: 10
+                                                    color: parent.textColor
+                                                    font.strikeout: parent.strikeout
+                                                    wrapMode: Text.WordWrap
+                                                    maximumLineCount: SettingsData.weekEventTitleLines
+                                                    elide: Text.ElideRight
+                                                }
+
+                                                AttendeeStripes {
+                                                    visible: ownAllDayChip.stripeColors.length > 1
+                                                    anchors.right: parent.right
+                                                    anchors.top: parent.top
+                                                    anchors.bottom: parent.bottom
+                                                    anchors.rightMargin: 3
+                                                    anchors.topMargin: 2
+                                                    anchors.bottomMargin: 2
+                                                    compact: true
+                                                    colors: ownAllDayChip.stripeColors
+                                                }
+
+                                                EventMouseArea {
+                                                    id: allDayMouseArea
+                                                    anchors.fill: parent
+                                                    eventData: parent.modelData
+                                                    dragEnabled: !parent.modelData.readOnly
+                                                    onEntered: chipTooltip.show(root.eventTooltip(parent.modelData), parent)
+                                                    onExited: chipTooltip.hide()
+                                                    onActivated: (event, modifiers) => {
+                                                        chipTooltip.hide();
+                                                        root.eventClicked(event, modifiers);
+                                                    }
+                                                    onContextRequested: (event, anchorItem, x, y) => root.eventContextRequested(event, anchorItem, x, y)
+                                                    onDragPressed: root.eventPointerDown = true
+                                                    onDragStarted: (event, pointerItem, x, y) => root.startEventDrag(event, pointerItem, x, y)
+                                                    onDragMoved: (event, pointerItem, x, y) => root.updateEventDrag(pointerItem, x, y)
+                                                    onDropped: (event, pointerItem, x, y) => {
+                                                        root.updateEventDrag(pointerItem, x, y);
+                                                        root.finishEventDrag(event);
+                                                    }
+                                                    onDragReleased: {
+                                                        root.eventPointerDown = false;
+                                                        if (root.eventDragging)
+                                                            root.finishEventDrag(parent.modelData);
+                                                    }
+                                                }
                                             }
                                         }
+                                    }
+                                }
+
+                                StyledText {
+                                    id: allDayMore
+                                    visible: allDayCell.dayCell.hidden > 0
+                                    width: parent.width
+                                    height: root.allDayOverflowHeight
+                                    leftPadding: 4
+                                    verticalAlignment: Text.AlignVCenter
+                                    text: I18n.tr("+%1 more", "overflow label in month grid day cell, %1 is the number of hidden events").arg(allDayCell.dayCell.hidden)
+                                    font.pixelSize: 10
+                                    color: Theme.surfaceVariantText
+                                    elide: Text.ElideRight
+
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: root.viewDayRequested(allDayCell.day)
                                     }
                                 }
                             }
@@ -689,6 +850,15 @@ Item {
                                     root.eventsVersion;
                                     return root.timedEventsFor(root.dayAt(index - 1));
                                 }
+                                readonly property var overlayTimedEvents: {
+                                    root.eventsVersion;
+                                    PeopleService.version;
+                                    return root.overlayTimedEventsFor(root.dayAt(index - 1));
+                                }
+                                readonly property var busyBands: {
+                                    PeopleService.version;
+                                    return root.busyBandsFor(root.dayAt(index - 1));
+                                }
 
                                 width: root.dayWidth
                                 height: parent.height
@@ -733,6 +903,26 @@ Item {
                                     onCreateRequested: (start, end) => root.createTimedRequested(start, end)
                                 }
 
+                                Repeater {
+                                    model: ScriptModel {
+                                        values: dayColumn.busyBands
+                                    }
+
+                                    BusyBand {
+                                        id: busyBand
+                                        required property var modelData
+                                        readonly property real bandWidth: (parent.width - 2) / modelData.columns
+                                        x: 1 + modelData.column * bandWidth
+                                        y: modelData.startHour * root.hourHeight
+                                        width: bandWidth
+                                        height: modelData.durationHours * root.hourHeight
+                                        personColor: modelData.color
+                                        label: PeopleService.bandLabel(modelData)
+                                        onEntered: chipTooltip.show(PeopleService.tooltipFor(modelData), busyBand)
+                                        onExited: chipTooltip.hide()
+                                    }
+                                }
+
                                 DankIcon {
                                     visible: {
                                         root.eventsVersion;
@@ -751,8 +941,10 @@ Item {
                                     }
 
                                     EventChipBackground {
+                                        id: ownTimedChip
                                         required property var modelData
                                         readonly property bool isSelected: root.isEventSelected(modelData)
+                                        readonly property var stripeColors: PeopleService.active ? PeopleService.stripesFor(modelData) : []
                                         onIsSelectedChanged: {
                                             if (isSelected)
                                                 root.revealHours(modelData.startHour, modelData.durationHours);
@@ -768,11 +960,13 @@ Item {
                                         response: modelData.myResponse
                                         calendarColor: modelData.color
                                         selected: isSelected
+                                        dimmed: PeopleService.active && stripeColors.length === 0
                                         hovered: timedMouseArea.containsMouse
 
                                         Column {
                                             anchors.fill: parent
                                             anchors.margins: 4
+                                            anchors.rightMargin: ownTimedChip.stripeColors.length > 1 ? Theme.attendeeStripesWidth(ownTimedChip.stripeColors.length, false) + 6 : 4
                                             spacing: 2
 
                                             StyledText {
@@ -797,6 +991,17 @@ Item {
                                                 maximumLineCount: 1
                                                 elide: Text.ElideRight
                                             }
+                                        }
+
+                                        AttendeeStripes {
+                                            visible: ownTimedChip.stripeColors.length > 1
+                                            anchors.right: parent.right
+                                            anchors.top: parent.top
+                                            anchors.bottom: parent.bottom
+                                            anchors.rightMargin: 3
+                                            anchors.topMargin: 3
+                                            anchors.bottomMargin: 3
+                                            colors: ownTimedChip.stripeColors
                                         }
 
                                         EventMouseArea {
@@ -824,6 +1029,35 @@ Item {
                                                     root.finishEventDrag(parent.modelData);
                                             }
                                         }
+                                    }
+                                }
+
+                                Repeater {
+                                    model: ScriptModel {
+                                        values: dayColumn.overlayTimedEvents
+                                    }
+
+                                    PersonEventChip {
+                                        id: overlayTimedChip
+                                        required property var modelData
+                                        readonly property real laneGap: 2
+                                        readonly property real usableWidth: parent.width - 8
+                                        readonly property real laneWidth: (usableWidth - (modelData.columns - 1) * laneGap) / modelData.columns
+                                        x: 4 + modelData.column * (laneWidth + laneGap)
+                                        y: modelData.startHour * root.hourHeight
+                                        z: 1
+                                        width: laneWidth
+                                        height: modelData.durationHours * root.hourHeight - 2
+                                        kind: modelData.kind
+                                        title: modelData.title
+                                        location: modelData.location
+                                        personColor: modelData.color
+                                        isPrivate: modelData.private
+                                        stripes: modelData.stripes || []
+                                        compact: modelData.durationHours < 1
+                                        titleLines: Math.min(SettingsData.weekEventTitleLines, Math.max(1, Math.floor(height / 14)))
+                                        onEntered: chipTooltip.show(PeopleService.tooltipFor(modelData), overlayTimedChip)
+                                        onExited: chipTooltip.hide()
                                     }
                                 }
 

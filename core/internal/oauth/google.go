@@ -22,6 +22,7 @@ func GoogleScopes() []string {
 	return []string{
 		gcalendar.CalendarEventsScope,
 		gcalendar.CalendarCalendarlistReadonlyScope,
+		gcalendar.CalendarEventsFreebusyScope,
 		gtasks.TasksScope,
 		"https://www.googleapis.com/auth/userinfo.email",
 		"openid",

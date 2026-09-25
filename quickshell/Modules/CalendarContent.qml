@@ -276,6 +276,7 @@ Item {
                     onEventRescheduleRequested: (ev, dayOffset, minuteOffset) => root.eventRescheduleRequested(ev, dayOffset, minuteOffset)
                     onShiftDaysRequested: days => root.shiftDaysRequested(days)
                     onCreateTimedRequested: (start, end) => root.createTimedRequested(start, end)
+                    onViewDayRequested: day => root.viewDayRequested(day)
                 }
             }
 

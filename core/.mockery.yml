@@ -11,6 +11,7 @@ packages:
       Provider: {}
       ProviderFactory: {}
       SecretStore: {}
+      ScheduleReader: {}
   github.com/AvengeMedia/dankcalendar/core/internal/reminders:
     interfaces:
       Sender: {}

@@ -14,11 +14,13 @@ Item {
     property date today: new Date()
     property var actionCalendar: null
     property var actionAccount: null
+    property bool peopleExpanded: true
     property bool calendarsExpanded: true
     property bool accountsExpanded: true
     property bool tasksExpanded: true
     property bool keyboardActive: false
     property int navIndex: -1
+    property string peopleFieldError: ""
 
     signal viewChanged(string view)
     signal todayRequested
@@ -26,6 +28,7 @@ Item {
     signal createTaskRequested
     signal taskClicked(var task)
     signal addAccountRequested
+    signal peopleSearchDismissed
 
     implicitWidth: 240
 
@@ -71,6 +74,11 @@ Item {
                 key: "view:" + viewItems[i].view,
                 view: viewItems[i].view
             });
+        items.push({
+            type: "section",
+            key: "section:people",
+            section: "people"
+        });
         items.push({
             type: "section",
             key: "section:calendars",
@@ -158,6 +166,8 @@ Item {
 
     function isSectionExpanded(name) {
         switch (name) {
+        case "people":
+            return peopleExpanded;
         case "calendars":
             return calendarsExpanded;
         case "tasks":
@@ -171,6 +181,9 @@ Item {
 
     function setSectionExpanded(name, expanded) {
         switch (name) {
+        case "people":
+            peopleExpanded = expanded;
+            break;
         case "calendars":
             calendarsExpanded = expanded;
             break;
@@ -544,6 +557,96 @@ Item {
             id: scrollColumn
             width: parent.width
             spacing: Theme.spacingL
+
+            Column {
+                width: parent.width
+                spacing: Theme.spacingS
+
+                SectionHeader {
+                    title: I18n.tr("People", "sidebar section header for the colleague-schedule search")
+                    expanded: root.peopleExpanded
+                    navKey: "section:people"
+                    onToggled: root.peopleExpanded = !root.peopleExpanded
+                }
+
+                Column {
+                    width: parent.width
+                    spacing: Theme.spacingS
+                    visible: root.peopleExpanded
+
+                    DankSearchField {
+                        id: peopleSearchField
+                        width: parent.width
+                        height: Theme.buttonHeightS
+                        leftIconName: "person_search"
+                        placeholderText: I18n.tr("Search for people", "sidebar people search field placeholder")
+                        enabled: PeopleService.hasGoogleAccount
+                        isError: root.peopleFieldError !== ""
+                        supportingText: !PeopleService.hasGoogleAccount ? I18n.tr("Connect a Google account to look up people", "sidebar people search hint shown when no Google account is connected") : root.peopleFieldError
+                        onAccepted: {
+                            const err = PeopleService.add(text);
+                            root.peopleFieldError = err;
+                            if (!err)
+                                text = "";
+                        }
+                        Keys.onReturnPressed: event => event.accepted = true
+                        Keys.onEnterPressed: event => event.accepted = true
+                        Keys.onEscapePressed: event => {
+                            PeopleService.clear();
+                            text = "";
+                            root.peopleFieldError = "";
+                            event.accepted = true;
+                            root.peopleSearchDismissed();
+                        }
+                    }
+
+                    Flow {
+                        width: parent.width
+                        spacing: Theme.spacingXS
+                        visible: PeopleService.people.length > 0
+
+                        Repeater {
+                            model: ScriptModel {
+                                values: PeopleService.people
+                            }
+
+                            PersonChip {
+                                required property var modelData
+                                person: modelData
+                                onRemoved: PeopleService.remove(modelData.email)
+                                onRetried: PeopleService.retry(modelData.email)
+                            }
+                        }
+                    }
+
+                    Column {
+                        width: parent.width
+                        spacing: Theme.spacingXS
+                        visible: PeopleService.reconnectPerson !== null
+
+                        readonly property var reconnectAccount: PeopleService.reconnectPerson ? DankCalService.accountById(PeopleService.reconnectPerson.accountId) : null
+                        readonly property string reconnectLabel: reconnectAccount ? (DankCalService.accountLabel(reconnectAccount) || reconnectAccount.id) : ""
+
+                        StyledText {
+                            width: parent.width
+                            wrapMode: Text.WordWrap
+                            font.pixelSize: Theme.fontSizeSmall
+                            color: Theme.surfaceVariantText
+                            text: I18n.tr("Reconnect %1 to see availability", "sidebar message shown when a colleague lookup needs the account reconnected").arg(parent.reconnectLabel)
+                        }
+
+                        DankButton {
+                            text: I18n.tr("Reconnect", "sidebar button that reconnects the account used for a colleague lookup")
+                            buttonHeight: Theme.buttonHeightXS
+                            focusPolicy: Qt.NoFocus
+                            onClicked: {
+                                if (parent.reconnectAccount)
+                                    DankCalService.reconnectAccount(parent.reconnectAccount, () => PeopleService.retryReconnect());
+                            }
+                        }
+                    }
+                }
+            }
 
             Column {
                 width: parent.width

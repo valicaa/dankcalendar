@@ -149,6 +149,12 @@ Item {
         return ev.title + " · " + SettingsData.formatTime(ev.start) + " – " + SettingsData.formatTime(ev.end) + (ev.calendar ? " · " + ev.calendar : "");
     }
 
+    function overlayEventsFor(day) {
+        if (!PeopleService.active)
+            return [];
+        return PeopleService.overlayForDay(day);
+    }
+
     readonly property int firstDayOfWeek: SettingsData.effectiveFirstDayOfWeek
     readonly property real weekGutter: SettingsData.showWeekNumbers ? 28 : 0
     readonly property real eventChipHeight: Math.max(18, SettingsData.monthEventTitleLines * 14 + 4)
@@ -313,22 +319,29 @@ Item {
                             root.eventsVersion;
                             return DankCalService.eventsForDay(cellDate);
                         }
+                        readonly property var cellOverlayEvents: {
+                            root.eventsVersion;
+                            PeopleService.version;
+                            return root.overlayEventsFor(cellDate);
+                        }
 
-                        // On today, events that have already ended yield their
+                        readonly property var mergedItems: PeopleService.mergeWithOwn(cellEvents, cellOverlayEvents)
+
+                        // On today, items that have already ended yield their
                         // chip slots to ones still upcoming; they fall into the
                         // "+N more" overflow rather than being shown first.
-                        readonly property var displayEvents: {
+                        readonly property var displayItems: {
                             if (!isToday)
-                                return cellEvents;
+                                return mergedItems;
                             const now = root.today.getTime();
                             const upcoming = [];
                             const ended = [];
-                            for (let i = 0; i < cellEvents.length; i++) {
-                                const ev = cellEvents[i];
-                                if (ev.allDay || ev.end.getTime() > now)
-                                    upcoming.push(ev);
+                            for (let i = 0; i < mergedItems.length; i++) {
+                                const item = mergedItems[i];
+                                if (item.event.allDay || item.event.end.getTime() > now)
+                                    upcoming.push(item);
                                 else
-                                    ended.push(ev);
+                                    ended.push(item);
                             }
                             return upcoming.concat(ended);
                         }
@@ -453,79 +466,122 @@ Item {
 
                             Repeater {
                                 model: ScriptModel {
-                                    values: dayCell.displayEvents.slice(0, dayCell.maxChips)
+                                    objectProp: "key"
+                                    values: dayCell.displayItems.slice(0, dayCell.maxChips)
                                 }
 
-                                EventChipBackground {
+                                Item {
+                                    id: chipDelegate
                                     required property var modelData
-                                    readonly property bool isSelected: root.isEventSelected(modelData)
+                                    readonly property bool isOverlay: modelData.isOverlay
+                                    readonly property var ev: modelData.event
+                                    readonly property var stripeColors: !isOverlay && PeopleService.active ? PeopleService.stripesFor(ev) : []
                                     width: parent.width
                                     height: root.eventChipHeight
-                                    radius: Theme.cornerRadiusXS
-                                    clip: true
-                                    compact: true
-                                    response: modelData.myResponse
-                                    calendarColor: modelData.color
-                                    selected: isSelected
-                                    hovered: chipMouseArea.containsMouse
 
-                                    Row {
-                                        anchors.left: parent.left
-                                        anchors.right: parent.right
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        anchors.leftMargin: 4
-                                        anchors.rightMargin: 4
-                                        spacing: 4
+                                    EventChipBackground {
+                                        id: ownChip
+                                        visible: !chipDelegate.isOverlay
+                                        anchors.fill: parent
+                                        radius: Theme.cornerRadiusXS
+                                        clip: true
+                                        compact: true
+                                        response: chipDelegate.isOverlay ? "" : chipDelegate.ev.myResponse
+                                        calendarColor: chipDelegate.isOverlay ? Theme.primary : chipDelegate.ev.color
+                                        selected: !chipDelegate.isOverlay && root.isEventSelected(chipDelegate.ev)
+                                        dimmed: !chipDelegate.isOverlay && PeopleService.active && chipDelegate.stripeColors.length === 0
+                                        hovered: !chipDelegate.isOverlay && chipMouseArea.containsMouse
 
-                                        Rectangle {
-                                            width: 3
-                                            height: 12
-                                            radius: Theme.fullRadius(width, height)
-                                            color: parent.parent.dotColor
+                                        Row {
+                                            anchors.left: parent.left
+                                            anchors.right: parent.right
                                             anchors.verticalCenter: parent.verticalCenter
+                                            anchors.leftMargin: 4
+                                            anchors.rightMargin: chipDelegate.stripeColors.length > 1 ? Theme.attendeeStripesWidth(chipDelegate.stripeColors.length, true) + 6 : 4
+                                            spacing: 4
+
+                                            Rectangle {
+                                                width: 3
+                                                height: 12
+                                                radius: Theme.fullRadius(width, height)
+                                                color: parent.parent.dotColor
+                                                anchors.verticalCenter: parent.verticalCenter
+                                            }
+
+                                            StyledText {
+                                                anchors.verticalCenter: parent.verticalCenter
+                                                text: chipDelegate.isOverlay ? "" : chipDelegate.ev.title
+                                                font.pixelSize: 11
+                                                color: parent.parent.textColor
+                                                font.strikeout: parent.parent.strikeout
+                                                wrapMode: Text.WordWrap
+                                                maximumLineCount: SettingsData.monthEventTitleLines
+                                                elide: Text.ElideRight
+                                                width: parent.width - 10
+                                            }
                                         }
 
-                                        StyledText {
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            text: parent.parent.modelData.title
-                                            font.pixelSize: 11
-                                            color: parent.parent.textColor
-                                            font.strikeout: parent.parent.strikeout
-                                            wrapMode: Text.WordWrap
-                                            maximumLineCount: SettingsData.monthEventTitleLines
-                                            elide: Text.ElideRight
-                                            width: parent.width - 10
+                                        AttendeeStripes {
+                                            visible: chipDelegate.stripeColors.length > 1
+                                            anchors.right: parent.right
+                                            anchors.top: parent.top
+                                            anchors.bottom: parent.bottom
+                                            anchors.rightMargin: 3
+                                            anchors.topMargin: 2
+                                            anchors.bottomMargin: 2
+                                            compact: true
+                                            colors: chipDelegate.stripeColors
+                                        }
+
+                                        EventMouseArea {
+                                            id: chipMouseArea
+                                            enabled: !chipDelegate.isOverlay
+                                            anchors.fill: parent
+                                            eventData: chipDelegate.ev
+                                            dragEnabled: !chipDelegate.isOverlay && !chipDelegate.ev.readOnly
+                                            onEntered: chipTooltip.show(root.eventTooltip(chipDelegate.ev), ownChip)
+                                            onExited: chipTooltip.hide()
+                                            onActivated: (event, modifiers) => {
+                                                chipTooltip.hide();
+                                                root.eventClicked(event, modifiers);
+                                            }
+                                            onContextRequested: (event, anchorItem, x, y) => root.eventContextRequested(event, anchorItem, x, y)
+                                            onDragPressed: root.eventPointerDown = true
+                                            onDragStarted: (event, pointerItem, x, y) => {
+                                                chipTooltip.hide();
+                                                root.draggedEvent = event;
+                                                root.eventDragging = true;
+                                                root.updateEventDrag(pointerItem, x, y);
+                                            }
+                                            onDragMoved: (event, pointerItem, x, y) => root.updateEventDrag(pointerItem, x, y)
+                                            onDropped: (event, pointerItem, x, y) => {
+                                                root.updateEventDrag(pointerItem, x, y);
+                                                root.finishEventDrag(event);
+                                            }
+                                            onDragReleased: {
+                                                root.eventPointerDown = false;
+                                                if (root.eventDragging)
+                                                    root.finishEventDrag(chipDelegate.ev);
+                                            }
                                         }
                                     }
 
-                                    EventMouseArea {
-                                        id: chipMouseArea
+                                    Loader {
+                                        id: colleagueChip
+                                        active: chipDelegate.isOverlay
                                         anchors.fill: parent
-                                        eventData: parent.modelData
-                                        dragEnabled: !parent.modelData.readOnly
-                                        onEntered: chipTooltip.show(root.eventTooltip(parent.modelData), parent)
-                                        onExited: chipTooltip.hide()
-                                        onActivated: (event, modifiers) => {
-                                            chipTooltip.hide();
-                                            root.eventClicked(event, modifiers);
-                                        }
-                                        onContextRequested: (event, anchorItem, x, y) => root.eventContextRequested(event, anchorItem, x, y)
-                                        onDragPressed: root.eventPointerDown = true
-                                        onDragStarted: (event, pointerItem, x, y) => {
-                                            chipTooltip.hide();
-                                            root.draggedEvent = event;
-                                            root.eventDragging = true;
-                                            root.updateEventDrag(pointerItem, x, y);
-                                        }
-                                        onDragMoved: (event, pointerItem, x, y) => root.updateEventDrag(pointerItem, x, y)
-                                        onDropped: (event, pointerItem, x, y) => {
-                                            root.updateEventDrag(pointerItem, x, y);
-                                            root.finishEventDrag(event);
-                                        }
-                                        onDragReleased: {
-                                            root.eventPointerDown = false;
-                                            if (root.eventDragging)
-                                                root.finishEventDrag(parent.modelData);
+
+                                        sourceComponent: PersonEventChip {
+                                            kind: chipDelegate.ev.kind
+                                            title: chipDelegate.ev.title
+                                            location: chipDelegate.ev.location
+                                            personColor: chipDelegate.ev.color
+                                            isPrivate: chipDelegate.ev.private
+                                            stripes: chipDelegate.ev.stripes
+                                            compact: true
+                                            titleLines: SettingsData.monthEventTitleLines
+                                            onEntered: chipTooltip.show(PeopleService.tooltipFor(chipDelegate.ev), colleagueChip)
+                                            onExited: chipTooltip.hide()
                                         }
                                     }
                                 }
@@ -533,8 +589,8 @@ Item {
 
                             StyledText {
                                 id: moreLabel
-                                visible: dayCell.displayEvents.length > dayCell.maxChips
-                                text: I18n.tr("+%1 more", "overflow label in month grid day cell, %1 is the number of hidden events").arg(dayCell.displayEvents.length - dayCell.maxChips)
+                                visible: dayCell.displayItems.length > dayCell.maxChips
+                                text: I18n.tr("+%1 more", "overflow label in month grid day cell, %1 is the number of hidden events").arg(dayCell.displayItems.length - dayCell.maxChips)
                                 font.pixelSize: 10
                                 color: Theme.surfaceVariantText
                                 width: parent.width
@@ -544,7 +600,7 @@ Item {
                                     cursorShape: Qt.PointingHandCursor
                                     onClicked: mouse => {
                                         mouse.accepted = true;
-                                        dayPopover.show(dayCell.cellDate, dayCell.displayEvents, moreLabel);
+                                        dayPopover.show(dayCell.cellDate, dayCell.displayItems, moreLabel);
                                     }
                                 }
                             }

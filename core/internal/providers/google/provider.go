@@ -131,9 +131,12 @@ func isServiceDisabled(err error) bool {
 // Tasks without blocking Calendar. Older account tokens lack the Tasks scope
 // because it was added after Calendar support shipped.
 func isOptionalServiceUnavailable(err error) bool {
-	if isServiceDisabled(err) {
-		return true
-	}
+	return isServiceDisabled(err) || isInsufficientScope(err)
+}
+
+// isInsufficientScope reports whether err is Google's 403 for a token that
+// lacks a required OAuth scope, as opposed to one denied access outright.
+func isInsufficientScope(err error) bool {
 	var apiErr *googleapi.Error
 	if !errors.As(err, &apiErr) || apiErr.Code != http.StatusForbidden {
 		return false

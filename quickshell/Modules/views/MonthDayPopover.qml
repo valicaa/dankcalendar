@@ -130,72 +130,130 @@ Item {
                 clip: true
                 spacing: 2
                 model: ScriptModel {
+                    objectProp: "key"
                     values: root.events
                 }
-                delegate: EventChipBackground {
-                    id: eventRow
+                // Rows are PeopleService.mergeWithOwn wrappers: {isOverlay, event}.
+                delegate: Item {
+                    id: rowDelegate
                     required property var modelData
-                    readonly property bool isSelected: root.isEventSelected(modelData)
+                    readonly property bool isOverlay: modelData.isOverlay
+                    readonly property var ev: modelData.event
+                    readonly property var stripeColors: !isOverlay && PeopleService.active ? PeopleService.stripesFor(ev) : []
                     width: ListView.view.width
                     height: root.rowHeight - Theme.groupedListGap
-                    radius: Theme.cornerRadiusXS
-                    response: modelData.myResponse
-                    calendarColor: modelData.color
-                    selected: isSelected
-                    hovered: rowHover.containsMouse
 
-                    Row {
-                        anchors.left: parent.left
-                        anchors.right: parent.right
-                        anchors.verticalCenter: parent.verticalCenter
-                        anchors.leftMargin: Theme.spacingXS
-                        anchors.rightMargin: Theme.spacingXS
-                        spacing: Theme.spacingS
+                    EventChipBackground {
+                        id: eventRow
+                        visible: !rowDelegate.isOverlay
+                        anchors.fill: parent
+                        radius: Theme.cornerRadiusXS
+                        response: rowDelegate.isOverlay ? "" : rowDelegate.ev.myResponse
+                        calendarColor: rowDelegate.isOverlay ? Theme.primary : rowDelegate.ev.color
+                        selected: !rowDelegate.isOverlay && root.isEventSelected(rowDelegate.ev)
+                        dimmed: !rowDelegate.isOverlay && PeopleService.active && rowDelegate.stripeColors.length === 0
+                        hovered: !rowDelegate.isOverlay && rowHover.containsMouse
 
-                        Rectangle {
-                            width: 3
-                            height: 22
-                            radius: Theme.fullRadius(width, height)
-                            color: eventRow.dotColor
+                        Row {
+                            anchors.left: parent.left
+                            anchors.right: parent.right
                             anchors.verticalCenter: parent.verticalCenter
+                            anchors.leftMargin: Theme.spacingXS
+                            anchors.rightMargin: rowDelegate.stripeColors.length > 1 ? Theme.attendeeStripesWidth(rowDelegate.stripeColors.length, true) + Theme.spacingXS : Theme.spacingXS
+                            spacing: Theme.spacingS
+
+                            Rectangle {
+                                width: 3
+                                height: 22
+                                radius: Theme.fullRadius(width, height)
+                                color: eventRow.dotColor
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+
+                            StyledText {
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: 64
+                                text: rowDelegate.isOverlay ? "" : (rowDelegate.ev.allDay ? I18n.tr("All day", "all-day marker in the month day-detail popover") : SettingsData.formatTime(rowDelegate.ev.start))
+                                font.pixelSize: Theme.fontSizeSmall
+                                color: eventRow.mutedTextColor
+                                isMonospace: true
+                                elide: Text.ElideRight
+                            }
+
+                            StyledText {
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: parent.width - 3 - 64 - Theme.spacingS * 2
+                                text: rowDelegate.isOverlay ? "" : rowDelegate.ev.title
+                                font.pixelSize: Theme.fontSizeSmall
+                                color: eventRow.textColor
+                                font.strikeout: eventRow.strikeout
+                                elide: Text.ElideRight
+                                maximumLineCount: 1
+                            }
                         }
 
-                        StyledText {
-                            anchors.verticalCenter: parent.verticalCenter
-                            width: 64
-                            text: eventRow.modelData.allDay ? I18n.tr("All day", "all-day marker in the month day-detail popover") : SettingsData.formatTime(eventRow.modelData.start)
-                            font.pixelSize: Theme.fontSizeSmall
-                            color: eventRow.mutedTextColor
-                            isMonospace: true
-                            elide: Text.ElideRight
+                        AttendeeStripes {
+                            visible: rowDelegate.stripeColors.length > 1
+                            anchors.right: parent.right
+                            anchors.top: parent.top
+                            anchors.bottom: parent.bottom
+                            anchors.rightMargin: 3
+                            anchors.topMargin: 3
+                            anchors.bottomMargin: 3
+                            compact: true
+                            colors: rowDelegate.stripeColors
                         }
 
-                        StyledText {
-                            anchors.verticalCenter: parent.verticalCenter
-                            width: parent.width - 3 - 64 - Theme.spacingS * 2
-                            text: eventRow.modelData.title
-                            font.pixelSize: Theme.fontSizeSmall
-                            color: eventRow.textColor
-                            font.strikeout: eventRow.strikeout
-                            elide: Text.ElideRight
-                            maximumLineCount: 1
+                        MouseArea {
+                            id: rowHover
+                            enabled: !rowDelegate.isOverlay
+                            anchors.fill: parent
+                            acceptedButtons: Qt.LeftButton | Qt.RightButton
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: mouse => {
+                                if (mouse.button === Qt.RightButton) {
+                                    root.eventContextRequested(rowDelegate.ev, eventRow, mouse.x, mouse.y);
+                                    return;
+                                }
+                                root.eventClicked(rowDelegate.ev, mouse.modifiers);
+                                if ((mouse.modifiers & (Qt.ControlModifier | Qt.MetaModifier | Qt.ShiftModifier)) === 0)
+                                    popup.close();
+                            }
                         }
                     }
 
-                    MouseArea {
-                        id: rowHover
+                    Loader {
+                        active: rowDelegate.isOverlay
                         anchors.fill: parent
-                        acceptedButtons: Qt.LeftButton | Qt.RightButton
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: mouse => {
-                            if (mouse.button === Qt.RightButton) {
-                                root.eventContextRequested(eventRow.modelData, eventRow, mouse.x, mouse.y);
-                                return;
+                        anchors.leftMargin: Theme.spacingXS
+                        anchors.rightMargin: Theme.spacingXS
+
+                        sourceComponent: Row {
+                            spacing: Theme.spacingS
+
+                            StyledText {
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: 64
+                                text: rowDelegate.ev.allDay ? I18n.tr("All day", "all-day marker in the month day-detail popover") : SettingsData.formatTime(rowDelegate.ev.start)
+                                font.pixelSize: Theme.fontSizeSmall
+                                color: Theme.surfaceVariantText
+                                isMonospace: true
+                                elide: Text.ElideRight
                             }
-                            root.eventClicked(eventRow.modelData, mouse.modifiers);
-                            if ((mouse.modifiers & (Qt.ControlModifier | Qt.MetaModifier | Qt.ShiftModifier)) === 0)
-                                popup.close();
+
+                            PersonEventChip {
+                                width: parent.width - 64 - Theme.spacingS
+                                height: rowDelegate.height
+                                kind: rowDelegate.ev.kind
+                                title: rowDelegate.ev.title
+                                location: rowDelegate.ev.location
+                                personColor: rowDelegate.ev.color
+                                isPrivate: rowDelegate.ev.private
+                                stripes: rowDelegate.ev.stripes
+                                compact: true
+                                titleLines: 1
+                            }
                         }
                     }
                 }
