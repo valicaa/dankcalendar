@@ -116,7 +116,7 @@ git rev-list --count origin/master..master     # must print 0
 gh issue develop <N> -R valicaa/dankcalendar --name <feat|fix|chore>/<N>-<slug> --base master --checkout
 ```
 
-Prefix by issue label: `feat/` for `enhancement`, `fix/` for `bug`, `chore/` otherwise.
+Prefix by issue label — see `write-issue`'s Branch name section.
 `gh issue develop` creates the branch on GitHub from origin's `master`: the pull brings a
 local `master` that is behind up to date (phases 4–5 diff against it), and a local-only commit
 would be missing from the branch. `master` never holds local commits, so a nonzero count or a

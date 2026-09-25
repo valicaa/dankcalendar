@@ -6,8 +6,8 @@ body:
   - type: markdown
     attributes:
       value: |
-        Fill in all 8 sections — see `.claude/skills/write-issue/SKILL.md` for the full template.
-        Title stays `area: lowercase summary`; fork-only work uses `docs` or `tooling`.
+        Fill in all 8 sections — see [write-issue](https://github.com/valicaa/dankcalendar/blob/master/.claude/skills/write-issue/SKILL.md)
+        for the full template. Title stays `area: lowercase summary`; fork-only work uses `docs` or `tooling`.
   - type: textarea
     id: problem
     attributes:
@@ -45,7 +45,7 @@ body:
       label: Constraints
       description: "Standing rules that bind this change, then one line — write \"Upstream-worthy: yes\" or \"Upstream-worthy: no\"."
       placeholder: |
-        Upstream-worthy: yes
+        Upstream-worthy: no
     validations:
       required: true
   - type: textarea
@@ -72,8 +72,8 @@ body:
       label: Size
       description: T-shirt size. Triage adds the matching size:S/size:M/size:L label separately — picking here doesn't apply it.
       options:
-        - "S (one layer, <1h)"
-        - "M (2–3 layers)"
-        - "L (cross-cutting, schema, new provider)"
+        - "S (0-1 layers, <1h, no migration)"
+        - "M (2-3 layers)"
+        - "L (4+ layers, cross-cutting, DB migration, or new provider)"
     validations:
       required: true

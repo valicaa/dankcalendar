@@ -44,9 +44,9 @@ in the main checkout, never with `isolation: worktree`.
 
 ## 2. Branch
 
-The PM creates the issue, the branch (`gh issue develop … --checkout`, from a clean, current
-`master`) and `tasks/<N>-<slug>/todo.md` with its `tasks: plan for <slug>` commit — exact
-commands in `project-manager` step 2. Phase 3 starts on that branch.
+The PM creates the issue (`write-issue`'s `gh issue create`), then the branch and
+`tasks/<N>-<slug>/todo.md` with its `tasks: plan for <slug>` commit — branch and todo commands
+in `project-manager` step 2. Phase 3 starts on that branch.
 
 ## 3. Implement
 

@@ -6,13 +6,13 @@ body:
   - type: markdown
     attributes:
       value: |
-        Fill in all 8 sections — see `.claude/skills/write-issue/SKILL.md` for the full template
-        and worked example. Title stays `area: lowercase summary` (e.g. `caldav: free/busy resets`).
+        Fill in all 8 sections — see [write-issue](https://github.com/valicaa/dankcalendar/blob/master/.claude/skills/write-issue/SKILL.md)
+        for the full template and worked example. Title stays `area: lowercase summary` (e.g. `caldav: free/busy resets`).
   - type: textarea
     id: problem
     attributes:
       label: Problem
-      description: The repro steps, then expected vs actual result. Include the account/provider and, if you have them, logs (`journalctl --user -u dcal`).
+      description: The repro steps, then expected vs actual result — how often, and since when. Include the account/provider and, if you have them, logs (`journalctl --user -u dcal`).
       placeholder: |
         Steps: 1) ... 2) ... 3) ...
         Expected: ...
@@ -38,7 +38,7 @@ body:
     id: scenarios
     attributes:
       label: Scenarios
-      description: One scenario must be the repro itself, as Given/When/Then with the EXPECTED (correct) result as Then — the actual, wrong result stays in Problem. "Scenario passes" means the bug is fixed.
+      description: 1-5 scenarios; one must be the repro itself, as Given/When/Then with the EXPECTED (correct) result as Then — the actual, wrong result stays in Problem. "Scenario passes" means the bug is fixed.
       placeholder: |
         1. Given <state>, When <action>, Then <expected, correct result>.
     validations:
@@ -76,8 +76,8 @@ body:
       label: Size
       description: T-shirt size. Triage adds the matching size:S/size:M/size:L label separately — picking here doesn't apply it.
       options:
-        - "S (one layer, <1h)"
-        - "M (2–3 layers)"
-        - "L (cross-cutting, schema, new provider)"
+        - "S (0-1 layers, <1h, no migration)"
+        - "M (2-3 layers)"
+        - "L (4+ layers, cross-cutting, DB migration, or new provider)"
     validations:
       required: true
