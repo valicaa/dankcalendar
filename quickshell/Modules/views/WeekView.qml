@@ -554,7 +554,7 @@ Item {
                                             anchors.left: parent.left
                                             anchors.right: parent.right
                                             anchors.leftMargin: 4
-                                            anchors.rightMargin: ownAllDayChip.stripeColors.length > 0 ? ownAllDayChip.stripeColors.length * 3 + 6 : 4
+                                            anchors.rightMargin: ownAllDayChip.stripeColors.length > 1 ? Theme.attendeeStripesWidth(ownAllDayChip.stripeColors.length, true) + 6 : 4
                                             anchors.verticalCenter: parent.verticalCenter
                                             text: parent.modelData.title
                                             font.pixelSize: 10
@@ -566,7 +566,7 @@ Item {
                                         }
 
                                         AttendeeStripes {
-                                            visible: ownAllDayChip.stripeColors.length > 0
+                                            visible: ownAllDayChip.stripeColors.length > 1
                                             anchors.right: parent.right
                                             anchors.top: parent.top
                                             anchors.bottom: parent.bottom
@@ -876,7 +876,7 @@ Item {
                                         Column {
                                             anchors.fill: parent
                                             anchors.margins: 4
-                                            anchors.rightMargin: ownTimedChip.stripeColors.length > 0 ? ownTimedChip.stripeColors.length * 3 + 6 : 4
+                                            anchors.rightMargin: ownTimedChip.stripeColors.length > 1 ? Theme.attendeeStripesWidth(ownTimedChip.stripeColors.length, false) + 6 : 4
                                             spacing: 2
 
                                             StyledText {
@@ -904,7 +904,7 @@ Item {
                                         }
 
                                         AttendeeStripes {
-                                            visible: ownTimedChip.stripeColors.length > 0
+                                            visible: ownTimedChip.stripeColors.length > 1
                                             anchors.right: parent.right
                                             anchors.top: parent.top
                                             anchors.bottom: parent.bottom

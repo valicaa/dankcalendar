@@ -160,7 +160,7 @@ Item {
                             anchors.right: parent.right
                             anchors.verticalCenter: parent.verticalCenter
                             anchors.leftMargin: Theme.spacingXS
-                            anchors.rightMargin: rowDelegate.stripeColors.length > 0 ? rowDelegate.stripeColors.length * 3 + Theme.spacingXS + 4 : Theme.spacingXS
+                            anchors.rightMargin: rowDelegate.stripeColors.length > 1 ? Theme.attendeeStripesWidth(rowDelegate.stripeColors.length, true) + Theme.spacingXS : Theme.spacingXS
                             spacing: Theme.spacingS
 
                             Rectangle {
@@ -194,7 +194,7 @@ Item {
                         }
 
                         AttendeeStripes {
-                            visible: rowDelegate.stripeColors.length > 0
+                            visible: rowDelegate.stripeColors.length > 1
                             anchors.right: parent.right
                             anchors.top: parent.top
                             anchors.bottom: parent.bottom

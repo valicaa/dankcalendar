@@ -546,7 +546,7 @@ Item {
                                             anchors.right: parent.right
                                             anchors.verticalCenter: parent.verticalCenter
                                             anchors.leftMargin: 4
-                                            anchors.rightMargin: chipDelegate.stripeColors.length > 0 ? chipDelegate.stripeColors.length * 3 + 6 : 4
+                                            anchors.rightMargin: chipDelegate.stripeColors.length > 1 ? Theme.attendeeStripesWidth(chipDelegate.stripeColors.length, true) + 6 : 4
                                             spacing: 4
 
                                             Rectangle {
@@ -571,7 +571,7 @@ Item {
                                         }
 
                                         AttendeeStripes {
-                                            visible: chipDelegate.stripeColors.length > 0
+                                            visible: chipDelegate.stripeColors.length > 1
                                             anchors.right: parent.right
                                             anchors.top: parent.top
                                             anchors.bottom: parent.bottom

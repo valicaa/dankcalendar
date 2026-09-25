@@ -19,6 +19,12 @@ Item {
     property bool isPrivate: false
     property bool compact: false
     property int titleLines: 1
+    // Week/Month chips are small enough to use the chip-sized defaults
+    // below; Day view's lanes are drawn at the same scale as the owner's
+    // Day chips (DayView's ownDayTimedChip), so it passes those sizes
+    // explicitly to match.
+    property real titleFontSize: 11
+    property real locationFontSize: 10
     // Colours of every participant when this item is a colleague-colleague
     // merge (PeopleService.overlayForDay's stripes); empty for an
     // unmerged item, which draws with no stripe.
@@ -31,8 +37,7 @@ Item {
     readonly property bool busyLook: kind !== "event" || isPrivate
     readonly property color fillColor: busyLook ? Theme.withAlpha(resolvedColor, 0.18) : Theme.rsvpFillColor("", resolvedColor)
     readonly property color textColor: busyLook ? Theme.surfaceText : Theme.rsvpTextColor("", resolvedColor)
-    readonly property real stripeBarWidth: compact ? 2 : 3
-    readonly property real stripesWidth: stripes.length === 0 ? 0 : stripes.length * stripeBarWidth + (stripes.length - 1)
+    readonly property real stripesWidth: Theme.attendeeStripesWidth(stripes.length, compact)
 
     Rectangle {
         anchors.fill: parent
@@ -52,7 +57,7 @@ Item {
         }
 
         AttendeeStripes {
-            visible: root.stripes.length > 0
+            visible: root.stripes.length > 1
             anchors.right: parent.right
             anchors.top: parent.top
             anchors.bottom: parent.bottom
@@ -66,7 +71,7 @@ Item {
         Column {
             anchors.fill: parent
             anchors.leftMargin: root.busyLook ? 7 : 4
-            anchors.rightMargin: root.stripes.length > 0 ? root.stripesWidth + 7 : 4
+            anchors.rightMargin: root.stripes.length > 1 ? root.stripesWidth + 7 : 4
             anchors.topMargin: 2
             anchors.bottomMargin: 2
             spacing: 2
@@ -74,7 +79,7 @@ Item {
             StyledText {
                 width: parent.width
                 text: root.busyLook ? I18n.tr("Busy", "overlay label for a colleague's free/busy-only or private time block") : root.title
-                font.pixelSize: 11
+                font.pixelSize: root.titleFontSize
                 font.weight: Theme.fontWeightMedium
                 color: root.textColor
                 wrapMode: Text.WordWrap
@@ -85,7 +90,7 @@ Item {
             StyledText {
                 visible: !root.busyLook && !root.compact && text !== ""
                 text: root.location
-                font.pixelSize: 10
+                font.pixelSize: root.locationFontSize
                 color: Theme.withAlpha(root.textColor, 0.75)
                 width: parent.width
                 maximumLineCount: 1

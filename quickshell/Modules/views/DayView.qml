@@ -363,7 +363,7 @@ Item {
                                 anchors.left: parent.left
                                 anchors.right: parent.right
                                 anchors.leftMargin: Theme.spacingS
-                                anchors.rightMargin: ownAllDayDayChip.stripeColors.length > 0 ? ownAllDayDayChip.stripeColors.length * 3 + Theme.spacingS + 4 : Theme.spacingS
+                                anchors.rightMargin: ownAllDayDayChip.stripeColors.length > 1 ? Theme.attendeeStripesWidth(ownAllDayDayChip.stripeColors.length, true) + Theme.spacingS : Theme.spacingS
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: allDayItemDelegate.modelData.title + "  ·  " + I18n.tr("all day", "suffix on all-day event chip in day view")
                                 font.pixelSize: Theme.fontSizeSmall
@@ -375,7 +375,7 @@ Item {
                             }
 
                             AttendeeStripes {
-                                visible: ownAllDayDayChip.stripeColors.length > 0
+                                visible: ownAllDayDayChip.stripeColors.length > 1
                                 anchors.right: parent.right
                                 anchors.top: parent.top
                                 anchors.bottom: parent.bottom
@@ -412,6 +412,7 @@ Item {
                             stripes: allDayItemDelegate.modelData.stripes || []
                             compact: true
                             titleLines: 1
+                            titleFontSize: Theme.fontSizeSmall
                             onEntered: chipTooltip.show(root.overlayTooltip(allDayItemDelegate.modelData), colleagueAllDayDayChip)
                             onExited: chipTooltip.hide()
                         }
@@ -587,7 +588,7 @@ Item {
                         hovered: timedMouseArea.containsMouse
 
                         AttendeeStripes {
-                            visible: ownDayTimedChip.stripeColors.length > 0
+                            visible: ownDayTimedChip.stripeColors.length > 1
                             anchors.right: parent.right
                             anchors.top: parent.top
                             anchors.bottom: parent.bottom
@@ -600,7 +601,7 @@ Item {
                         Row {
                             anchors.fill: parent
                             anchors.margins: Theme.spacingS
-                            anchors.rightMargin: ownDayTimedChip.stripeColors.length > 0 ? ownDayTimedChip.stripeColors.length * 3 + Theme.spacingS + 4 : Theme.spacingS
+                            anchors.rightMargin: ownDayTimedChip.stripeColors.length > 1 ? Theme.attendeeStripesWidth(ownDayTimedChip.stripeColors.length, false) + Theme.spacingS : Theme.spacingS
                             spacing: Theme.spacingS
 
                             Rectangle {
@@ -705,6 +706,8 @@ Item {
                         stripes: modelData.stripes || []
                         compact: modelData.durationHours < 1
                         titleLines: Math.max(1, Math.floor(height / 14))
+                        titleFontSize: Theme.fontSizeMedium
+                        locationFontSize: Theme.fontSizeSmall
                         onEntered: chipTooltip.show(root.overlayTooltip(modelData), colleagueDayTimedChip)
                         onExited: chipTooltip.hide()
                     }

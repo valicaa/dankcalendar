@@ -274,6 +274,8 @@ Singleton {
                 for (const b of p.busy) {
                     if (_dayKeyOf(b.start) !== dayKey)
                         continue;
+                    // Busy spans never merge (no id to merge on), so they
+                    // never carry a stripe.
                     busyItems.push({
                         "overlay": true,
                         "kind": "busy",
@@ -283,13 +285,19 @@ Singleton {
                         "end": b.end,
                         "allDay": false,
                         "color": p.color,
-                        "stripes": [p.color],
+                        "stripes": [],
                         "email": p.email
                     });
                 }
             }
         }
-        return groups.concat(busyItems);
+        // A group that ended up with only its creator's color never
+        // actually merged with anyone; drop its stripe too so an unmerged
+        // colleague event draws with none, matching a busy item.
+        const merged = groups.map(g => g.stripes.length > 1 ? g : Object.assign({}, g, {
+                    "stripes": []
+                }));
+        return merged.concat(busyItems);
     }
 
     // One person's items for a day, for the Day-view lanes (phase 5). A
