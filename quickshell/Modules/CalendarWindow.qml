@@ -748,6 +748,7 @@ FloatingWindow {
                     onCreateTaskRequested: window.openCreateTask()
                     onTaskClicked: task => window.openTaskDetails(task)
                     onAddAccountRequested: window.openAddAccount()
+                    onPeopleSearchDismissed: focusScope.forceActiveFocus()
                 }
 
                 Item {

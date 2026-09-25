@@ -605,7 +605,7 @@ Singleton {
             _loadedFrom = from;
             _loadedTo = to;
             const raw = (response.result || {}).events || [];
-            events = raw.map(e => _normalizeEvent(e));
+            events = raw.map(e => normalizeEvent(e));
             eventsUpdated();
         });
     }
@@ -618,7 +618,7 @@ Singleton {
         return new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
     }
 
-    function _normalizeEvent(e) {
+    function normalizeEvent(e) {
         const allDay = !!e.allDay;
         const start = allDay ? _dayBoundary(e.start) : new Date(e.start);
         let end = allDay ? _dayBoundary(e.end) : new Date(e.end);
@@ -650,7 +650,7 @@ Singleton {
     }
 
     function eventFromResult(raw) {
-        return decorateEvent(_normalizeEvent(raw || {}));
+        return decorateEvent(normalizeEvent(raw || {}));
     }
 
     // Card previews need plain text: descriptions arrive as HTML (Google web
@@ -805,7 +805,7 @@ Singleton {
             const raw = (response.result || {}).events || [];
             const out = [];
             for (let i = 0; i < raw.length; i++) {
-                const ev = _normalizeEvent(raw[i]);
+                const ev = normalizeEvent(raw[i]);
                 if (hidden[ev.calendarId])
                     continue;
                 if (ev.status === "cancelled")
