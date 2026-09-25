@@ -205,12 +205,13 @@ Item {
                 height: 22
                 radius: Theme.cornerRadiusXS
                 clip: true
-                color: modelData.myResponse === "needs-action" ? "transparent" : Theme.withAlpha(modelData.color, 0.22)
-                border.color: isSelected ? Theme.primary : modelData.color
-                border.width: isSelected ? 2 : 1
+                opacity: Theme.rsvpFaded(modelData.myResponse)
+                color: Theme.rsvpFillColor(modelData.myResponse, modelData.color)
+                border.color: isSelected ? Theme.primary : Theme.rsvpBorderColor(modelData.myResponse, modelData.color)
+                border.width: isSelected ? 2 : Theme.rsvpBorderWidth(modelData.myResponse)
 
                 TentativeHatch {
-                    visible: parent.modelData.myResponse === "tentative"
+                    visible: Theme.rsvpHatchVisible(parent.modelData.myResponse)
                     stripeColor: parent.modelData.color
                 }
 
@@ -222,7 +223,8 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     text: modelData.title + "  ·  " + I18n.tr("all day", "suffix on all-day event chip in day view")
                     font.pixelSize: Theme.fontSizeSmall
-                    color: Theme.surfaceText
+                    color: Theme.rsvpTextColor(modelData.myResponse, modelData.color)
+                    font.strikeout: Theme.rsvpStrikeout(modelData.myResponse)
                     wrapMode: Text.NoWrap
                     maximumLineCount: 1
                     elide: Text.ElideRight
@@ -384,12 +386,13 @@ Item {
                         height: modelData.durationHours * root.hourHeight - 4
                         radius: Theme.cornerRadiusS
                         clip: true
-                        color: modelData.myResponse === "needs-action" ? "transparent" : Theme.withAlpha(modelData.color, 0.22)
-                        border.color: isSelected ? Theme.primary : modelData.color
-                        border.width: isSelected ? 2 : 1
+                        opacity: Theme.rsvpFaded(modelData.myResponse)
+                        color: Theme.rsvpFillColor(modelData.myResponse, modelData.color)
+                        border.color: isSelected ? Theme.primary : Theme.rsvpBorderColor(modelData.myResponse, modelData.color)
+                        border.width: isSelected ? 2 : Theme.rsvpBorderWidth(modelData.myResponse)
 
                         TentativeHatch {
-                            visible: parent.modelData.myResponse === "tentative"
+                            visible: Theme.rsvpHatchVisible(parent.modelData.myResponse)
                             stripeColor: parent.modelData.color
                         }
 
@@ -403,7 +406,7 @@ Item {
                                 height: parent.height - 4
                                 anchors.verticalCenter: parent.verticalCenter
                                 radius: Theme.fullRadius(width, height)
-                                color: parent.parent.modelData.color
+                                color: Theme.rsvpDotColor(parent.parent.modelData.myResponse, parent.parent.modelData.color)
                             }
 
                             Column {
@@ -414,7 +417,8 @@ Item {
                                     text: parent.parent.parent.modelData.title
                                     font.pixelSize: Theme.fontSizeMedium
                                     font.weight: Theme.fontWeightMedium
-                                    color: Theme.surfaceText
+                                    color: Theme.rsvpTextColor(parent.parent.parent.modelData.myResponse, parent.parent.parent.modelData.color)
+                                    font.strikeout: Theme.rsvpStrikeout(parent.parent.parent.modelData.myResponse)
                                     width: parent.width
                                     wrapMode: Text.NoWrap
                                     maximumLineCount: 1
@@ -425,7 +429,7 @@ Item {
                                     visible: parent.parent.parent.modelData.durationHours >= 0.75
                                     text: parent.parent.parent.modelData.calendar
                                     font.pixelSize: Theme.fontSizeSmall
-                                    color: Theme.surfaceVariantText
+                                    color: Theme.rsvpMutedTextColor(parent.parent.parent.modelData.myResponse, parent.parent.parent.modelData.color)
                                     width: parent.width
                                     wrapMode: Text.NoWrap
                                     maximumLineCount: 1
@@ -436,7 +440,7 @@ Item {
                                     visible: text !== "" && parent.parent.parent.modelData.durationHours >= 1.25
                                     text: parent.parent.parent.modelData.location
                                     font.pixelSize: Theme.fontSizeSmall
-                                    color: Theme.surfaceVariantText
+                                    color: Theme.rsvpMutedTextColor(parent.parent.parent.modelData.myResponse, parent.parent.parent.modelData.color)
                                     width: parent.width
                                     wrapMode: Text.NoWrap
                                     maximumLineCount: 1
@@ -447,7 +451,7 @@ Item {
                                     visible: text !== "" && parent.parent.parent.modelData.durationHours >= 2
                                     text: DankCalService.descriptionPreview(parent.parent.parent.modelData)
                                     font.pixelSize: Theme.fontSizeSmall
-                                    color: Theme.surfaceVariantText
+                                    color: Theme.rsvpMutedTextColor(parent.parent.parent.modelData.myResponse, parent.parent.parent.modelData.color)
                                     width: parent.width
                                     wrapMode: Text.WordWrap
                                     maximumLineCount: 2
