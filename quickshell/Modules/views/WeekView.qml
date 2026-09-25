@@ -501,12 +501,13 @@ Item {
                                         height: root.allDayChipHeight
                                         radius: Theme.cornerRadiusXS
                                         clip: true
-                                        color: modelData.myResponse === "needs-action" ? "transparent" : Theme.withAlpha(modelData.color, 0.22)
-                                        border.color: isSelected ? Theme.primary : modelData.color
-                                        border.width: isSelected ? 2 : 1
+                                        opacity: Theme.rsvpFaded(modelData.myResponse)
+                                        color: Theme.rsvpFillColor(modelData.myResponse, modelData.color)
+                                        border.color: isSelected ? Theme.primary : Theme.rsvpBorderColor(modelData.myResponse, modelData.color)
+                                        border.width: isSelected ? 2 : Theme.rsvpBorderWidth(modelData.myResponse)
 
                                         TentativeHatch {
-                                            visible: parent.modelData.myResponse === "tentative"
+                                            visible: Theme.rsvpHatchVisible(parent.modelData.myResponse)
                                             stripeColor: parent.modelData.color
                                         }
 
@@ -518,7 +519,8 @@ Item {
                                             anchors.verticalCenter: parent.verticalCenter
                                             text: modelData.title
                                             font.pixelSize: 10
-                                            color: Theme.surfaceText
+                                            color: Theme.rsvpTextColor(modelData.myResponse, modelData.color)
+                                            font.strikeout: Theme.rsvpStrikeout(modelData.myResponse)
                                             wrapMode: Text.WordWrap
                                             maximumLineCount: SettingsData.weekEventTitleLines
                                             elide: Text.ElideRight
@@ -767,12 +769,13 @@ Item {
                                         height: modelData.durationHours * root.hourHeight - 2
                                         radius: Theme.cornerRadiusS
                                         clip: true
-                                        color: modelData.myResponse === "needs-action" ? "transparent" : Theme.withAlpha(modelData.color, 0.22)
-                                        border.color: isSelected ? Theme.primary : modelData.color
-                                        border.width: isSelected ? 2 : 1
+                                        opacity: Theme.rsvpFaded(modelData.myResponse)
+                                        color: Theme.rsvpFillColor(modelData.myResponse, modelData.color)
+                                        border.color: isSelected ? Theme.primary : Theme.rsvpBorderColor(modelData.myResponse, modelData.color)
+                                        border.width: isSelected ? 2 : Theme.rsvpBorderWidth(modelData.myResponse)
 
                                         TentativeHatch {
-                                            visible: parent.modelData.myResponse === "tentative"
+                                            visible: Theme.rsvpHatchVisible(parent.modelData.myResponse)
                                             stripeColor: parent.modelData.color
                                         }
 
@@ -785,7 +788,8 @@ Item {
                                                 text: modelData.title
                                                 font.pixelSize: 11
                                                 font.weight: Theme.fontWeightMedium
-                                                color: Theme.surfaceText
+                                                color: Theme.rsvpTextColor(modelData.myResponse, modelData.color)
+                                                font.strikeout: Theme.rsvpStrikeout(modelData.myResponse)
                                                 width: parent.width
                                                 wrapMode: Text.WordWrap
                                                 maximumLineCount: Math.min(SettingsData.weekEventTitleLines, Math.max(1, Math.floor(parent.height / 14)))
@@ -796,7 +800,7 @@ Item {
                                                 visible: text !== "" && modelData.durationHours >= 1
                                                 text: modelData.location
                                                 font.pixelSize: 10
-                                                color: Theme.surfaceVariantText
+                                                color: Theme.rsvpMutedTextColor(modelData.myResponse, modelData.color)
                                                 width: parent.width
                                                 wrapMode: Text.NoWrap
                                                 maximumLineCount: 1
