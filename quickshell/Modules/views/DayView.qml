@@ -45,12 +45,10 @@ Item {
     readonly property real hourHeight: 56
     readonly property real timeColumnWidth: 72
 
-    // Per-person lanes while PeopleService.active: the owner first (null),
-    // then each colleague with a schedule in chip order. A colleague still
-    // "loading"/"error"/"unavailable"/"reconnect" gets no column (matches
-    // PeopleService.lanes). With no people, laneOwners is [null] and every
-    // lane* helper below is the identity, so the layout is unchanged.
-    readonly property var laneOwners: PeopleService.lanes.length > 0 ? [null].concat(PeopleService.lanes) : [null]
+    // One lane per person with a schedule: the owner first (null), then
+    // colleagues in chip order. With nobody looked up there is one lane at
+    // x 0 spanning the full width.
+    readonly property var laneOwners: [null].concat(PeopleService.lanes)
     readonly property int laneCount: laneOwners.length
     readonly property real laneGap: 6
 
@@ -62,22 +60,7 @@ Item {
         return index * (laneWidth(totalWidth) + laneGap);
     }
 
-    function overlayPersonLabel(item) {
-        const person = PeopleService.people.find(p => p.email === item.email);
-        return (person && (person.name || person.email)) || item.email;
-    }
-
-    function overlayTooltip(item) {
-        const title = item.title || I18n.tr("Busy", "overlay label for a colleague's free/busy-only or private time block");
-        const suffix = (item.location ? " · " + item.location : "") + " · " + root.overlayPersonLabel(item);
-        if (item.allDay)
-            return title + " · " + I18n.tr("All day", "all-day marker in event tooltip") + suffix;
-        return title + " · " + SettingsData.formatTime(item.start) + " – " + SettingsData.formatTime(item.end) + suffix;
-    }
-
-    // One colleague lane's timed items, laid out through the same overlap
-    // logic as the owner's own lane, but independently: a lane's columns
-    // never depend on another lane's events.
+    // A colleague lane's timed items, laid out independently of other lanes.
     function laneTimedEvents(index) {
         const person = laneOwners[index];
         if (!person)
@@ -98,10 +81,7 @@ Item {
                 }));
     }
 
-    // Flattened across every colleague lane (index >= 1); each item still
-    // carries its own lane index plus that lane's own column/columns.
     readonly property var colleagueTimedEvents: {
-        eventsVersion;
         PeopleService.version;
         let out = [];
         for (let i = 1; i < laneCount; i++)
@@ -116,13 +96,13 @@ Item {
         return PeopleService.personItemsForDay(person.email, displayDate).filter(item => item.allDay);
     }
 
-    readonly property bool colleagueHasAllDay: {
+    readonly property int allDayRows: {
         eventsVersion;
         PeopleService.version;
-        for (let i = 1; i < laneCount; i++)
-            if (laneAllDayEvents(i).length > 0)
-                return true;
-        return false;
+        let rows = 0;
+        for (let i = 0; i < laneCount; i++)
+            rows = Math.max(rows, laneAllDayEvents(i).length);
+        return rows;
     }
 
     readonly property bool showsNow: today.getFullYear() === displayDate.getFullYear() && today.getMonth() === displayDate.getMonth() && today.getDate() === displayDate.getDate()
@@ -264,8 +244,7 @@ Item {
         }
     }
 
-    // Lane header (colour dot + name), shown only with a colleague-schedule
-    // overlay so a bare Day view (no people) is unchanged.
+    // Lane names, shown only while colleagues have lanes.
     Row {
         id: laneHeader
         anchors.top: coreHoursWarning.visible ? coreHoursWarning.bottom : parent.top
@@ -306,18 +285,16 @@ Item {
         }
     }
 
-    // All-day strip: one lane column per person while PeopleService.active,
-    // laid out with the same laneWidth/laneX geometry as the timed grid
-    // below. With no people, laneCount is 1 and this is a single column,
-    // identical to before.
-    Row {
+    // Lanes are placed by x rather than in a Row, which would close up
+    // around a lane with no all-day items and shift the next one left.
+    Item {
         id: allDayStrip
         anchors.top: laneHeader.visible ? laneHeader.bottom : (coreHoursWarning.visible ? coreHoursWarning.bottom : parent.top)
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.leftMargin: root.timeColumnWidth
-        spacing: root.laneGap
-        visible: root.allDayEvents.length > 0 || root.colleagueHasAllDay
+        height: root.allDayRows > 0 ? root.allDayRows * 24 - 2 : 0
+        visible: root.allDayRows > 0
 
         Repeater {
             model: root.laneCount
@@ -331,91 +308,92 @@ Item {
                     PeopleService.version;
                     return root.laneAllDayEvents(index);
                 }
+                x: root.laneX(allDayStrip.width, index)
                 width: root.laneWidth(allDayStrip.width)
                 spacing: 2
 
                 Repeater {
                     model: ScriptModel {
-                        values: allDayLane.laneEvents
+                        values: allDayLane.isOwn ? allDayLane.laneEvents : []
                     }
 
-                    Item {
-                        id: allDayItemDelegate
+                    EventChipBackground {
+                        id: ownAllDayDayChip
                         required property var modelData
-                        width: allDayLane.width
+                        readonly property bool isSelected: root.isEventSelected(modelData)
+                        readonly property var stripeColors: PeopleService.active ? PeopleService.stripesFor(modelData) : []
+                        width: parent.width
                         height: 22
+                        radius: Theme.cornerRadiusXS
+                        clip: true
+                        response: modelData.myResponse
+                        calendarColor: modelData.color
+                        selected: isSelected
+                        dimmed: PeopleService.active && stripeColors.length === 0
+                        hovered: allDayMouseArea.containsMouse
 
-                        EventChipBackground {
-                            id: ownAllDayDayChip
-                            visible: allDayLane.isOwn
-                            readonly property bool isSelected: root.isEventSelected(allDayItemDelegate.modelData)
-                            readonly property var stripeColors: PeopleService.active ? PeopleService.stripesFor(allDayItemDelegate.modelData) : []
-                            anchors.fill: parent
-                            radius: Theme.cornerRadiusXS
-                            clip: true
-                            response: allDayItemDelegate.modelData.myResponse
-                            calendarColor: allDayItemDelegate.modelData.color
-                            selected: isSelected
-                            dimmed: PeopleService.active && PeopleService.sharedWith(allDayItemDelegate.modelData).length === 0
-                            hovered: allDayMouseArea.containsMouse
-
-                            StyledText {
-                                anchors.left: parent.left
-                                anchors.right: parent.right
-                                anchors.leftMargin: Theme.spacingS
-                                anchors.rightMargin: ownAllDayDayChip.stripeColors.length > 1 ? Theme.attendeeStripesWidth(ownAllDayDayChip.stripeColors.length, true) + Theme.spacingS : Theme.spacingS
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: allDayItemDelegate.modelData.title + "  ·  " + I18n.tr("all day", "suffix on all-day event chip in day view")
-                                font.pixelSize: Theme.fontSizeSmall
-                                color: parent.textColor
-                                font.strikeout: parent.strikeout
-                                wrapMode: Text.NoWrap
-                                maximumLineCount: 1
-                                elide: Text.ElideRight
-                            }
-
-                            AttendeeStripes {
-                                visible: ownAllDayDayChip.stripeColors.length > 1
-                                anchors.right: parent.right
-                                anchors.top: parent.top
-                                anchors.bottom: parent.bottom
-                                anchors.rightMargin: 3
-                                anchors.topMargin: 3
-                                anchors.bottomMargin: 3
-                                compact: true
-                                colors: ownAllDayDayChip.stripeColors
-                            }
-
-                            EventMouseArea {
-                                id: allDayMouseArea
-                                anchors.fill: parent
-                                eventData: allDayItemDelegate.modelData
-                                onEntered: chipTooltip.show(root.eventTooltip(allDayItemDelegate.modelData), ownAllDayDayChip)
-                                onExited: chipTooltip.hide()
-                                onActivated: (event, modifiers) => {
-                                    chipTooltip.hide();
-                                    root.eventClicked(event, modifiers);
-                                }
-                                onContextRequested: (event, anchorItem, x, y) => root.eventContextRequested(event, anchorItem, x, y)
-                            }
+                        StyledText {
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            anchors.leftMargin: Theme.spacingS
+                            anchors.rightMargin: ownAllDayDayChip.stripeColors.length > 1 ? Theme.attendeeStripesWidth(ownAllDayDayChip.stripeColors.length, true) + Theme.spacingS : Theme.spacingS
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: ownAllDayDayChip.modelData.title + "  ·  " + I18n.tr("all day", "suffix on all-day event chip in day view")
+                            font.pixelSize: Theme.fontSizeSmall
+                            color: parent.textColor
+                            font.strikeout: parent.strikeout
+                            wrapMode: Text.NoWrap
+                            maximumLineCount: 1
+                            elide: Text.ElideRight
                         }
 
-                        PersonEventChip {
-                            id: colleagueAllDayDayChip
-                            visible: !allDayLane.isOwn
-                            anchors.fill: parent
-                            kind: allDayItemDelegate.modelData.kind
-                            title: allDayItemDelegate.modelData.title
-                            location: allDayItemDelegate.modelData.location
-                            personColor: allDayItemDelegate.modelData.color
-                            isPrivate: !!allDayItemDelegate.modelData.private
-                            stripes: allDayItemDelegate.modelData.stripes || []
+                        AttendeeStripes {
+                            visible: ownAllDayDayChip.stripeColors.length > 1
+                            anchors.right: parent.right
+                            anchors.top: parent.top
+                            anchors.bottom: parent.bottom
+                            anchors.rightMargin: 3
+                            anchors.topMargin: 3
+                            anchors.bottomMargin: 3
                             compact: true
-                            titleLines: 1
-                            titleFontSize: Theme.fontSizeSmall
-                            onEntered: chipTooltip.show(root.overlayTooltip(allDayItemDelegate.modelData), colleagueAllDayDayChip)
-                            onExited: chipTooltip.hide()
+                            colors: ownAllDayDayChip.stripeColors
                         }
+
+                        EventMouseArea {
+                            id: allDayMouseArea
+                            anchors.fill: parent
+                            eventData: ownAllDayDayChip.modelData
+                            onEntered: chipTooltip.show(root.eventTooltip(ownAllDayDayChip.modelData), ownAllDayDayChip)
+                            onExited: chipTooltip.hide()
+                            onActivated: (event, modifiers) => {
+                                chipTooltip.hide();
+                                root.eventClicked(event, modifiers);
+                            }
+                            onContextRequested: (event, anchorItem, x, y) => root.eventContextRequested(event, anchorItem, x, y)
+                        }
+                    }
+                }
+
+                Repeater {
+                    model: ScriptModel {
+                        values: allDayLane.isOwn ? [] : allDayLane.laneEvents
+                    }
+
+                    PersonEventChip {
+                        id: colleagueAllDayDayChip
+                        required property var modelData
+                        width: parent.width
+                        height: 22
+                        kind: modelData.kind
+                        title: modelData.title
+                        location: modelData.location
+                        personColor: modelData.color
+                        isPrivate: modelData.private
+                        compact: true
+                        titleLines: 1
+                        titleFontSize: Theme.fontSizeSmall
+                        onEntered: chipTooltip.show(PeopleService.tooltipFor(modelData), colleagueAllDayDayChip)
+                        onExited: chipTooltip.hide()
                     }
                 }
             }
@@ -499,9 +477,6 @@ Item {
                     }
                 }
 
-                // Lane separators, one per boundary between adjacent
-                // per-person columns; absent (no repeated items) when
-                // laneCount is 1.
                 Repeater {
                     model: Math.max(0, root.laneCount - 1)
 
@@ -678,9 +653,6 @@ Item {
                     }
                 }
 
-                // One PersonEventChip per colleague lane's timed item,
-                // laid out independently per lane (root.laneTimedEvents);
-                // read-only, matching Week/Month.
                 Repeater {
                     model: ScriptModel {
                         values: root.colleagueTimedEvents
@@ -702,13 +674,12 @@ Item {
                         title: modelData.title
                         location: modelData.location
                         personColor: modelData.color
-                        isPrivate: !!modelData.private
-                        stripes: modelData.stripes || []
+                        isPrivate: modelData.private
                         compact: modelData.durationHours < 1
                         titleLines: Math.max(1, Math.floor(height / 14))
                         titleFontSize: Theme.fontSizeMedium
                         locationFontSize: Theme.fontSizeSmall
-                        onEntered: chipTooltip.show(root.overlayTooltip(modelData), colleagueDayTimedChip)
+                        onEntered: chipTooltip.show(PeopleService.tooltipFor(modelData), colleagueDayTimedChip)
                         onExited: chipTooltip.hide()
                     }
                 }
