@@ -132,9 +132,7 @@ Item {
                 model: ScriptModel {
                     values: root.events
                 }
-                // model rows are {isOverlay, event} wrappers (MonthView.mergeDayItems):
-                // an own event row stays fully interactive; a colleague row
-                // (PersonEventChip) is read-only, matching the month cells.
+                // Rows are MonthView.mergeDayItems wrappers: {isOverlay, event}.
                 delegate: Item {
                     id: rowDelegate
                     required property var modelData
@@ -224,38 +222,37 @@ Item {
                         }
                     }
 
-                    Row {
-                        visible: rowDelegate.isOverlay
-                        anchors.left: parent.left
-                        anchors.right: parent.right
-                        anchors.verticalCenter: parent.verticalCenter
+                    Loader {
+                        active: rowDelegate.isOverlay
+                        anchors.fill: parent
                         anchors.leftMargin: Theme.spacingXS
                         anchors.rightMargin: Theme.spacingXS
-                        spacing: Theme.spacingS
 
-                        StyledText {
-                            anchors.verticalCenter: parent.verticalCenter
-                            width: 64
-                            text: rowDelegate.isOverlay ? (rowDelegate.ev.allDay ? I18n.tr("All day", "all-day marker in the month day-detail popover") : SettingsData.formatTime(rowDelegate.ev.start)) : ""
-                            font.pixelSize: Theme.fontSizeSmall
-                            color: Theme.surfaceVariantText
-                            isMonospace: true
-                            elide: Text.ElideRight
-                        }
+                        sourceComponent: Row {
+                            spacing: Theme.spacingS
 
-                        PersonEventChip {
-                            id: colleagueRow
-                            anchors.verticalCenter: parent.verticalCenter
-                            width: parent.width - 64 - Theme.spacingS
-                            height: parent.height
-                            kind: rowDelegate.isOverlay ? rowDelegate.ev.kind : "event"
-                            title: rowDelegate.isOverlay ? rowDelegate.ev.title : ""
-                            location: rowDelegate.isOverlay ? rowDelegate.ev.location : ""
-                            personColor: rowDelegate.isOverlay ? rowDelegate.ev.color : Theme.primary
-                            isPrivate: rowDelegate.isOverlay && !!rowDelegate.ev.private
-                            stripes: rowDelegate.isOverlay ? (rowDelegate.ev.stripes || []) : []
-                            compact: true
-                            titleLines: 1
+                            StyledText {
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: 64
+                                text: rowDelegate.ev.allDay ? I18n.tr("All day", "all-day marker in the month day-detail popover") : SettingsData.formatTime(rowDelegate.ev.start)
+                                font.pixelSize: Theme.fontSizeSmall
+                                color: Theme.surfaceVariantText
+                                isMonospace: true
+                                elide: Text.ElideRight
+                            }
+
+                            PersonEventChip {
+                                width: parent.width - 64 - Theme.spacingS
+                                height: rowDelegate.height
+                                kind: rowDelegate.ev.kind
+                                title: rowDelegate.ev.title
+                                location: rowDelegate.ev.location
+                                personColor: rowDelegate.ev.color
+                                isPrivate: rowDelegate.ev.private
+                                stripes: rowDelegate.ev.stripes
+                                compact: true
+                                titleLines: 1
+                            }
                         }
                     }
                 }

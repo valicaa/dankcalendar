@@ -149,40 +149,22 @@ Item {
         return ev.title + " · " + SettingsData.formatTime(ev.start) + " – " + SettingsData.formatTime(ev.end) + (ev.calendar ? " · " + ev.calendar : "");
     }
 
-    function overlayPersonLabel(item) {
-        const person = PeopleService.people.find(p => p.email === item.email);
-        return (person && (person.name || person.email)) || item.email;
-    }
-
-    function overlayTooltip(item) {
-        const title = item.title || I18n.tr("Busy", "overlay label for a colleague's free/busy-only or private time block");
-        const suffix = " · " + root.overlayPersonLabel(item);
-        if (item.allDay)
-            return title + " · " + I18n.tr("All day", "all-day marker in event tooltip") + suffix;
-        return title + " · " + SettingsData.formatTime(item.start) + " – " + SettingsData.formatTime(item.end) + suffix;
-    }
-
-    // Colleague-schedule overlay for one cell, drawn on top of the (faded)
-    // own chips rather than pushed below them.
     function overlayEventsFor(day) {
         if (!PeopleService.active)
             return [];
         return PeopleService.overlayForDay(day);
     }
 
-    // A Month cell is a list, not a time grid, so "colleague on top" means
-    // ordering, not overlap: one merged list of {isOverlay, event} wrappers,
-    // all-day first, then timed items interleaved by start time (colleague
-    // first on a tie). A shared meeting is never listed twice: the colleague
-    // copy of an event that matches one of the owner's own occurrences is
-    // already dropped by PeopleService.overlayForDay (section 4), so
-    // ownEvents is drawn in full here, undimmed and carrying stripes via
-    // PeopleService.stripesFor where it's shared.
+    // A cell is a list, so "colleague on top" means order: all-day items
+    // first, then timed items by start, a colleague first on a tie. A shared
+    // meeting is listed once, as the own event (overlayForDay leaves it out).
     function mergeDayItems(ownEvents, overlayEvents) {
         const own = ownEvents.map(ev => ({
                     "isOverlay": false,
                     "event": ev
                 }));
+        if (overlayEvents.length === 0)
+            return own;
         const colleague = overlayEvents.map(ev => ({
                     "isOverlay": true,
                     "event": ev
@@ -498,11 +480,6 @@ Item {
                             }
                         }
 
-                        // One merged list per cell (mergedItems/displayItems):
-                        // colleague items (full colour) and remaining own
-                        // items (dimmed), interleaved by start time. Each
-                        // delegate carries both chip kinds and shows only the
-                        // one that matches its item.
                         Column {
                             anchors.left: parent.left
                             anchors.right: parent.right
@@ -615,20 +592,23 @@ Item {
                                         }
                                     }
 
-                                    PersonEventChip {
+                                    Loader {
                                         id: colleagueChip
-                                        visible: chipDelegate.isOverlay
+                                        active: chipDelegate.isOverlay
                                         anchors.fill: parent
-                                        kind: chipDelegate.isOverlay ? chipDelegate.ev.kind : "event"
-                                        title: chipDelegate.isOverlay ? chipDelegate.ev.title : ""
-                                        location: chipDelegate.isOverlay ? chipDelegate.ev.location : ""
-                                        personColor: chipDelegate.isOverlay ? chipDelegate.ev.color : Theme.primary
-                                        isPrivate: chipDelegate.isOverlay && !!chipDelegate.ev.private
-                                        stripes: chipDelegate.isOverlay ? (chipDelegate.ev.stripes || []) : []
-                                        compact: true
-                                        titleLines: SettingsData.monthEventTitleLines
-                                        onEntered: chipTooltip.show(root.overlayTooltip(chipDelegate.ev), colleagueChip)
-                                        onExited: chipTooltip.hide()
+
+                                        sourceComponent: PersonEventChip {
+                                            kind: chipDelegate.ev.kind
+                                            title: chipDelegate.ev.title
+                                            location: chipDelegate.ev.location
+                                            personColor: chipDelegate.ev.color
+                                            isPrivate: chipDelegate.ev.private
+                                            stripes: chipDelegate.ev.stripes
+                                            compact: true
+                                            titleLines: SettingsData.monthEventTitleLines
+                                            onEntered: chipTooltip.show(PeopleService.tooltipFor(chipDelegate.ev), colleagueChip)
+                                            onExited: chipTooltip.hide()
+                                        }
                                     }
                                 }
                             }
