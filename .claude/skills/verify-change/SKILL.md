@@ -85,10 +85,26 @@ deployed.
 `.claude/tools/dev-instance.sh` runs the branch's build **offline on a scratch copy of the real
 data**, as the transient user unit `dankcal-dev`. It stops `dcal.service` for the run (the owner
 approved this) and starts it again whenever `dankcal-dev` stops — `stop`, a crash, or the 2h
-limit. **One dev instance per machine**: a lock refuses a second `start` while one runs or
-starts. Each block is one Bash call from any directory. `<checkout>` is the literal absolute
-path of the checkout under test: the main checkout, or a linked worktree after
-`git -C <checkout> submodule update --init`.
+limit. **One dev instance per machine**: `start` refuses while `dankcal-dev` runs, and a lock
+lets only one `start` or `stop` run at a time. Each block is one Bash call from any directory.
+`<checkout>` is the literal absolute path of the checkout under test: the main checkout, or a
+linked worktree whose submodule is initialised from the main checkout's clone (local, no
+network):
+
+```bash
+timeout 60 git -C <checkout> -c protocol.file.allow=always -c submodule.dank-qml-common.url=/home/nozomi/Documents/code/calendar/dank-qml-common submodule update --init
+```
+
+If that fails or times out, remove the half-made clone, and if the error names a commit the
+main checkout's clone lacks, fetch it there first; then retry. Never `git submodule deinit` in
+a worktree: it deletes the submodule's entries from the config all checkouts share.
+
+```bash
+d=$(git -C <checkout> rev-parse --absolute-git-dir) && [ -n "$d" ] && rm -rf <checkout>/dank-qml-common "$d/modules/dank-qml-common"
+timeout 120 git -C /home/nozomi/Documents/code/calendar/dank-qml-common fetch origin
+```
+
+Then start the dev instance and prove it is offline:
 
 ```bash
 /home/nozomi/Documents/code/calendar/.claude/tools/dev-instance.sh start <checkout>
@@ -114,8 +130,8 @@ Then:
    with `screenshot` — plain `grim` captures whatever is on screen, which may not be the dev
    window. `screenshot` (Hyprland) runs `ui.show`, refuses if the dev window is on a workspace
    no monitor shows, and captures only the window's area; its `captured …` line names the
-   window and the dev `qs` pid. Read the PNG and confirm it shows the calendar with what you
-   expected (the window is translucent, so what is behind it shows faintly). For
+   window and the dev `qs` pid. The PNG is that screen area, so Read it and confirm it shows
+   the calendar window itself, with what you expected. For
    backend-only changes, exercise it with `ipc <method> key=value` and show the output.
    `status` prints the dev DB copy's goose and user version. Never use plain `dcal show` or
    `dcal ipc` here: with no dev instance up they reach, or cold-start, a daemon on the real
@@ -135,10 +151,10 @@ Then:
 4. Always finish with the block below — also when `start` failed or was cut off, since that can
    leave `dcal.service` stopped — and put its output in the report. It must end with
    `dev instance stopped cleanly` (exit 0): the real DB's sha256 is unchanged across the time
-   `dcal.service` was stopped, no Secret Service or EDS appeared, no process runs the dev build
-   or `<checkout>/quickshell`, `dankcal-dev` is inactive and `dcal` active. A clean stop
-   deletes the scratch copy (`home/`, `after/`) and keeps the two `.sha256` files; a `FAIL`
-   keeps the copy for diagnosis. If `dcal` runs `<checkout>/quickshell`,
+   `dcal.service` was stopped, no Secret Service or EDS is on the bus at stop, no process runs
+   the dev build or `<checkout>/quickshell`, `dankcal-dev` is inactive and `dcal` active. A
+   clean stop deletes the scratch copy (`home/`, `after/`) and keeps the two `.sha256` files;
+   a `FAIL` keeps the copy for diagnosis. If `dcal` runs `<checkout>/quickshell`,
    `systemctl --user restart dcal` puts it back on its own UI.
 
 ```bash

@@ -4,7 +4,7 @@
 #   dev-instance.sh start <checkout>   build <checkout>/core, stop dcal.service, copy the real
 #                                      data, run the build as the transient unit dankcal-dev
 #   dev-instance.sh ipc <method> [k=v…]  `dcal ipc` against the dev instance only
-#   dev-instance.sh screenshot <png>   show the dev window, focus it and capture only it
+#   dev-instance.sh screenshot <png>   show the dev window and capture only its area (Hyprland)
 #   dev-instance.sh probe              try to reach the internet from inside the dev instance's
 #                                      network namespace (must fail)
 #   dev-instance.sh status             state of dankcal-dev and dcal, versions of the dev DB copy
@@ -14,8 +14,8 @@
 #
 # <checkout> is the absolute path of any checkout of this repo (the main one or a linked
 # worktree with its submodule initialised). Its QML runs from <checkout>/quickshell.
-# One dev instance per machine: the lock $LOCK is held by start, then by the running dev
-# instance itself, so a second start is refused; stop takes it once dankcal-dev is gone.
+# One dev instance per machine: start and stop each hold the lock $LOCK while they run (never
+# passed to the dev instance), and start refuses while dankcal-dev is active or activating.
 #
 # Isolation:
 #   data     XDG_DATA_HOME, XDG_CONFIG_HOME, XDG_STATE_HOME, XDG_CACHE_HOME point under
@@ -30,7 +30,7 @@
 #   D-Bus    the session bus is shared with the desktop. start (and guard) refuse while a
 #            Secret Service or Evolution Data Server is on it, or the copy has an Evolution
 #            account: either would reach real credentials or sync outside the namespace. One
-#            that appears mid-run is not prevented, only reported by stop.
+#            that appears mid-run is not prevented; stop reports one still on the bus.
 #   process  dankcal-dev Conflicts= dcal.service, and After= orders the stop of one before the
 #            start of the other, so the two never run together (a live dcal started next to
 #            the dev one takes its QML dir from $XDG_RUNTIME_DIR/dankcal.path). Stopping the
@@ -95,13 +95,15 @@ cmd_start() {
 	[ -d "$checkout/core/cmd/dcal" ] || die "$checkout has no core/cmd/dcal"
 	[ -f "$checkout/quickshell/DankCommon/Widgets/DankIcon.qml" ] ||
 		die "DankCommon missing: git -C $checkout submodule update --init"
-	! systemctl --user is-active --quiet "$UNIT" || die "$UNIT already running; stop it first"
+	case "$(systemctl --user is-active "$UNIT" || true)" in
+	active | activating | reloading | deactivating) die "$UNIT is running; stop it first" ;;
+	esac
 	shared=$(shared_dbus_names)
 	[ -z "$shared" ] || die "on the session bus, would be shared with the dev instance: $shared"
 
 	echo "== build $checkout"
 	mkdir -p "$ROOT/bin"
-	(cd "$checkout/core" && CGO_ENABLED=0 go build -o "$ROOT/bin/dcal" ./cmd/dcal)
+	(cd "$checkout/core" && CGO_ENABLED=0 go build -o "$ROOT/bin/dcal" ./cmd/dcal) 9>&-
 	install -m 0755 "$(readlink -f "$0")" "$ROOT/bin/dev-instance.sh"
 	echo "$checkout" >"$ROOT/checkout"
 
@@ -132,9 +134,8 @@ cmd_start() {
 		-E XDG_CACHE_HOME="$ROOT/home/cache" \
 		-E DANKCAL_DB_PATH="$ROOT/home/data/dankcal/dankcal.db" \
 		-E DCAL_ENABLE_HOTRELOAD=1 \
-		"$ROOT/bin/dev-instance.sh" guard "$ROOT/bin/dcal" run -c "$checkout/quickshell"
+		"$ROOT/bin/dev-instance.sh" guard "$ROOT/bin/dcal" run -c "$checkout/quickshell" 9>&-
 	trap - EXIT
-	exec 9>&- # hand the lock to guard
 
 	local sock
 	for _ in $(seq 1 30); do
@@ -156,8 +157,6 @@ cmd_start() {
 # to a shared Secret Service / EDS.
 cmd_guard() {
 	local ifaces shared
-	exec 9>"$LOCK"
-	flock -w 30 9 || die "refusing to run: lock $LOCK is held"
 	ifaces=$(tail -n +3 /proc/self/net/dev | awk -F: '{gsub(/ /, "", $1); print $1}' | xargs)
 	[ "$ifaces" = "lo" ] || die "refusing to run: network interfaces '$ifaces' visible, PrivateNetwork is not in effect"
 	shared=$(shared_dbus_names)
@@ -189,7 +188,7 @@ cmd_screenshot() {
 	command -v hyprctl >/dev/null || die "hyprctl not found: this needs Hyprland"
 	pid=$(dev_pid)
 	[ "$pid" -gt 0 ] || die "$UNIT is not running"
-	qs=$(pgrep -P "$pid" -x qs) || die "no qs child of the dev daemon (pid $pid)"
+	qs=$(pgrep -n -P "$pid" -x qs) || die "no qs child of the dev daemon (pid $pid)"
 	"$0" ipc ui.show >/dev/null
 	sleep 1
 	win=$(hyprctl clients -j | jq -c --argjson p "$qs" \
@@ -229,9 +228,9 @@ cmd_status() {
 
 cmd_stop() {
 	local fail=0 pid shared
-	if systemctl --user is-active --quiet "$UNIT"; then
-		systemctl --user stop "$UNIT"
-	fi
+	case "$(systemctl --user is-active "$UNIT" || true)" in
+	active | activating | reloading | deactivating) systemctl --user stop "$UNIT" ;;
+	esac
 	for _ in $(seq 1 30); do
 		systemctl --user is-active --quiet "$LIVE" && break
 		sleep 1
@@ -255,9 +254,9 @@ cmd_stop() {
 	echo "== session bus"
 	shared=$(shared_dbus_names)
 	if [ -n "$shared" ]; then
-		echo "FAIL: now on the session bus, may have been shared with the dev instance: $shared"; fail=1
+		echo "FAIL: on the session bus at stop, may have been shared with the dev instance: $shared"; fail=1
 	else
-		echo "no Secret Service or Evolution Data Server"
+		echo "none on the bus at stop: no Secret Service or Evolution Data Server"
 	fi
 
 	echo "== processes"
@@ -285,16 +284,10 @@ cmd_stop() {
 }
 
 case "${1:-}" in
-start)
+start | stop)
 	scratch_ok
 	exec 9>"$LOCK"
-	flock -n 9 || die "lock $LOCK is held: a dev instance is running, or another start/stop is"
-	;;
-stop)
-	scratch_ok
-	! systemctl --user is-active --quiet "$UNIT" || systemctl --user stop "$UNIT"
-	exec 9>"$LOCK"
-	flock -w 60 9 || die "lock $LOCK still held 60s after $UNIT stopped"
+	flock -n 9 || die "another dev-instance start or stop is running (lock $LOCK)"
 	;;
 esac
 
