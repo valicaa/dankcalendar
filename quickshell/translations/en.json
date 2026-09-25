@@ -2492,7 +2492,7 @@
   {
     "term": "Remove",
     "context": "Remove",
-    "reference": "Modules/CalendarSidebar.qml:315, Modals/SettingsContent.qml:1231, Modals/SettingsContent.qml:1237, Widgets/PersonChip.qml:99",
+    "reference": "Modules/CalendarSidebar.qml:315, Modals/SettingsContent.qml:1231, Modals/SettingsContent.qml:1237, Widgets/PersonChip.qml:106",
     "comment": "confirm button for removing an account | person chip button to remove a colleague from the schedule search | remove account confirmation button"
   },
   {
@@ -3152,7 +3152,7 @@
   {
     "term": "Unavailable",
     "context": "Unavailable",
-    "reference": "Widgets/PersonChip.qml:86",
+    "reference": "Widgets/PersonChip.qml:41",
     "comment": "person chip status label when a colleague's schedule cannot be read"
   },
   {

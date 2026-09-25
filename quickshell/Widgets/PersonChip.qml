@@ -30,11 +30,18 @@ StyledRect {
     MouseArea {
         id: retryArea
         anchors.fill: parent
-        enabled: root.isError
+        enabled: root.isError || root.isUnavailable
         cursorShape: root.isError ? Qt.PointingHandCursor : Qt.ArrowCursor
         hoverEnabled: true
-        onClicked: root.retried()
-        onEntered: tooltip.show(root.isError ? root.person.error : root.person.email, root)
+        onClicked: if (root.isError) root.retried()
+        onEntered: {
+            if (root.isError)
+                tooltip.show(root.person.error, root);
+            else if (root.isUnavailable)
+                tooltip.show(I18n.tr("Unavailable", "person chip status label when a colleague's schedule cannot be read"), root);
+            else
+                tooltip.show(root.person.email, root);
+        }
         onExited: tooltip.hide()
     }
 
@@ -83,7 +90,7 @@ StyledRect {
 
         StyledText {
             anchors.verticalCenter: parent.verticalCenter
-            text: root.isUnavailable ? I18n.tr("Unavailable", "person chip status label when a colleague's schedule cannot be read") : root.label
+            text: root.label
             font.pixelSize: Theme.fontSizeSmall
             color: root.isUnavailable ? Theme.surfaceVariantText : Theme.surfaceText
             elide: Text.ElideRight
