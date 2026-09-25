@@ -130,6 +130,7 @@ Item {
                 clip: true
                 spacing: 2
                 model: ScriptModel {
+                    objectProp: "key"
                     values: root.events
                 }
                 // Rows are PeopleService.mergeWithOwn wrappers: {isOverlay, event}.

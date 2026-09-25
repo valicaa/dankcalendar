@@ -466,6 +466,7 @@ Item {
 
                             Repeater {
                                 model: ScriptModel {
+                                    objectProp: "key"
                                     values: dayCell.displayItems.slice(0, dayCell.maxChips)
                                 }
 

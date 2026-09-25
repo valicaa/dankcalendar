@@ -94,8 +94,8 @@ Singleton {
     // Every change to people goes through here: one index rebuild, one
     // version bump.
     function _commit(next) {
-        people = next;
         _store.index = _buildIndex(next);
+        people = next;
         const nextLanes = next.filter(p => p.status === "details" || p.status === "busy");
         if (_laneKey(nextLanes) !== _laneKey(lanes))
             lanes = nextLanes;
@@ -296,6 +296,7 @@ Singleton {
             "start": source.start,
             "end": source.end,
             "allDay": !!source.allDay,
+            "key": source.key || "",
             "color": p.color,
             "stripes": [],
             "email": p.email,
@@ -424,11 +425,14 @@ Singleton {
     }
 
     // Own events (in their eventsForDay order) and overlay items as one list
-    // of {isOverlay, event}: all-day items first, then timed, each by start
-    // with a colleague first on a tie. With no overlay items the own events
-    // keep their order.
+    // of {key, isOverlay, event}: all-day items first, then timed, each by
+    // start with a colleague first on a tie. With no overlay items the own
+    // events keep their order. `key` is stable across rebuilds, so a
+    // ScriptModel with objectProp "key" keeps each delegate (and a drag in
+    // progress on it) when the lists are recomputed.
     function mergeWithOwn(ownEvents, overlayItems) {
         const wrap = (isOverlay, ev) => ({
+                "key": isOverlay ? ("colleague|" + ev.email + "|" + ev.key + "|" + ev.start.getTime() + "|" + ev.end.getTime()) : ("own|" + EventUtils.eventKey(ev)),
                 "isOverlay": isOverlay,
                 "event": ev
             });
