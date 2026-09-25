@@ -21,6 +21,14 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import graphpaths  # noqa: E402
+
+if graphpaths.is_linked_worktree(ROOT):
+    sys.exit(f"graph-qml.py maintains the main checkout's graph; run it from "
+              f"{graphpaths.main_checkout(ROOT)} (see the code-graph skill)")
+
 OUT = ROOT / "graphify-out"
 GRAPH = OUT / "graph.json"
 FILE_TYPES = {"code", "document", "paper", "image", "rationale", "concept"}
