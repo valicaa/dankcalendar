@@ -106,8 +106,9 @@ Then:
 1. Show the window, navigate to the feature, and capture with
    `grim <scratchpad>/verify-<slug>.png`; Read the image and confirm what you expected is
    visible. For backend-only changes, exercise it with `ipc <method> key=value` and show the
-   output. `status` prints the dev DB copy's goose version. Never use plain `dcal show` or
-   `dcal ipc` here: with no dev instance up they reach, or cold-start, a daemon on the real data.
+   output. `status` prints the dev DB copy's goose and user version. Never use plain
+   `dcal show` or `dcal ipc` here: with no dev instance up they reach, or cold-start, a daemon
+   on the real data.
    ```bash
    /home/nozomi/Documents/code/calendar/.claude/tools/dev-instance.sh ipc ui.show
    /home/nozomi/Documents/code/calendar/.claude/tools/dev-instance.sh status

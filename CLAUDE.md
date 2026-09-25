@@ -73,7 +73,7 @@ make i18n-extract     # after adding/changing any I18n.tr() string
 make generate         # after editing core/ent/schema
 make migrate name=x   # new DB migration from schema diff
 # offline dev instance on a copy of the real data, QML hot reload on (verify-change section 4):
-.claude/tools/dev-instance.sh start /abs/checkout   # then: ipc ui.show | probe | status | stop
+.claude/tools/dev-instance.sh start /abs/checkout   # then: probe, ipc ui.show, status, stop
 ```
 
 ## Lessons and keeping these docs current
