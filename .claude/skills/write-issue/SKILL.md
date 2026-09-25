@@ -6,95 +6,174 @@ description: Use when writing, editing or triaging any issue on valicaa/dankcale
 # Write an issue
 
 The issue body is the spec. Every change but `project-manager` step 0's trivial docs edits
-starts as an issue on `valicaa/dankcalendar` built from the template below.
+(a `tasks/lessons.md` rule or a typo in another doc — see that step for the exact list) starts
+as an issue on `valicaa/dankcalendar` built from the template below.
 
-## The template — always 8 headings
+## 0. Check it doesn't already exist
+
+Before drafting, confirm the capability isn't already there:
+1. Send `dcal-scout` to check the code and settings for it.
+2. `gh issue list -R valicaa/dankcalendar --state all --search "<keywords>"` for an issue that
+   already covers it.
+
+If either finds it, tell the user instead of filing. Example: "ISO week numbers in month view"
+already exists — `dcal-scout` finds `SettingsData.showWeekNumbers` driving
+`quickshell/Modules/views/MonthView.qml:152-238`.
+
+## The template — always 8 headings, in this order
 
 ```markdown
-## Problem        who hits this, when, today's workaround (one paragraph)
-## Goal / Non-goals   Shape Up appetite: the size we are willing to spend; no-gos listed
-## Story          As <user>, I want <capability>, so that <outcome>   (INVEST)
-## Scenarios      Given <state> / When <action> / Then <observable result>   (1–5)
-## Constraints    CGO_ENABLED=0; migration needs explicit approval + backup; I18n.tr for
-                  strings; quickshell/DankCommon read-only; Upstream-worthy: yes/no
-## Acceptance     checkable list, each tied to a scenario or constraint
-## Risks          callers touched, data, providers, sync; layers touched (tick list: QML,
-                  UI setting, IPC, DB migration, provider, background engine, HTTP/CLI)
-## Size           t-shirt: S (one layer, <1h) | M (2–3 layers) | L (cross-cutting, schema,
-                  new provider); any new-feature phase that doesn't apply, and why
+## Problem
+## Goal / Non-goals
+## Story
+## Scenarios
+## Constraints
+## Acceptance
+## Risks
+## Size
 ```
 
-Always these 8 headings, in this order, nothing merged or dropped:
-- **Problem** — the problem, never the solution; one paragraph.
-- **Goal / Non-goals** — the appetite (Shape Up) plus an explicit no-gos list.
-- **Story** — one INVEST line, `As <user>, I want <capability>, so that <outcome>`.
-- **Scenarios** — 1–5, each strict Given/When/Then with an observable Then, not an
-  implementation step.
-- **Constraints** — the standing rules that bind this change (CGO, migrations, I18n,
-  DankCommon) plus `Upstream-worthy: yes/no` as a line here, never its own heading.
-- **Acceptance** — a checkable list; every item names the scenario or constraint it proves.
-- **Risks** — callers/data/providers/sync touched, and the layers-touched tick list (QML, UI
-  setting, IPC, DB migration, provider, background engine, HTTP/CLI) as a line here, never its
-  own heading.
-- **Size** — the t-shirt size, and which `new-feature` phase doesn't apply and why, if any.
+Heading lines carry only the heading — guidance goes in the body under each one, never on the
+heading line itself, so a copied template doesn't read `## Problem who hits this…`. Issue forms
+render each field as an `### ` heading (one level below the `##` a hand-written body uses); both
+are the template — never require one level over the other.
 
-Issue forms render each field as an `### ` heading (one level below the `##` a hand-written
-body uses); both are the template — never require one level over the other.
+- **Problem** — the problem, never the solution, plus today's workaround. A short paragraph, or
+  a list for a bug's repro steps (see Variants). A fact you couldn't get from the user: a
+  trailing `Unknown: <what>` line — it must never be something Acceptance depends on.
+- **Goal / Non-goals** — the appetite (Shape Up) plus an explicit no-gos list.
+- **Story** — one INVEST line: `As <user>, I want <capability>, so that <outcome>`.
+- **Scenarios** — 1–5, strict Given/When/Then; Then is always the observable, *correct* result
+  — never an implementation step, and (bug variant) never the bug itself.
+- **Constraints** — standing rules that bind this change (CGO, migrations, I18n, DankCommon)
+  plus one line, `Upstream-worthy: yes` or `Upstream-worthy: no`.
+- **Acceptance** — a checkable list; every item names the scenario or constraint it proves.
+- **Risks** — callers/data/providers/sync touched, plus the layers-touched line (below).
+- **Size** — the t-shirt size (below) and which `new-feature` phase doesn't apply, if any.
+
+## Layers-touched tick list
+
+Defined once, used everywhere (Risks, and the forms' Risks field): one line, exactly this
+shape, `[x]` for each layer touched (at least one ticked, or the word `none` for pure fork
+tooling):
+
+`Layers touched: [ ] QML  [ ] UI setting  [ ] IPC  [ ] DB migration  [ ] provider  [ ] background engine  [ ] HTTP/CLI`
 
 ## Variants
 
 - **Feature** (label `enhancement`): the shape above as written.
-- **Bug** (label `bug`): Problem holds the repro steps plus expected vs actual result, not just
-  a symptom; one Scenario is that repro, Given the steps, When run, Then the actual (wrong)
-  result. Goal / Non-goals is usually short ("fix it", no-gos are what NOT to also fix).
-- **Chore** (label `chore`): Story may be thin (no end user outcome) — state who benefits
-  (a future contributor, CI, the PM) instead of a user-facing capability; the rest is unchanged.
+- **Bug** (label `bug`): Problem holds the repro steps plus expected vs actual result (see
+  Facts to collect below). One Scenario is that repro: Given the steps, When run, Then the
+  EXPECTED (correct) result — the actual, wrong result stays in Problem, never in a Scenario's
+  Then. So "Scenario 1 passes" means the bug is fixed. Goal / Non-goals is usually short ("fix
+  it"; no-gos are what NOT to also fix).
+- **Chore** (label `chore`): Story may be thin (no end user outcome) — state who benefits (a
+  future contributor, CI, the PM) instead of a user-facing capability. The rest is unchanged.
+
+### Facts to collect (bugs)
+
+Ask the user (`project-manager` step 1.3) for: repro steps; expected vs actual result; how
+often and since when (a recent version or sync update?); the account/provider involved; error
+text or logs (`journalctl --user -u dcal`). Anything still unknown after asking goes on a
+trailing `Unknown: <what>` line in Problem — never something an Acceptance item depends on.
 
 ## Title, labels, slug
 
-Title: `area: lowercase summary`. `area` comes from upstream's vocabulary — `ui`, `i18n`,
-`core`, `events`, `providers`, `caldav`, `settings`, `sync`, `reminders`, `notifications`,
-`keyring`, `ipc`, `nix`, `flatpak`, `ci` — or, for fork-only work, `docs` (CLAUDE.md, skills,
-agents), `tooling` (scripts, hooks) or `tasks` (only `tasks/` changes).
+Title: `area: lowercase summary`, no trailing period. `area` is the same open vocabulary as
+commit subjects — upstream's most-used areas: `ui`, `i18n`, `core`, `providers`, `events`,
+`caldav`, `nix`, `flatpak`, `ci` (see the rest with `git log upstream/master --format=%s | cut
+-d: -f1 | sort | uniq -c | sort -rn | head -30`). Fork-only areas: `docs` (CLAUDE.md, skills,
+agents) and `tooling` (scripts, hooks). Not `tasks` — upstream uses `tasks:` for its own Tasks
+feature; `tasks:` stays only the PM's commit subject for `tasks/` changes, never an issue area.
 
-Labels: exactly one type label (`enhancement`, `bug` or `chore`) and one size label
-(`size:S`, `size:M` or `size:L`).
+Labels: exactly one type label (`enhancement`, `bug` or `chore`) and one size label (`size:S`,
+`size:M` or `size:L`).
 
 Slug: the title's summary (without `area:`), lowercase kebab-case, 2–5 words (a hyphenated or
-slashed word like `free/busy` counts as one). Drop articles and filler, keep the most specific
-words: `events: add free/busy check` → `add-free-busy-check`; `ui: show week numbers in the
-month view header` → `week-numbers-month-header`.
+slashed word like `free/busy` counts as one). Drop articles, filler, and a generic leading verb
+(`add`, `show`, `make`, `support`, `fix`) unless dropping it makes the slug ambiguous:
+`events: add free/busy check` → `free-busy-check`; `ui: show week numbers in the month view
+header` → `week-numbers-month-header`.
+
+## Size
+
+T-shirt size = the largest of:
+- layers touched (the tick list): 1 = S, 2–3 = M, cross-cutting (most layers) = L.
+- effort: <1h = S regardless of layers.
+- risk: a DB migration or a new provider = L regardless of the rest.
+
+Note which `new-feature` phase doesn't apply and why — name it (e.g. "phase 5 Review — skipped,
+single-file docs fix") or point at `new-feature`'s phase list. For a form-filed issue, triage
+(below) writes this note into the Size field by editing the body.
+
+## Branch name
+
+Type label picks the prefix: `enhancement` → `feat`, `bug` → `fix`, `chore` → `chore`. Branch
+is `<prefix>/<N>-<slug>`. The `gh issue develop` command that cuts it lives in `project-manager`
+step 2.
 
 ## Creating the issue
 
+Write the body to a temp file (the session scratchpad if you have one), then:
+
 ```bash
-gh issue create -R valicaa/dankcalendar --title "<area>: <summary>" --body-file \
-  <scratchpad>/issue-body.md --label <enhancement|bug|chore> --label <size:S|size:M|size:L>
+gh issue create -R valicaa/dankcalendar --title "<area>: <summary>" \
+  --body-file <path-to-body.md> --label <enhancement|bug|chore> --label <size:S|size:M|size:L>
 ```
 
 `N` is the number at the end of the URL this command prints. `project-manager` step 2 shows the
 spec to the user and gets a yes before running this — that order, not this skill, is its job.
 
+## Forms
+
+`.github/ISSUE_TEMPLATE/{feature,bug,chore}.yml` render the same 8 fields as textareas (Size is
+a dropdown), all `required: true` so none can stay empty. Text that used to be pre-filled with
+GitHub's `value:` (the `Upstream-worthy: yes/no` line, the layers line) is now a `placeholder:`
+instead — greyed-out example text, not submitted unless the submitter types it — and each
+field's `description` says exactly what to write (`Upstream-worthy: yes` or `no`; the layers
+line with `[x]`).
+
 ## Triage of a form-filed issue
 
-An issue opened through `.github/ISSUE_TEMPLATE/feature.yml`, `bug.yml` or `chore.yml` already
-carries its type label and a title pre-filled with `area: `. Triage:
-1. Add the size label — the form's Size field is a dropdown (S/M/L) but applies no label; add
-   `size:S|size:M|size:L` to match what was picked.
-2. Run the quality checklist below; a heading GitHub left empty (the submitter skipped an
-   optional-looking field) gets asked for or filled in from the thread before work starts.
-3. Confirm the title still matches the vocabulary and the slug rules once the branch is cut.
+A form-filed issue already carries its type label and an `area: ` title stub. Required fields
+can't be empty, but a submitter can still leave a placeholder's example text unedited. Before
+`gh issue develop`:
+
+1. Check every field for an untouched placeholder (a literal `Upstream-worthy: yes` or `no`
+   copied without a real answer, a layers line with no `[x]`) and the `area: ` title stub.
+2. Fix the type label if the wrong form was used (`enhancement`/`bug`/`chore`).
+3. Check the picked Size against the ticked layers (Size above); add the matching
+   `size:S`/`size:M`/`size:L` label — the form's dropdown doesn't apply one.
+4. Fix the title (`area: lowercase summary`) and derive the slug (Slug above) now, before
+   cutting the branch.
+5. Apply any edit: `gh issue view N -R valicaa/dankcalendar --json body -q .body > <tmpfile>`,
+   edit the file, then `gh issue edit N -R valicaa/dankcalendar --body-file <tmpfile>`.
+6. A fact only the submitter has (missing repro detail, unclear scope): ask with `gh issue
+   comment N -R valicaa/dankcalendar --body-file <tmpfile>` — never guess it.
 
 ## Quality checklist
 
-- [ ] all 8 headings present, `##` or `###`, in order
-- [ ] Constraints includes the `Upstream-worthy: yes/no` line
-- [ ] Risks includes the layers-touched tick list
-- [ ] every Acceptance item is checkable and names the scenario or constraint it proves
-- [ ] Problem states the problem, not a solution ("the month view can't show week numbers", not
-      "add a `showWeekNumbers` setting")
+- [ ] existence/duplicate check done (step 0)
+- [ ] title is `area: lowercase summary`, no trailing period
+- [ ] exactly one type label (`enhancement`/`bug`/`chore`) and one size label (`size:S/M/L`)
+- [ ] all 8 headings present, `##` or `###`, in order, nothing merged or dropped
+- [ ] Problem states the problem, not a solution ("the settings page has no per-calendar color
+      override", not "add a calendar color picker")
+- [ ] Goal / Non-goals lists an explicit no-gos
+- [ ] Story is one `As <user>, I want <capability>, so that <outcome>` line
+- [ ] 1–5 Scenarios, each strict Given/When/Then
+- [ ] bug variant: Problem holds repro steps and expected vs actual; one Scenario is the repro
+      with Then = the expected (fixed) result
+- [ ] Constraints includes `Upstream-worthy: yes` or `Upstream-worthy: no`
+- [ ] the layers-touched line is present with at least one `[x]`, or `none` for fork tooling
+- [ ] every Acceptance item is checkable and names its scenario or constraint
+- [ ] no `Unknown:` item that an Acceptance item depends on
 
 ## Worked example (bug)
+
+Title: `caldav: free/busy resets`
+Labels: `bug`, `size:S`
+Slug: `free-busy-resets`
 
 ```markdown
 ## Problem
@@ -121,7 +200,8 @@ CGO_ENABLED=0; no migration; Upstream-worthy: yes.
 - [ ] Scenario 1 passes against a live CalDAV test calendar
 
 ## Risks
-Layers touched: provider (caldav). `internal/providers/caldav` write path only.
+Layers touched: [ ] QML  [ ] UI setting  [ ] IPC  [ ] DB migration  [x] provider  [ ] background engine  [ ] HTTP/CLI
+`internal/providers/caldav` write path only.
 
 ## Size
 S (one layer, <1h).

@@ -38,18 +38,18 @@ body:
     id: scenarios
     attributes:
       label: Scenarios
-      description: One scenario must be the repro itself, as Given/When/Then with the actual (wrong) result as Then.
+      description: One scenario must be the repro itself, as Given/When/Then with the EXPECTED (correct) result as Then — the actual, wrong result stays in Problem. "Scenario passes" means the bug is fixed.
       placeholder: |
-        1. Given <state>, When <action>, Then <actual wrong result>.
+        1. Given <state>, When <action>, Then <expected, correct result>.
     validations:
       required: true
   - type: textarea
     id: constraints
     attributes:
       label: Constraints
-      description: Standing rules that bind this change (CGO, migrations, I18n, DankCommon). Keep the Upstream-worthy line.
-      value: |
-        Upstream-worthy: yes/no
+      description: "Standing rules that bind this change (CGO, migrations, I18n, DankCommon), then one line — write \"Upstream-worthy: yes\" or \"Upstream-worthy: no\"."
+      placeholder: |
+        Upstream-worthy: yes
     validations:
       required: true
   - type: textarea
@@ -65,8 +65,8 @@ body:
     id: risks
     attributes:
       label: Risks
-      description: Callers/data/providers/sync touched, plus the layers-touched tick list. Keep the checklist.
-      value: |
+      description: Callers/data/providers/sync touched, then the layers-touched line below with [x] for every layer this change touches.
+      placeholder: |
         Layers touched: [ ] QML  [ ] UI setting  [ ] IPC  [ ] DB migration  [ ] provider  [ ] background engine  [ ] HTTP/CLI
     validations:
       required: true
@@ -76,8 +76,8 @@ body:
       label: Size
       description: T-shirt size. Triage adds the matching size:S/size:M/size:L label separately — picking here doesn't apply it.
       options:
-        - "S (one layer, under 1h)"
-        - "M (2-3 layers)"
+        - "S (one layer, <1h)"
+        - "M (2–3 layers)"
         - "L (cross-cutting, schema, new provider)"
     validations:
       required: true

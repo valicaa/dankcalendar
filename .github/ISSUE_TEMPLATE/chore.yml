@@ -7,7 +7,7 @@ body:
     attributes:
       value: |
         Fill in all 8 sections — see `.claude/skills/write-issue/SKILL.md` for the full template.
-        Title stays `area: lowercase summary`; fork-only work uses `docs`, `tooling` or `tasks`.
+        Title stays `area: lowercase summary`; fork-only work uses `docs` or `tooling`.
   - type: textarea
     id: problem
     attributes:
@@ -43,9 +43,9 @@ body:
     id: constraints
     attributes:
       label: Constraints
-      description: Standing rules that bind this change. Keep the Upstream-worthy line.
-      value: |
-        Upstream-worthy: yes/no
+      description: "Standing rules that bind this change, then one line — write \"Upstream-worthy: yes\" or \"Upstream-worthy: no\"."
+      placeholder: |
+        Upstream-worthy: yes
     validations:
       required: true
   - type: textarea
@@ -61,8 +61,8 @@ body:
     id: risks
     attributes:
       label: Risks
-      description: Callers/data touched, plus the layers-touched tick list (often none, for docs/tooling).
-      value: |
+      description: Callers/data touched, then the layers-touched line below with [x] for every layer touched, or write "none" for docs/tooling.
+      placeholder: |
         Layers touched: [ ] QML  [ ] UI setting  [ ] IPC  [ ] DB migration  [ ] provider  [ ] background engine  [ ] HTTP/CLI
     validations:
       required: true
@@ -72,8 +72,8 @@ body:
       label: Size
       description: T-shirt size. Triage adds the matching size:S/size:M/size:L label separately — picking here doesn't apply it.
       options:
-        - "S (one layer, under 1h)"
-        - "M (2-3 layers)"
+        - "S (one layer, <1h)"
+        - "M (2–3 layers)"
         - "L (cross-cutting, schema, new provider)"
     validations:
       required: true

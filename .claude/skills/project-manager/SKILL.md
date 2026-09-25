@@ -48,9 +48,9 @@ change goes on. Two trivial changes skip the issue, but not the PR — every cha
 - **A typo in any other doc** (CLAUDE.md, a skill, an agent): a `dcal-builder`, as a
   `docs: <summary>` commit on a trivial branch — only while the main checkout is on `master`.
 
-A trivial branch is `docs/<slug>`, no issue; `<slug>` comes from the commit summary by step 2's
-slug rule. The check-docs hook takes commits on it only while every uncommitted path is a doc
-(`.claude/**.md`, `tasks/`, CLAUDE.md, a root `*.md`). The committer creates it:
+A trivial branch is `docs/<slug>`, no issue; `<slug>` comes from the commit summary by
+`write-issue`'s slug rule. The check-docs hook takes commits on it only while every uncommitted
+path is a doc (`.claude/**.md`, `tasks/`, CLAUDE.md, a root `*.md`). The committer creates it:
 
 ```bash
 [ -f CLAUDE.md ] && [ "$(git rev-parse --show-toplevel)" = "$PWD" ] && [ "$(git branch --show-current)" = master ] && [ -z "$(git status --short)" ] || { echo "STOP: not the main checkout on a clean master"; exit 1; }
@@ -98,11 +98,10 @@ spec**. Features, bugs and chores all follow `new-feature`'s phases; this step i
 and 2. A bug or small chore skips phase 1 steps 3–4 (reading the closest feature, mapping
 layers and callers); when they apply, `dcal-scout` does them for the PM.
 
-The template (8 headings), the feature/bug/chore variants, the title/label/slug rules and the
-`gh issue create` command all live in `write-issue` — use it to write the body, then:
-
-**Order matters: show the spec to the user and get their yes first, then create the issue.**
-Ready = the user said yes AND the issue exists.
+The template (8 headings), the feature/bug/chore variants, and the title/label/slug rules live
+in `write-issue`. Write the body with `write-issue`, show it to the user and get their yes, then
+create the issue with its `gh issue create` command. Ready = the user said yes AND the issue
+exists.
 
 Then create the branch — in the main checkout, which must be on `master` with a clean tree
 (one feature worked at a time — see Branches; with the user's OK a checked-out one can be parked:

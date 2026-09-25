@@ -27,19 +27,19 @@ The main session follows `project-manager`: it elicits, specs (a GitHub issue), 
 | `upstream-pr` | Turning a finished feature into a clean PR against AvengeMedia. |
 | `code-graph` | Before reading source to trace call chains, callers, blast radius (`.claude/tools/graph-calls.py <path>`); refreshing the graph. Overrides the global graphify skill's "run `graphify query` first" default here. |
 | `write-issue` | Writing, editing or triaging an issue on `valicaa/dankcalendar`: template, labels, slug. |
-
 ## Branch model
 
 - **Issue-first:** every change but `project-manager` step 0's trivial ones starts as an issue
   on `valicaa/dankcalendar` (spec; template: `write-issue`), then a branch.
-- `master` = `upstream/master` + fork tooling (this file, `.claude/`, `tasks/`, `.graphifyignore`, `.github/ISSUE_TEMPLATE/`) and finished features; the only branch deployed, moved only by the
+- `master` = `upstream/master` + fork tooling (this file, `.claude/`, `tasks/`, `.graphifyignore`,
+  `.github/ISSUE_TEMPLATE/`) and finished features; the only branch deployed, moved only by the
   owner merging a PR on GitHub (that merge is the deploy OK, never asked in chat).
 - `feat|fix|chore/<N>-<slug>` branches off `master` via `gh issue develop N -R
   valicaa/dankcalendar --name <prefix>/<N>-<slug> --base master --checkout` (every `gh` command
   carries `-R`, never `gh repo set-default`) and ends as a PR (`Closes #N` in its body only),
   the checkout back on `master`. Other PR branches: `docs/<slug>` (step 0), `sync/upstream-<hash>`.
 - `pr/<slug>` is created by the `upstream-pr` skill off `upstream/master`, code commits only —
-  never `CLAUDE.md`, `.claude/`, `tasks/`, `.graphifyignore`, `.github/ISSUE_TEMPLATE/` or a fork `#N`.
+  never the fork tooling above or a fork `#N`.
 - One feature is worked at a time (its branch checked out) until `new-feature` 6.2 opens its PR;
   writing agents take turns there (never `isolation: worktree`); the PM commits all of `tasks/`.
 
