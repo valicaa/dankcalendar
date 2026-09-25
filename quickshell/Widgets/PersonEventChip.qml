@@ -19,6 +19,10 @@ Item {
     property bool isPrivate: false
     property bool compact: false
     property int titleLines: 1
+    // Colours of every participant when this item is a colleague-colleague
+    // merge (PeopleService.overlayForDay's stripes); empty for an
+    // unmerged item, which draws with no stripe.
+    property var stripes: []
 
     signal entered
     signal exited
@@ -27,6 +31,8 @@ Item {
     readonly property bool busyLook: kind !== "event" || isPrivate
     readonly property color fillColor: busyLook ? Theme.withAlpha(resolvedColor, 0.18) : Theme.rsvpFillColor("", resolvedColor)
     readonly property color textColor: busyLook ? Theme.surfaceText : Theme.rsvpTextColor("", resolvedColor)
+    readonly property real stripeBarWidth: compact ? 2 : 3
+    readonly property real stripesWidth: stripes.length === 0 ? 0 : stripes.length * stripeBarWidth + (stripes.length - 1)
 
     Rectangle {
         anchors.fill: parent
@@ -45,10 +51,22 @@ Item {
             color: root.resolvedColor
         }
 
+        AttendeeStripes {
+            visible: root.stripes.length > 0
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            anchors.rightMargin: 3
+            anchors.topMargin: 2
+            anchors.bottomMargin: 2
+            colors: root.stripes
+            compact: root.compact
+        }
+
         Column {
             anchors.fill: parent
             anchors.leftMargin: root.busyLook ? 7 : 4
-            anchors.rightMargin: 4
+            anchors.rightMargin: root.stripes.length > 0 ? root.stripesWidth + 7 : 4
             anchors.topMargin: 2
             anchors.bottomMargin: 2
             spacing: 2

@@ -535,8 +535,10 @@ Item {
                                     }
 
                                     EventChipBackground {
+                                        id: ownAllDayChip
                                         required property var modelData
                                         readonly property bool isSelected: root.isEventSelected(modelData)
+                                        readonly property var stripeColors: PeopleService.active ? PeopleService.stripesFor(modelData) : []
                                         width: parent.width
                                         height: root.allDayChipHeight
                                         radius: Theme.cornerRadiusXS
@@ -552,7 +554,7 @@ Item {
                                             anchors.left: parent.left
                                             anchors.right: parent.right
                                             anchors.leftMargin: 4
-                                            anchors.rightMargin: 4
+                                            anchors.rightMargin: ownAllDayChip.stripeColors.length > 0 ? ownAllDayChip.stripeColors.length * 3 + 6 : 4
                                             anchors.verticalCenter: parent.verticalCenter
                                             text: parent.modelData.title
                                             font.pixelSize: 10
@@ -561,6 +563,18 @@ Item {
                                             wrapMode: Text.WordWrap
                                             maximumLineCount: SettingsData.weekEventTitleLines
                                             elide: Text.ElideRight
+                                        }
+
+                                        AttendeeStripes {
+                                            visible: ownAllDayChip.stripeColors.length > 0
+                                            anchors.right: parent.right
+                                            anchors.top: parent.top
+                                            anchors.bottom: parent.bottom
+                                            anchors.rightMargin: 3
+                                            anchors.topMargin: 2
+                                            anchors.bottomMargin: 2
+                                            compact: true
+                                            colors: ownAllDayChip.stripeColors
                                         }
 
                                         EventMouseArea {
@@ -623,6 +637,7 @@ Item {
                                         location: modelData.location
                                         personColor: modelData.color
                                         isPrivate: !!modelData.private
+                                        stripes: modelData.stripes || []
                                         compact: true
                                         titleLines: SettingsData.weekEventTitleLines
                                         onEntered: chipTooltip.show(root.overlayTooltip(modelData), overlayAllDayChip)
@@ -836,8 +851,10 @@ Item {
                                     }
 
                                     EventChipBackground {
+                                        id: ownTimedChip
                                         required property var modelData
                                         readonly property bool isSelected: root.isEventSelected(modelData)
+                                        readonly property var stripeColors: PeopleService.active ? PeopleService.stripesFor(modelData) : []
                                         onIsSelectedChanged: {
                                             if (isSelected)
                                                 root.revealHours(modelData.startHour, modelData.durationHours);
@@ -859,6 +876,7 @@ Item {
                                         Column {
                                             anchors.fill: parent
                                             anchors.margins: 4
+                                            anchors.rightMargin: ownTimedChip.stripeColors.length > 0 ? ownTimedChip.stripeColors.length * 3 + 6 : 4
                                             spacing: 2
 
                                             StyledText {
@@ -883,6 +901,17 @@ Item {
                                                 maximumLineCount: 1
                                                 elide: Text.ElideRight
                                             }
+                                        }
+
+                                        AttendeeStripes {
+                                            visible: ownTimedChip.stripeColors.length > 0
+                                            anchors.right: parent.right
+                                            anchors.top: parent.top
+                                            anchors.bottom: parent.bottom
+                                            anchors.rightMargin: 3
+                                            anchors.topMargin: 3
+                                            anchors.bottomMargin: 3
+                                            colors: ownTimedChip.stripeColors
                                         }
 
                                         EventMouseArea {
@@ -937,6 +966,7 @@ Item {
                                         location: modelData.location
                                         personColor: modelData.color
                                         isPrivate: !!modelData.private
+                                        stripes: modelData.stripes || []
                                         // Below an hour there's no room for a location line under
                                         // the title; a short chip drops it, matching the owner's
                                         // own timed chip (durationHours >= 1 threshold above).

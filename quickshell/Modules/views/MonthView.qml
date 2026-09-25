@@ -173,9 +173,11 @@ Item {
     // A Month cell is a list, not a time grid, so "colleague on top" means
     // ordering, not overlap: one merged list of {isOverlay, event} wrappers,
     // all-day first, then timed items interleaved by start time (colleague
-    // first on a tie). An owner event a colleague item is matched to
-    // (PeopleService.sharedWith) is dropped here so it isn't listed twice;
-    // ownEvents is expected pre-filtered to the events still worth listing.
+    // first on a tie). A shared meeting is never listed twice: the colleague
+    // copy of an event that matches one of the owner's own occurrences is
+    // already dropped by PeopleService.overlayForDay (section 4), so
+    // ownEvents is drawn in full here, undimmed and carrying stripes via
+    // PeopleService.stripesFor where it's shared.
     function mergeDayItems(ownEvents, overlayEvents) {
         const own = ownEvents.map(ev => ({
                     "isOverlay": false,
@@ -368,16 +370,7 @@ Item {
                             return root.overlayEventsFor(cellDate);
                         }
 
-                        // Own events already shown via a matching colleague item
-                        // (PeopleService.sharedWith) are dropped so the day isn't
-                        // listed twice; the colleague item stands in for them.
-                        readonly property var visibleOwnEvents: {
-                            if (!PeopleService.active)
-                                return cellEvents;
-                            return cellEvents.filter(ev => PeopleService.sharedWith(ev).length === 0);
-                        }
-
-                        readonly property var mergedItems: root.mergeDayItems(visibleOwnEvents, cellOverlayEvents)
+                        readonly property var mergedItems: root.mergeDayItems(cellEvents, cellOverlayEvents)
 
                         // On today, items that have already ended yield their
                         // chip slots to ones still upcoming; they fall into the
@@ -531,6 +524,7 @@ Item {
                                     required property var modelData
                                     readonly property bool isOverlay: modelData.isOverlay
                                     readonly property var ev: modelData.event
+                                    readonly property var stripeColors: !isOverlay && PeopleService.active ? PeopleService.stripesFor(ev) : []
                                     width: parent.width
                                     height: root.eventChipHeight
 
@@ -544,7 +538,7 @@ Item {
                                         response: chipDelegate.isOverlay ? "" : chipDelegate.ev.myResponse
                                         calendarColor: chipDelegate.isOverlay ? Theme.primary : chipDelegate.ev.color
                                         selected: !chipDelegate.isOverlay && root.isEventSelected(chipDelegate.ev)
-                                        dimmed: !chipDelegate.isOverlay && PeopleService.active
+                                        dimmed: !chipDelegate.isOverlay && PeopleService.active && chipDelegate.stripeColors.length === 0
                                         hovered: !chipDelegate.isOverlay && chipMouseArea.containsMouse
 
                                         Row {
@@ -552,7 +546,7 @@ Item {
                                             anchors.right: parent.right
                                             anchors.verticalCenter: parent.verticalCenter
                                             anchors.leftMargin: 4
-                                            anchors.rightMargin: 4
+                                            anchors.rightMargin: chipDelegate.stripeColors.length > 0 ? chipDelegate.stripeColors.length * 3 + 6 : 4
                                             spacing: 4
 
                                             Rectangle {
@@ -574,6 +568,18 @@ Item {
                                                 elide: Text.ElideRight
                                                 width: parent.width - 10
                                             }
+                                        }
+
+                                        AttendeeStripes {
+                                            visible: chipDelegate.stripeColors.length > 0
+                                            anchors.right: parent.right
+                                            anchors.top: parent.top
+                                            anchors.bottom: parent.bottom
+                                            anchors.rightMargin: 3
+                                            anchors.topMargin: 2
+                                            anchors.bottomMargin: 2
+                                            compact: true
+                                            colors: chipDelegate.stripeColors
                                         }
 
                                         EventMouseArea {
@@ -618,6 +624,7 @@ Item {
                                         location: chipDelegate.isOverlay ? chipDelegate.ev.location : ""
                                         personColor: chipDelegate.isOverlay ? chipDelegate.ev.color : Theme.primary
                                         isPrivate: chipDelegate.isOverlay && !!chipDelegate.ev.private
+                                        stripes: chipDelegate.isOverlay ? (chipDelegate.ev.stripes || []) : []
                                         compact: true
                                         titleLines: SettingsData.monthEventTitleLines
                                         onEntered: chipTooltip.show(root.overlayTooltip(chipDelegate.ev), colleagueChip)

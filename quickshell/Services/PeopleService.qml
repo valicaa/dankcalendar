@@ -223,17 +223,36 @@ Singleton {
         return date.getFullYear() + "-" + date.getMonth() + "-" + date.getDate();
     }
 
-    // Merged overlay items for one day, for the Week/Month views (phase 3).
-    // No colleague-colleague merge yet: every detail event is its own item.
+    // Merged overlay items for one day, for the Week/Month views (4) and,
+    // filtered by email, the Day-view lanes (5). A detail event matched to
+    // one of the owner's own occurrences (ownKey) is not drawn here at all:
+    // the owner's own chip carries it instead, with a stripe per
+    // participant via stripesFor(). Remaining detail events are grouped by
+    // `key` (the cross-calendar iCalUID + start pair), so a meeting two or
+    // more colleagues share is drawn once, in the colour of the first
+    // person in chip order who has it, with one stripe per participant in
+    // that same order. Busy spans never merge: they carry no id.
     function overlayForDay(day) {
-        const key = _dayKeyOf(day);
-        const items = [];
+        const dayKey = _dayKeyOf(day);
+        const groups = [];
+        const byMergeKey = {};
+        const busyItems = [];
         for (const p of people) {
             if (p.status === "details") {
                 for (const ev of p.events) {
-                    if (_dayKeyOf(ev.start) !== key)
+                    if (_dayKeyOf(ev.start) !== dayKey)
                         continue;
-                    items.push({
+                    if (ev.ownKey)
+                        continue;
+                    // A colleague event with no iCalUID (rare) merges with
+                    // nobody: key it uniquely instead of grouping on "".
+                    const mergeKey = ev.key || ("_" + p.email + "_" + ev.start.getTime());
+                    const existing = byMergeKey[mergeKey];
+                    if (existing) {
+                        existing.stripes.push(p.color);
+                        continue;
+                    }
+                    const item = {
                         "overlay": true,
                         "kind": "event",
                         "title": ev.title,
@@ -242,18 +261,20 @@ Singleton {
                         "end": ev.end,
                         "allDay": ev.allDay,
                         "color": p.color,
-                        "stripes": [],
+                        "stripes": [p.color],
                         "email": p.email,
                         // A private detail event under reader access carries
                         // no disclosed title; drawn with the busy look.
                         "private": ev.private
-                    });
+                    };
+                    byMergeKey[mergeKey] = item;
+                    groups.push(item);
                 }
             } else if (p.status === "busy") {
                 for (const b of p.busy) {
-                    if (_dayKeyOf(b.start) !== key)
+                    if (_dayKeyOf(b.start) !== dayKey)
                         continue;
-                    items.push({
+                    busyItems.push({
                         "overlay": true,
                         "kind": "busy",
                         "title": I18n.tr("Busy", "overlay label for a colleague's free/busy-only time block"),
@@ -262,18 +283,32 @@ Singleton {
                         "end": b.end,
                         "allDay": false,
                         "color": p.color,
-                        "stripes": [],
+                        "stripes": [p.color],
                         "email": p.email
                     });
                 }
             }
         }
-        return items;
+        return groups.concat(busyItems);
     }
 
-    // One person's unmerged items for a day, for the Day-view lanes (phase 4).
+    // One person's items for a day, for the Day-view lanes (phase 5). A
+    // merged colleague-colleague meeting (see overlayForDay) is attributed
+    // to the first person in chip order who has it, so it appears in that
+    // person's lane only, never duplicated across lanes.
     function personItemsForDay(email, day) {
         return overlayForDay(day).filter(item => item.email === email);
+    }
+
+    // Stripe colours for an own event that's a shared meeting: the owner's
+    // own calendar colour plus every colleague who shares it, in chip
+    // order. Empty when nobody shares it (the own chip draws with no
+    // stripes and, by the dimmed binding views use, fades normally).
+    function stripesFor(ev) {
+        const shared = sharedWith(ev);
+        if (shared.length === 0)
+            return [];
+        return [ev.color].concat(shared);
     }
 
     // Colleague colours who share the given own event, for the own chip's

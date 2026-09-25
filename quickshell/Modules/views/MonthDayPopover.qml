@@ -140,6 +140,7 @@ Item {
                     required property var modelData
                     readonly property bool isOverlay: modelData.isOverlay
                     readonly property var ev: modelData.event
+                    readonly property var stripeColors: !isOverlay && PeopleService.active ? PeopleService.stripesFor(ev) : []
                     width: ListView.view.width
                     height: root.rowHeight - Theme.groupedListGap
 
@@ -151,6 +152,7 @@ Item {
                         response: rowDelegate.isOverlay ? "" : rowDelegate.ev.myResponse
                         calendarColor: rowDelegate.isOverlay ? Theme.primary : rowDelegate.ev.color
                         selected: !rowDelegate.isOverlay && root.isEventSelected(rowDelegate.ev)
+                        dimmed: !rowDelegate.isOverlay && PeopleService.active && rowDelegate.stripeColors.length === 0
                         hovered: !rowDelegate.isOverlay && rowHover.containsMouse
 
                         Row {
@@ -158,7 +160,7 @@ Item {
                             anchors.right: parent.right
                             anchors.verticalCenter: parent.verticalCenter
                             anchors.leftMargin: Theme.spacingXS
-                            anchors.rightMargin: Theme.spacingXS
+                            anchors.rightMargin: rowDelegate.stripeColors.length > 0 ? rowDelegate.stripeColors.length * 3 + Theme.spacingXS + 4 : Theme.spacingXS
                             spacing: Theme.spacingS
 
                             Rectangle {
@@ -189,6 +191,18 @@ Item {
                                 elide: Text.ElideRight
                                 maximumLineCount: 1
                             }
+                        }
+
+                        AttendeeStripes {
+                            visible: rowDelegate.stripeColors.length > 0
+                            anchors.right: parent.right
+                            anchors.top: parent.top
+                            anchors.bottom: parent.bottom
+                            anchors.rightMargin: 3
+                            anchors.topMargin: 3
+                            anchors.bottomMargin: 3
+                            compact: true
+                            colors: rowDelegate.stripeColors
                         }
 
                         MouseArea {
@@ -239,6 +253,7 @@ Item {
                             location: rowDelegate.isOverlay ? rowDelegate.ev.location : ""
                             personColor: rowDelegate.isOverlay ? rowDelegate.ev.color : Theme.primary
                             isPrivate: rowDelegate.isOverlay && !!rowDelegate.ev.private
+                            stripes: rowDelegate.isOverlay ? (rowDelegate.ev.stripes || []) : []
                             compact: true
                             titleLines: 1
                         }
