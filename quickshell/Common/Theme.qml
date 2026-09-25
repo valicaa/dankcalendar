@@ -676,7 +676,10 @@ Singleton {
 
     // Fade for the owner's own chips while a colleague-schedule overlay
     // (PeopleService.active) is showing, so the overlay reads as "on top".
+    // Applied to the chip's fill/border/hatch only (EventChipBackground),
+    // never to its title text: overlayDimTextOpacity keeps that legible.
     readonly property real overlayDimOpacity: 0.35
+    readonly property real overlayDimTextOpacity: 0.75
 
     function blendAlpha(c, a) {
         if (!c || c.r === undefined)

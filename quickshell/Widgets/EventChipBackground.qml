@@ -12,13 +12,19 @@ Rectangle {
     property real hatchOpacity: 0.55
     // Faded while a colleague-schedule overlay is drawn on top (PeopleService),
     // so the own chip stays visible but reads as "underneath". RSVP fill,
-    // border, hatch and strikeout are unaffected; opacity multiplies the lot.
+    // border and hatch are scaled to Theme.overlayDimOpacity (background
+    // only); the title text instead uses textColor/mutedTextColor below,
+    // which stay at Theme.overlayDimTextOpacity so they remain readable.
+    // strikeout (declined, #22) is unaffected either way.
     property bool dimmed: false
 
-    readonly property color fillColor: Theme.rsvpFillColor(response, calendarColor)
-    readonly property color textColor: Theme.rsvpTextColor(response, calendarColor)
-    readonly property color mutedTextColor: Theme.rsvpMutedTextColor(response, calendarColor)
-    readonly property color dotColor: Theme.rsvpDotColor(response, calendarColor)
+    readonly property real backgroundOpacity: dimmed ? Theme.overlayDimOpacity : 1
+    readonly property real textOpacity: dimmed ? Theme.overlayDimTextOpacity : 1
+
+    readonly property color fillColor: Theme.blendAlpha(Theme.rsvpFillColor(response, calendarColor), backgroundOpacity)
+    readonly property color textColor: Theme.blendAlpha(Theme.rsvpTextColor(response, calendarColor), textOpacity)
+    readonly property color mutedTextColor: Theme.blendAlpha(Theme.rsvpMutedTextColor(response, calendarColor), textOpacity)
+    readonly property color dotColor: Theme.blendAlpha(Theme.rsvpDotColor(response, calendarColor), textOpacity)
     readonly property bool strikeout: Theme.rsvpStrikeout(response)
     // Short chips (month/all-day, ~18-32px) get a 1px ring so it doesn't crowd the text.
     property bool compact: height < 24
@@ -26,16 +32,15 @@ Rectangle {
 
     radius: Theme.cornerRadiusS
     color: fillColor
-    border.color: selected ? Theme.primary : Theme.rsvpBorderColor(response, calendarColor)
+    border.color: Theme.blendAlpha(selected ? Theme.primary : Theme.rsvpBorderColor(response, calendarColor), backgroundOpacity)
     border.width: selected ? ringWidth : 1
-    opacity: dimmed ? Theme.overlayDimOpacity : 1
 
     TentativeHatch {
         visible: Theme.rsvpHatchVisible(root.response)
         anchors.fill: parent
         anchors.margins: Math.max(root.border.width, root.radius * 0.3)
         stripeColor: root.calendarColor
-        opacity: root.hatchOpacity
+        opacity: root.hatchOpacity * root.backgroundOpacity
     }
 
     // Selection ring: a surface-colored gap between the RSVP fill and the primary
