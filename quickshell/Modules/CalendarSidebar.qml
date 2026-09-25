@@ -14,6 +14,7 @@ Item {
     property date today: new Date()
     property var actionCalendar: null
     property var actionAccount: null
+    property bool peopleExpanded: true
     property bool calendarsExpanded: true
     property bool accountsExpanded: true
     property bool tasksExpanded: true
@@ -73,6 +74,11 @@ Item {
                 key: "view:" + viewItems[i].view,
                 view: viewItems[i].view
             });
+        items.push({
+            type: "section",
+            key: "section:people",
+            section: "people"
+        });
         items.push({
             type: "section",
             key: "section:calendars",
@@ -160,6 +166,8 @@ Item {
 
     function isSectionExpanded(name) {
         switch (name) {
+        case "people":
+            return peopleExpanded;
         case "calendars":
             return calendarsExpanded;
         case "tasks":
@@ -173,6 +181,9 @@ Item {
 
     function setSectionExpanded(name, expanded) {
         switch (name) {
+        case "people":
+            peopleExpanded = expanded;
+            break;
         case "calendars":
             calendarsExpanded = expanded;
             break;
@@ -553,13 +564,15 @@ Item {
 
                 SectionHeader {
                     title: I18n.tr("People", "sidebar section header for the colleague-schedule search")
-                    expanded: true
+                    expanded: root.peopleExpanded
                     navKey: "section:people"
+                    onToggled: root.peopleExpanded = !root.peopleExpanded
                 }
 
                 Column {
                     width: parent.width
                     spacing: Theme.spacingS
+                    visible: root.peopleExpanded
 
                     DankSearchField {
                         id: peopleSearchField
