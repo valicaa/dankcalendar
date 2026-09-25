@@ -170,6 +170,34 @@ Item {
         return PeopleService.overlayForDay(day);
     }
 
+    // A Month cell is a list, not a time grid, so "colleague on top" means
+    // ordering, not overlap: one merged list of {isOverlay, event} wrappers,
+    // all-day first, then timed items interleaved by start time (colleague
+    // first on a tie). An owner event a colleague item is matched to
+    // (PeopleService.sharedWith) is dropped here so it isn't listed twice;
+    // ownEvents is expected pre-filtered to the events still worth listing.
+    function mergeDayItems(ownEvents, overlayEvents) {
+        const own = ownEvents.map(ev => ({
+                    "isOverlay": false,
+                    "event": ev
+                }));
+        const colleague = overlayEvents.map(ev => ({
+                    "isOverlay": true,
+                    "event": ev
+                }));
+        const allDayItems = own.filter(i => i.event.allDay).concat(colleague.filter(i => i.event.allDay));
+        const timed = own.filter(i => !i.event.allDay).concat(colleague.filter(i => !i.event.allDay));
+        timed.sort((a, b) => {
+            const dt = a.event.start.getTime() - b.event.start.getTime();
+            if (dt !== 0)
+                return dt;
+            if (a.isOverlay === b.isOverlay)
+                return 0;
+            return a.isOverlay ? -1 : 1;
+        });
+        return allDayItems.concat(timed);
+    }
+
     readonly property int firstDayOfWeek: SettingsData.effectiveFirstDayOfWeek
     readonly property real weekGutter: SettingsData.showWeekNumbers ? 28 : 0
     readonly property real eventChipHeight: Math.max(18, SettingsData.monthEventTitleLines * 14 + 4)
@@ -340,21 +368,32 @@ Item {
                             return root.overlayEventsFor(cellDate);
                         }
 
-                        // On today, events that have already ended yield their
+                        // Own events already shown via a matching colleague item
+                        // (PeopleService.sharedWith) are dropped so the day isn't
+                        // listed twice; the colleague item stands in for them.
+                        readonly property var visibleOwnEvents: {
+                            if (!PeopleService.active)
+                                return cellEvents;
+                            return cellEvents.filter(ev => PeopleService.sharedWith(ev).length === 0);
+                        }
+
+                        readonly property var mergedItems: root.mergeDayItems(visibleOwnEvents, cellOverlayEvents)
+
+                        // On today, items that have already ended yield their
                         // chip slots to ones still upcoming; they fall into the
                         // "+N more" overflow rather than being shown first.
-                        readonly property var displayEvents: {
+                        readonly property var displayItems: {
                             if (!isToday)
-                                return cellEvents;
+                                return mergedItems;
                             const now = root.today.getTime();
                             const upcoming = [];
                             const ended = [];
-                            for (let i = 0; i < cellEvents.length; i++) {
-                                const ev = cellEvents[i];
-                                if (ev.allDay || ev.end.getTime() > now)
-                                    upcoming.push(ev);
+                            for (let i = 0; i < mergedItems.length; i++) {
+                                const item = mergedItems[i];
+                                if (item.event.allDay || item.event.end.getTime() > now)
+                                    upcoming.push(item);
                                 else
-                                    ended.push(ev);
+                                    ended.push(item);
                             }
                             return upcoming.concat(ended);
                         }
@@ -466,6 +505,11 @@ Item {
                             }
                         }
 
+                        // One merged list per cell (mergedItems/displayItems):
+                        // colleague items (full colour) and remaining own
+                        // items (dimmed), interleaved by start time. Each
+                        // delegate carries both chip kinds and shows only the
+                        // one that matches its item.
                         Column {
                             anchors.left: parent.left
                             anchors.right: parent.right
@@ -479,89 +523,113 @@ Item {
 
                             Repeater {
                                 model: ScriptModel {
-                                    values: dayCell.displayEvents.slice(0, dayCell.maxChips)
+                                    values: dayCell.displayItems.slice(0, dayCell.maxChips)
                                 }
 
-                                EventChipBackground {
+                                Item {
+                                    id: chipDelegate
                                     required property var modelData
-                                    readonly property bool isSelected: root.isEventSelected(modelData)
+                                    readonly property bool isOverlay: modelData.isOverlay
+                                    readonly property var ev: modelData.event
                                     width: parent.width
                                     height: root.eventChipHeight
-                                    radius: Theme.cornerRadiusXS
-                                    clip: true
-                                    compact: true
-                                    response: modelData.myResponse
-                                    calendarColor: modelData.color
-                                    selected: isSelected
-                                    dimmed: PeopleService.active && PeopleService.sharedWith(modelData).length === 0
-                                    hovered: chipMouseArea.containsMouse
 
-                                    Row {
-                                        anchors.left: parent.left
-                                        anchors.right: parent.right
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        anchors.leftMargin: 4
-                                        anchors.rightMargin: 4
-                                        spacing: 4
+                                    EventChipBackground {
+                                        id: ownChip
+                                        visible: !chipDelegate.isOverlay
+                                        anchors.fill: parent
+                                        radius: Theme.cornerRadiusXS
+                                        clip: true
+                                        compact: true
+                                        response: chipDelegate.isOverlay ? "" : chipDelegate.ev.myResponse
+                                        calendarColor: chipDelegate.isOverlay ? Theme.primary : chipDelegate.ev.color
+                                        selected: !chipDelegate.isOverlay && root.isEventSelected(chipDelegate.ev)
+                                        dimmed: !chipDelegate.isOverlay && PeopleService.active
+                                        hovered: !chipDelegate.isOverlay && chipMouseArea.containsMouse
 
-                                        Rectangle {
-                                            width: 3
-                                            height: 12
-                                            radius: Theme.fullRadius(width, height)
-                                            color: parent.parent.dotColor
+                                        Row {
+                                            anchors.left: parent.left
+                                            anchors.right: parent.right
                                             anchors.verticalCenter: parent.verticalCenter
+                                            anchors.leftMargin: 4
+                                            anchors.rightMargin: 4
+                                            spacing: 4
+
+                                            Rectangle {
+                                                width: 3
+                                                height: 12
+                                                radius: Theme.fullRadius(width, height)
+                                                color: parent.parent.dotColor
+                                                anchors.verticalCenter: parent.verticalCenter
+                                            }
+
+                                            StyledText {
+                                                anchors.verticalCenter: parent.verticalCenter
+                                                text: chipDelegate.isOverlay ? "" : chipDelegate.ev.title
+                                                font.pixelSize: 11
+                                                color: parent.parent.textColor
+                                                font.strikeout: parent.parent.strikeout
+                                                wrapMode: Text.WordWrap
+                                                maximumLineCount: SettingsData.monthEventTitleLines
+                                                elide: Text.ElideRight
+                                                width: parent.width - 10
+                                            }
                                         }
 
-                                        StyledText {
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            text: parent.parent.modelData.title
-                                            font.pixelSize: 11
-                                            color: parent.parent.textColor
-                                            font.strikeout: parent.parent.strikeout
-                                            wrapMode: Text.WordWrap
-                                            maximumLineCount: SettingsData.monthEventTitleLines
-                                            elide: Text.ElideRight
-                                            width: parent.width - 10
+                                        EventMouseArea {
+                                            id: chipMouseArea
+                                            enabled: !chipDelegate.isOverlay
+                                            anchors.fill: parent
+                                            eventData: chipDelegate.ev
+                                            dragEnabled: !chipDelegate.isOverlay && !chipDelegate.ev.readOnly
+                                            onEntered: chipTooltip.show(root.eventTooltip(chipDelegate.ev), ownChip)
+                                            onExited: chipTooltip.hide()
+                                            onActivated: (event, modifiers) => {
+                                                chipTooltip.hide();
+                                                root.eventClicked(event, modifiers);
+                                            }
+                                            onContextRequested: (event, anchorItem, x, y) => root.eventContextRequested(event, anchorItem, x, y)
+                                            onDragPressed: root.eventPointerDown = true
+                                            onDragStarted: (event, pointerItem, x, y) => {
+                                                chipTooltip.hide();
+                                                root.draggedEvent = event;
+                                                root.eventDragging = true;
+                                                root.updateEventDrag(pointerItem, x, y);
+                                            }
+                                            onDragMoved: (event, pointerItem, x, y) => root.updateEventDrag(pointerItem, x, y)
+                                            onDropped: (event, pointerItem, x, y) => {
+                                                root.updateEventDrag(pointerItem, x, y);
+                                                root.finishEventDrag(event);
+                                            }
+                                            onDragReleased: {
+                                                root.eventPointerDown = false;
+                                                if (root.eventDragging)
+                                                    root.finishEventDrag(chipDelegate.ev);
+                                            }
                                         }
                                     }
 
-                                    EventMouseArea {
-                                        id: chipMouseArea
+                                    PersonEventChip {
+                                        id: colleagueChip
+                                        visible: chipDelegate.isOverlay
                                         anchors.fill: parent
-                                        eventData: parent.modelData
-                                        dragEnabled: !parent.modelData.readOnly
-                                        onEntered: chipTooltip.show(root.eventTooltip(parent.modelData), parent)
+                                        kind: chipDelegate.isOverlay ? chipDelegate.ev.kind : "event"
+                                        title: chipDelegate.isOverlay ? chipDelegate.ev.title : ""
+                                        location: chipDelegate.isOverlay ? chipDelegate.ev.location : ""
+                                        personColor: chipDelegate.isOverlay ? chipDelegate.ev.color : Theme.primary
+                                        isPrivate: chipDelegate.isOverlay && !!chipDelegate.ev.private
+                                        compact: true
+                                        titleLines: SettingsData.monthEventTitleLines
+                                        onEntered: chipTooltip.show(root.overlayTooltip(chipDelegate.ev), colleagueChip)
                                         onExited: chipTooltip.hide()
-                                        onActivated: (event, modifiers) => {
-                                            chipTooltip.hide();
-                                            root.eventClicked(event, modifiers);
-                                        }
-                                        onContextRequested: (event, anchorItem, x, y) => root.eventContextRequested(event, anchorItem, x, y)
-                                        onDragPressed: root.eventPointerDown = true
-                                        onDragStarted: (event, pointerItem, x, y) => {
-                                            chipTooltip.hide();
-                                            root.draggedEvent = event;
-                                            root.eventDragging = true;
-                                            root.updateEventDrag(pointerItem, x, y);
-                                        }
-                                        onDragMoved: (event, pointerItem, x, y) => root.updateEventDrag(pointerItem, x, y)
-                                        onDropped: (event, pointerItem, x, y) => {
-                                            root.updateEventDrag(pointerItem, x, y);
-                                            root.finishEventDrag(event);
-                                        }
-                                        onDragReleased: {
-                                            root.eventPointerDown = false;
-                                            if (root.eventDragging)
-                                                root.finishEventDrag(parent.modelData);
-                                        }
                                     }
                                 }
                             }
 
                             StyledText {
                                 id: moreLabel
-                                visible: dayCell.displayEvents.length > dayCell.maxChips
-                                text: I18n.tr("+%1 more", "overflow label in month grid day cell, %1 is the number of hidden events").arg(dayCell.displayEvents.length - dayCell.maxChips)
+                                visible: dayCell.displayItems.length > dayCell.maxChips
+                                text: I18n.tr("+%1 more", "overflow label in month grid day cell, %1 is the number of hidden events").arg(dayCell.displayItems.length - dayCell.maxChips)
                                 font.pixelSize: 10
                                 color: Theme.surfaceVariantText
                                 width: parent.width
@@ -571,43 +639,8 @@ Item {
                                     cursorShape: Qt.PointingHandCursor
                                     onClicked: mouse => {
                                         mouse.accepted = true;
-                                        dayPopover.show(dayCell.cellDate, dayCell.displayEvents, moreLabel);
+                                        dayPopover.show(dayCell.cellDate, dayCell.displayItems, moreLabel);
                                     }
-                                }
-                            }
-                        }
-
-                        // Colleague-schedule overlay, drawn on top of the
-                        // (faded) own chips above rather than pushed below
-                        // them, so it never changes the cell's own layout.
-                        Column {
-                            anchors.left: parent.left
-                            anchors.right: parent.right
-                            anchors.top: SettingsData.monthShowAllEvents ? dayBadge.bottom : undefined
-                            anchors.bottom: SettingsData.monthShowAllEvents ? undefined : parent.bottom
-                            anchors.margins: Theme.spacingXS
-                            spacing: 2
-                            z: 2
-
-                            Repeater {
-                                model: ScriptModel {
-                                    values: dayCell.cellOverlayEvents.slice(0, dayCell.maxChips)
-                                }
-
-                                PersonEventChip {
-                                    id: overlayMonthChip
-                                    required property var modelData
-                                    width: parent.width
-                                    height: root.eventChipHeight
-                                    kind: modelData.kind
-                                    title: modelData.title
-                                    location: modelData.location
-                                    personColor: modelData.color
-                                    isPrivate: !!modelData.private
-                                    compact: true
-                                    titleLines: SettingsData.monthEventTitleLines
-                                    onEntered: chipTooltip.show(root.overlayTooltip(modelData), overlayMonthChip)
-                                    onExited: chipTooltip.hide()
                                 }
                             }
                         }

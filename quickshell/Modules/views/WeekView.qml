@@ -937,6 +937,10 @@ Item {
                                         location: modelData.location
                                         personColor: modelData.color
                                         isPrivate: !!modelData.private
+                                        // Below an hour there's no room for a location line under
+                                        // the title; a short chip drops it, matching the owner's
+                                        // own timed chip (durationHours >= 1 threshold above).
+                                        compact: modelData.durationHours < 1
                                         titleLines: Math.min(SettingsData.weekEventTitleLines, Math.max(1, Math.floor(height / 14)))
                                         onEntered: chipTooltip.show(root.overlayTooltip(modelData), overlayTimedChip)
                                         onExited: chipTooltip.hide()
