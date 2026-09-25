@@ -7,17 +7,18 @@ import qs.Common
 import qs.Services
 import "../Common/EventUtils.js" as EventUtils
 
-// Colleague-schedule search: transient, in-memory UI state for the sidebar
-// People search and the (future) Week/Month/Day overlay. Talks to the daemon
-// only through DankCalService.sendRequest("people.schedule", ...). Nothing
-// here is written to ui-settings.json or the database.
+// Colleague-schedule lookups for the sidebar People search and the view
+// overlay. Held in memory only: nothing is written to ui-settings.json or
+// the database.
 Singleton {
     id: root
 
     readonly property var log: Log.scoped("PeopleService")
 
-    // Each entry: {email, name, color, status, accountId, events, busy, error, seq}.
-    // status is one of loading | details | busy | unavailable | reconnect | error.
+    // Each entry: {email, name, color, status, loading, accountId, events, busy, error, seq}.
+    // status is the outcome of the last lookup: pending (none yet) | details |
+    // busy | unavailable | reconnect | error. A refetch keeps status and data
+    // and only sets loading, so the overlay stays up while paging.
     property var people: []
     property int version: 0
 
@@ -25,18 +26,22 @@ Singleton {
     readonly property var lanes: people.filter(p => p.status === "details" || p.status === "busy")
     readonly property bool hasGoogleAccount: DankCalService.accounts.some(a => a.kind === "google")
     readonly property var reconnectPerson: people.find(p => p.status === "reconnect") || null
+    readonly property string busyLabel: I18n.tr("Busy", "overlay label for a colleague's free/busy-only or private time block")
 
+    property int _seq: 0
     property string _windowKey: ""
+    property var _window: null
+    readonly property var _index: _buildIndex(people)
 
     Connections {
         target: DankCalService
         function onFocusDateChanged() {
-            root._refetchTimer.restart();
+            refetchTimer.restart();
         }
     }
 
     Timer {
-        id: _refetchTimer
+        id: refetchTimer
         interval: 250
         onTriggered: root._maybeRefetchAll()
     }
@@ -89,7 +94,8 @@ Singleton {
                 "email": trimmed,
                 "name": "",
                 "color": _nextColor(),
-                "status": "loading",
+                "status": "pending",
+                "loading": false,
                 "accountId": "",
                 "events": [],
                 "busy": [],
@@ -124,8 +130,8 @@ Singleton {
             _fetch(email);
     }
 
-    // Refetches every person currently showing "reconnect", called after a
-    // successful DankCalService.reconnectAccount(...).
+    // Refetches every person showing "reconnect", after a successful
+    // DankCalService.reconnectAccount(...).
     function retryReconnect() {
         for (const p of people)
             if (p.status === "reconnect")
@@ -143,44 +149,41 @@ Singleton {
     }
 
     function _fetch(email) {
-        const idx = people.findIndex(p => p.email === email);
-        if (idx < 0)
+        if (!people.some(p => p.email === email))
             return;
-        const seq = (people[idx].seq || 0) + 1;
+        const seq = ++_seq;
         _setPerson(email, {
-            "status": "loading",
-            "seq": seq,
-            "error": ""
+            "loading": true,
+            "seq": seq
         });
-        const win = _windowFor(DankCalService.focusDate);
+        _window = _windowFor(DankCalService.focusDate);
         _windowKey = _monthKey(DankCalService.focusDate);
         DankCalService.sendRequest("people.schedule", {
             "email": email,
-            "from": win.from.toISOString(),
-            "to": win.to.toISOString()
+            "from": _window.from.toISOString(),
+            "to": _window.to.toISOString()
         }, response => root.ingest(email, response, seq));
     }
 
-    // The production IPC callback body. Also the entry point an offscreen
-    // verification harness feeds fixture responses through. seq is omitted
-    // by such a harness, which skips the stale-response guard.
+    // The people.schedule reply for the fetch numbered seq. A reply for a
+    // superseded fetch, or for a person removed since, is dropped.
     function ingest(email, response, seq) {
-        const idx = people.findIndex(p => p.email === email);
-        if (idx < 0)
+        const person = people.find(p => p.email === email);
+        if (!person || person.seq !== seq)
             return;
-        if (seq !== undefined && people[idx].seq !== seq)
-            return;
-        if (response && response.error) {
-            log.warn("lookup failed", email, response.error);
+        if (response.error) {
+            log.warn("colleague lookup failed");
             _setPerson(email, {
                 "status": "error",
+                "loading": false,
                 "error": response.error
             });
             return;
         }
-        const result = (response && response.result !== undefined) ? response.result : (response || {});
+        const result = response.result || {};
         _setPerson(email, {
             "status": result.status || "error",
+            "loading": false,
             "name": result.name || "",
             "accountId": result.accountId || "",
             "events": (result.events || []).map(e => _normalizeEvent(e)),
@@ -192,8 +195,8 @@ Singleton {
         });
     }
 
-    // Colleague all-day boundaries arrive as UTC-midnight ISO strings, the
-    // same convention DankCalService.normalizeEvent uses for own events.
+    // All-day boundaries arrive as UTC-midnight ISO strings, the convention
+    // DankCalService.normalizeEvent uses for own events.
     function _dayBoundary(iso) {
         const d = new Date(iso);
         return new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
@@ -208,135 +211,167 @@ Singleton {
         return Object.assign({}, base, {
             "key": e.key || "",
             "private": !!e.private,
-            "ownEventId": ownEventId,
-            "ownUid": ownUid,
-            "ownStart": ownStart,
-            // Matches EventUtils.eventKey(ownEvent) for the owner occurrence
-            // this colleague event was matched against (section 4 of the
-            // design), used by sharedWith().
+            // EventUtils.eventKey of the owner's occurrence this event matched.
             "ownKey": (ownEventId && ownStart) ? (ownEventId + "|" + ownUid + "|" + ownStart.getTime()) : ""
         });
     }
 
     function _dayKeyOf(d) {
-        const date = new Date(d);
-        return date.getFullYear() + "-" + date.getMonth() + "-" + date.getDate();
+        return d.getFullYear() + "-" + d.getMonth() + "-" + d.getDate();
     }
 
-    // Merged overlay items for one day, for the Week/Month views (4) and,
-    // filtered by email, the Day-view lanes (5). A detail event matched to
-    // one of the owner's own occurrences (ownKey) is not drawn here at all:
-    // the owner's own chip carries it instead, with a stripe per
-    // participant via stripesFor(). Remaining detail events are grouped by
-    // `key` (the cross-calendar iCalUID + start pair), so a meeting two or
-    // more colleagues share is drawn once, in the colour of the first
-    // person in chip order who has it, with one stripe per participant in
-    // that same order. Busy spans never merge: they carry no id.
-    function overlayForDay(day) {
-        const dayKey = _dayKeyOf(day);
-        const groups = [];
-        const byMergeKey = {};
-        const busyItems = [];
-        for (const p of people) {
+    // Local day keys an item overlaps (start < dayEnd && end > dayStart, the
+    // rule DankCalService.eventsForRange applies to own events), clamped to
+    // the fetched window.
+    function _daysOf(start, end) {
+        const keys = [];
+        let lo = start;
+        let hi = end;
+        if (_window) {
+            lo = new Date(Math.max(lo.getTime(), _window.from.getTime()));
+            hi = new Date(Math.min(hi.getTime(), _window.to.getTime()));
+        }
+        for (let day = new Date(lo.getFullYear(), lo.getMonth(), lo.getDate()); day < hi; day = new Date(day.getFullYear(), day.getMonth(), day.getDate() + 1))
+            keys.push(_dayKeyOf(day));
+        return keys;
+    }
+
+    function _overlayItem(p, kind, source, isPrivate) {
+        const hidesTitle = kind === "busy" || isPrivate;
+        return {
+            "overlay": true,
+            "kind": kind,
+            "title": hidesTitle ? busyLabel : source.title,
+            "location": hidesTitle ? "" : (source.location || ""),
+            "start": source.start,
+            "end": source.end,
+            "allDay": !!source.allDay,
+            "color": p.color,
+            "stripes": [],
+            "email": p.email,
+            "private": isPrivate
+        };
+    }
+
+    function _push(map, key, item) {
+        if (map[key])
+            map[key].push(item);
+        else
+            map[key] = [item];
+    }
+
+    // One pass over every person's events, per change of `people`:
+    //  - shared: own event key -> colours of the colleagues who share it
+    //  - byDay: day key -> merged overlay items for Week/Month. An event that
+    //    matches an own occurrence is carried by the own chip's stripes
+    //    instead. The rest are grouped by `key` (iCalUID + start), so a
+    //    meeting several colleagues share is one item in the first person's
+    //    colour, striped with every participant. Busy spans never merge.
+    //  - lanes: email -> day key -> that person's own items, unmerged, for
+    //    the Day view.
+    function _buildIndex(list) {
+        const shared = {};
+        const groups = {};
+        const busyByDay = {};
+        const lanes = {};
+        for (const p of list) {
+            const lane = {};
+            lanes[p.email] = lane;
             if (p.status === "details") {
                 for (const ev of p.events) {
-                    if (_dayKeyOf(ev.start) !== dayKey)
-                        continue;
-                    if (ev.ownKey)
-                        continue;
-                    // A colleague event with no iCalUID (rare) merges with
-                    // nobody: key it uniquely instead of grouping on "".
-                    const mergeKey = ev.key || ("_" + p.email + "_" + ev.start.getTime());
-                    const existing = byMergeKey[mergeKey];
-                    if (existing) {
-                        existing.stripes.push(p.color);
+                    const item = _overlayItem(p, "event", ev, ev.private);
+                    const days = _daysOf(ev.start, ev.end);
+                    for (const day of days)
+                        _push(lane, day, item);
+                    if (ev.ownKey) {
+                        const colors = shared[ev.ownKey] || (shared[ev.ownKey] = []);
+                        if (colors.indexOf(p.color) === -1)
+                            colors.push(p.color);
                         continue;
                     }
-                    const item = {
-                        "overlay": true,
-                        "kind": "event",
-                        "title": ev.title,
-                        "location": ev.location,
-                        "start": ev.start,
-                        "end": ev.end,
-                        "allDay": ev.allDay,
-                        "color": p.color,
-                        "stripes": [p.color],
-                        "email": p.email,
-                        // A private detail event under reader access carries
-                        // no disclosed title; drawn with the busy look.
-                        "private": ev.private
-                    };
-                    byMergeKey[mergeKey] = item;
-                    groups.push(item);
+                    // Without an iCalUID an event merges with nobody.
+                    const mergeKey = ev.key || ("_" + p.email + "_" + ev.start.getTime());
+                    for (const day of days) {
+                        const dayGroups = groups[day] || (groups[day] = {
+                                "order": [],
+                                "byKey": {}
+                            });
+                        const existing = dayGroups.byKey[mergeKey];
+                        if (existing) {
+                            if (existing.stripes.indexOf(p.color) === -1)
+                                existing.stripes.push(p.color);
+                            continue;
+                        }
+                        const merged = Object.assign({}, item, {
+                            "stripes": [p.color]
+                        });
+                        dayGroups.byKey[mergeKey] = merged;
+                        dayGroups.order.push(merged);
+                    }
                 }
             } else if (p.status === "busy") {
                 for (const b of p.busy) {
-                    if (_dayKeyOf(b.start) !== dayKey)
-                        continue;
-                    // Busy spans never merge (no id to merge on), so they
-                    // never carry a stripe.
-                    busyItems.push({
-                        "overlay": true,
-                        "kind": "busy",
-                        "title": I18n.tr("Busy", "overlay label for a colleague's free/busy-only time block"),
-                        "location": "",
-                        "start": b.start,
-                        "end": b.end,
-                        "allDay": false,
-                        "color": p.color,
-                        "stripes": [],
-                        "email": p.email
-                    });
+                    const item = _overlayItem(p, "busy", b, false);
+                    for (const day of _daysOf(b.start, b.end)) {
+                        _push(lane, day, item);
+                        _push(busyByDay, day, item);
+                    }
                 }
             }
         }
-        // A group that ended up with only its creator's color never
-        // actually merged with anyone; drop its stripe too so an unmerged
-        // colleague event draws with none, matching a busy item.
-        const merged = groups.map(g => g.stripes.length > 1 ? g : Object.assign({}, g, {
-                    "stripes": []
-                }));
-        return merged.concat(busyItems);
+
+        const byDay = {};
+        for (const day in groups) {
+            // A single colour means nobody merged with it: no stripe.
+            byDay[day] = groups[day].order.map(g => g.stripes.length > 1 ? g : Object.assign({}, g, {
+                        "stripes": []
+                    }));
+        }
+        for (const day in busyByDay)
+            byDay[day] = (byDay[day] || []).concat(busyByDay[day]);
+
+        return {
+            "shared": shared,
+            "byDay": byDay,
+            "lanes": lanes
+        };
     }
 
-    // One person's items for a day, for the Day-view lanes (phase 5). A
-    // merged colleague-colleague meeting (see overlayForDay) is attributed
-    // to the first person in chip order who has it, so it appears in that
-    // person's lane only, never duplicated across lanes.
+    // Merged overlay items overlapping a day, for Week and Month.
+    function overlayForDay(day) {
+        return _index.byDay[_dayKeyOf(day)] || [];
+    }
+
+    // One person's own items overlapping a day, unmerged, for a Day lane.
     function personItemsForDay(email, day) {
-        return overlayForDay(day).filter(item => item.email === email);
+        const lane = _index.lanes[email];
+        return (lane && lane[_dayKeyOf(day)]) || [];
     }
 
-    // Stripe colours for an own event that's a shared meeting: the owner's
-    // own calendar colour plus every colleague who shares it, in chip
-    // order. Empty when nobody shares it (the own chip draws with no
-    // stripes and, by the dimmed binding views use, fades normally).
+    // Colours of the colleagues who share an own event, in chip order.
+    function sharedWith(ev) {
+        return (ev && _index.shared[EventUtils.eventKey(ev)]) || [];
+    }
+
+    // Stripe colours for an own chip: its own colour, then every colleague
+    // who shares it. Empty when nobody does.
     function stripesFor(ev) {
         const shared = sharedWith(ev);
-        if (shared.length === 0)
-            return [];
-        return [ev.color].concat(shared);
+        return shared.length === 0 ? [] : [ev.color].concat(shared);
     }
 
-    // Colleague colours who share the given own event, for the own chip's
-    // attendee stripes (phase 4). Uses the daemon's own-event match, not a
-    // QML-side merge.
-    function sharedWith(ev) {
-        if (!ev)
-            return [];
-        const key = EventUtils.eventKey(ev);
-        const colors = [];
-        for (const p of people) {
-            if (p.status !== "details")
-                continue;
-            for (const pe of p.events) {
-                if (pe.ownKey && pe.ownKey === key) {
-                    colors.push(p.color);
-                    break;
-                }
-            }
-        }
-        return colors;
+    function _personLabel(email) {
+        const person = people.find(p => p.email === email);
+        return (person && person.name) || email;
+    }
+
+    // Tooltip text for an overlay item: title, time, location, person.
+    function tooltipFor(item) {
+        const when = item.allDay ? I18n.tr("All day", "all-day marker in event tooltip") : SettingsData.formatTime(item.start) + " – " + SettingsData.formatTime(item.end);
+        const parts = [item.title, when];
+        if (item.location)
+            parts.push(item.location);
+        parts.push(_personLabel(item.email));
+        return parts.join(" · ");
     }
 }

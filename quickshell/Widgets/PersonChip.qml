@@ -15,7 +15,7 @@ StyledRect {
     readonly property bool isError: person.status === "error"
     readonly property bool isUnavailable: person.status === "unavailable"
     readonly property bool isReconnect: person.status === "reconnect"
-    readonly property bool isLoading: person.status === "loading"
+    readonly property bool isLoading: !!person.loading
     readonly property string label: person.name || person.email
 
     color: Theme.surfaceContainerHigh
@@ -30,7 +30,6 @@ StyledRect {
     MouseArea {
         id: retryArea
         anchors.fill: parent
-        enabled: root.isError || root.isUnavailable
         cursorShape: root.isError ? Qt.PointingHandCursor : Qt.ArrowCursor
         hoverEnabled: true
         onClicked: if (root.isError) root.retried()
@@ -65,7 +64,7 @@ StyledRect {
         }
 
         DankIcon {
-            visible: root.isUnavailable
+            visible: root.isUnavailable && !root.isLoading
             name: "block"
             size: Theme.iconSizeSmall
             color: Theme.surfaceVariantText
@@ -73,7 +72,7 @@ StyledRect {
         }
 
         DankIcon {
-            visible: root.isError
+            visible: root.isError && !root.isLoading
             name: "warning"
             size: Theme.iconSizeSmall
             color: Theme.error
@@ -81,7 +80,7 @@ StyledRect {
         }
 
         DankIcon {
-            visible: root.isReconnect
+            visible: root.isReconnect && !root.isLoading
             name: "sync_problem"
             size: Theme.iconSizeSmall
             color: Theme.error
