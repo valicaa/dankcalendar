@@ -2030,6 +2030,13 @@
     "comment": ""
   },
   {
+    "term": "Me",
+    "translation": "",
+    "context": "day-view lane header label for the owner's own column",
+    "reference": "",
+    "comment": ""
+  },
+  {
     "term": "Medium",
     "translation": "",
     "context": "task priority dropdown option",

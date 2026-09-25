@@ -2,19 +2,19 @@
   {
     "term": "%1 AM",
     "context": "%1 AM",
-    "reference": "Modules/views/DayView.qml:94, Modules/views/WeekView.qml:206",
+    "reference": "Modules/views/DayView.qml:174, Modules/views/WeekView.qml:206",
     "comment": "morning hour label in time gutter"
   },
   {
     "term": "%1 PM",
     "context": "%1 PM",
-    "reference": "Modules/views/DayView.qml:94, Modules/views/WeekView.qml:206",
+    "reference": "Modules/views/DayView.qml:174, Modules/views/WeekView.qml:206",
     "comment": "afternoon hour label in time gutter"
   },
   {
     "term": "%1 appointments fall outside core hours",
     "context": "%1 appointments fall outside core hours",
-    "reference": "Modules/views/DayView.qml:168, Modules/views/WeekView.qml:378",
+    "reference": "Modules/views/DayView.qml:248, Modules/views/WeekView.qml:378",
     "comment": "core hours warning banner, plural"
   },
   {
@@ -92,7 +92,7 @@
   {
     "term": "+%1 more",
     "context": "+%1 more",
-    "reference": "Modules/views/MonthView.qml:564",
+    "reference": "Modules/views/MonthView.qml:639",
     "comment": "overflow label in month grid day cell, %1 is the number of hidden events"
   },
   {
@@ -110,7 +110,7 @@
   {
     "term": "1 appointment falls outside core hours",
     "context": "1 appointment falls outside core hours",
-    "reference": "Modules/views/DayView.qml:168, Modules/views/WeekView.qml:378",
+    "reference": "Modules/views/DayView.qml:248, Modules/views/WeekView.qml:378",
     "comment": "core hours warning banner, singular"
   },
   {
@@ -422,7 +422,7 @@
   {
     "term": "All day",
     "context": "All day",
-    "reference": "Modals/SearchModal.qml:111, Modals/EventDetailsModal.qml:1075, Widgets/EventContextMenu.qml:41, Modules/views/MonthDayPopover.qml:166, Modules/views/AgendaView.qml:81, Modules/views/DayView.qml:80, Modules/views/WeekView.qml:223, Modules/views/WeekView.qml:236, Modules/views/MonthView.qml:148, Modules/views/MonthView.qml:161",
+    "reference": "Modals/SearchModal.qml:111, Modals/EventDetailsModal.qml:1075, Widgets/EventContextMenu.qml:41, Modules/views/MonthDayPopover.qml:177, Modules/views/MonthDayPopover.qml:239, Modules/views/AgendaView.qml:81, Modules/views/DayView.qml:74, Modules/views/DayView.qml:160, Modules/views/WeekView.qml:223, Modules/views/WeekView.qml:236, Modules/views/MonthView.qml:148, Modules/views/MonthView.qml:161",
     "comment": "all-day marker in event context menu | all-day marker in event tooltip | all-day marker in the month day-detail popover | event form toggle label for all-day events | search result subtitle for all-day events | time column label for all-day events on agenda card"
   },
   {
@@ -584,7 +584,7 @@
   {
     "term": "Busy",
     "context": "Busy",
-    "reference": "Services/PeopleService.qml:259, Widgets/PersonEventChip.qml:58, Modules/views/WeekView.qml:233, Modules/views/MonthView.qml:158",
+    "reference": "Services/PeopleService.qml:280, Widgets/PersonEventChip.qml:76, Modules/views/DayView.qml:71, Modules/views/WeekView.qml:233, Modules/views/MonthView.qml:158",
     "comment": "overlay label for a colleague's free/busy-only or private time block | overlay label for a colleague's free/busy-only time block"
   },
   {
@@ -1196,7 +1196,7 @@
   {
     "term": "Disable core hours",
     "context": "Disable core hours",
-    "reference": "Modules/views/DayView.qml:178, Modules/views/WeekView.qml:388",
+    "reference": "Modules/views/DayView.qml:258, Modules/views/WeekView.qml:388",
     "comment": "core hours warning banner disable action"
   },
   {
@@ -1740,6 +1740,12 @@
     "comment": "RSVP tentative button"
   },
   {
+    "term": "Me",
+    "context": "Me",
+    "reference": "Modules/views/DayView.qml:300",
+    "comment": "day-view lane header label for the owner's own column"
+  },
+  {
     "term": "Medium",
     "context": "Medium",
     "reference": "Modals/TaskDetailsModal.qml:75",
@@ -1928,7 +1934,7 @@
   {
     "term": "New event",
     "context": "New event",
-    "reference": "Modals/EventDetailsModal.qml:523, Modals/EventDetailsModal.qml:542, Widgets/EventContextMenu.qml:64, Modules/views/MonthView.qml:419",
+    "reference": "Modals/EventDetailsModal.qml:523, Modals/EventDetailsModal.qml:542, Widgets/EventContextMenu.qml:64, Modules/views/MonthView.qml:451",
     "comment": "calendar day context menu action | event modal header when creating | event modal window title when creating | placeholder label on the event span shown while selecting days in the month grid"
   },
   {
@@ -3338,7 +3344,7 @@
   {
     "term": "all day",
     "context": "all day",
-    "reference": "Modules/views/DayView.qml:219",
+    "reference": "Modules/views/DayView.qml:368",
     "comment": "suffix on all-day event chip in day view"
   },
   {

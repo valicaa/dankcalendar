@@ -45,6 +45,86 @@ Item {
     readonly property real hourHeight: 56
     readonly property real timeColumnWidth: 72
 
+    // Per-person lanes while PeopleService.active: the owner first (null),
+    // then each colleague with a schedule in chip order. A colleague still
+    // "loading"/"error"/"unavailable"/"reconnect" gets no column (matches
+    // PeopleService.lanes). With no people, laneOwners is [null] and every
+    // lane* helper below is the identity, so the layout is unchanged.
+    readonly property var laneOwners: PeopleService.lanes.length > 0 ? [null].concat(PeopleService.lanes) : [null]
+    readonly property int laneCount: laneOwners.length
+    readonly property real laneGap: 6
+
+    function laneWidth(totalWidth) {
+        return (totalWidth - (laneCount - 1) * laneGap) / laneCount;
+    }
+
+    function laneX(totalWidth, index) {
+        return index * (laneWidth(totalWidth) + laneGap);
+    }
+
+    function overlayPersonLabel(item) {
+        const person = PeopleService.people.find(p => p.email === item.email);
+        return (person && (person.name || person.email)) || item.email;
+    }
+
+    function overlayTooltip(item) {
+        const title = item.title || I18n.tr("Busy", "overlay label for a colleague's free/busy-only or private time block");
+        const suffix = (item.location ? " · " + item.location : "") + " · " + root.overlayPersonLabel(item);
+        if (item.allDay)
+            return title + " · " + I18n.tr("All day", "all-day marker in event tooltip") + suffix;
+        return title + " · " + SettingsData.formatTime(item.start) + " – " + SettingsData.formatTime(item.end) + suffix;
+    }
+
+    // One colleague lane's timed items, laid out through the same overlap
+    // logic as the owner's own lane, but independently: a lane's columns
+    // never depend on another lane's events.
+    function laneTimedEvents(index) {
+        const person = laneOwners[index];
+        if (!person)
+            return [];
+        const out = [];
+        const items = PeopleService.personItemsForDay(person.email, displayDate);
+        for (let i = 0; i < items.length; i++) {
+            const item = items[i];
+            if (item.allDay)
+                continue;
+            const slot = EventUtils.timedSlot(item, displayDate, root.startHour, root.endHour);
+            if (!slot)
+                continue;
+            out.push(Object.assign({}, item, slot));
+        }
+        return DankCalService.layoutTimedEvents(out).map(ev => Object.assign({}, ev, {
+                    "lane": index
+                }));
+    }
+
+    // Flattened across every colleague lane (index >= 1); each item still
+    // carries its own lane index plus that lane's own column/columns.
+    readonly property var colleagueTimedEvents: {
+        eventsVersion;
+        PeopleService.version;
+        let out = [];
+        for (let i = 1; i < laneCount; i++)
+            out = out.concat(laneTimedEvents(i));
+        return out;
+    }
+
+    function laneAllDayEvents(index) {
+        const person = laneOwners[index];
+        if (!person)
+            return root.allDayEvents;
+        return PeopleService.personItemsForDay(person.email, displayDate).filter(item => item.allDay);
+    }
+
+    readonly property bool colleagueHasAllDay: {
+        eventsVersion;
+        PeopleService.version;
+        for (let i = 1; i < laneCount; i++)
+            if (laneAllDayEvents(i).length > 0)
+                return true;
+        return false;
+    }
+
     readonly property bool showsNow: today.getFullYear() === displayDate.getFullYear() && today.getMonth() === displayDate.getMonth() && today.getDate() === displayDate.getDate()
     readonly property real nowHour: today.getHours() + today.getMinutes() / 60
 
@@ -184,58 +264,158 @@ Item {
         }
     }
 
-    Column {
-        id: allDayStrip
+    // Lane header (colour dot + name), shown only with a colleague-schedule
+    // overlay so a bare Day view (no people) is unchanged.
+    Row {
+        id: laneHeader
         anchors.top: coreHoursWarning.visible ? coreHoursWarning.bottom : parent.top
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.leftMargin: root.timeColumnWidth
-        spacing: 2
-        visible: root.allDayEvents.length > 0
+        height: root.laneCount > 1 ? 20 : 0
+        visible: root.laneCount > 1
+        spacing: root.laneGap
 
         Repeater {
-            model: ScriptModel {
-                values: root.allDayEvents
-            }
+            model: root.laneCount
 
-            EventChipBackground {
-                required property var modelData
-                readonly property bool isSelected: root.isEventSelected(modelData)
-                width: parent.width
-                height: 22
-                radius: Theme.cornerRadiusXS
-                clip: true
-                response: modelData.myResponse
-                calendarColor: modelData.color
-                selected: isSelected
-                hovered: allDayMouseArea.containsMouse
+            Row {
+                id: laneHeaderCell
+                required property int index
+                width: root.laneWidth(laneHeader.width)
+                height: laneHeader.height
+                spacing: Theme.spacingXS
 
-                StyledText {
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.leftMargin: Theme.spacingS
-                    anchors.rightMargin: Theme.spacingS
+                Rectangle {
+                    width: 8
+                    height: 8
+                    radius: Theme.fullRadius(width, height)
                     anchors.verticalCenter: parent.verticalCenter
-                    text: parent.modelData.title + "  ·  " + I18n.tr("all day", "suffix on all-day event chip in day view")
-                    font.pixelSize: Theme.fontSizeSmall
-                    color: parent.textColor
-                    font.strikeout: parent.strikeout
-                    wrapMode: Text.NoWrap
-                    maximumLineCount: 1
-                    elide: Text.ElideRight
+                    color: laneHeaderCell.index === 0 ? Theme.primary : Theme.toColor(root.laneOwners[laneHeaderCell.index].color)
                 }
 
-                EventMouseArea {
-                    id: allDayMouseArea
-                    anchors.fill: parent
-                    eventData: parent.modelData
-                    onEntered: chipTooltip.show(root.eventTooltip(parent.modelData), parent)
-                    onExited: chipTooltip.hide()
-                    onActivated: (event, modifiers) => {
-                        chipTooltip.hide();
-                        root.eventClicked(event, modifiers);
+                StyledText {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: laneHeaderCell.width - 12
+                    text: laneHeaderCell.index === 0 ? I18n.tr("Me", "day-view lane header label for the owner's own column") : (root.laneOwners[laneHeaderCell.index].name || root.laneOwners[laneHeaderCell.index].email)
+                    font.pixelSize: Theme.fontSizeSmall
+                    color: Theme.surfaceVariantText
+                    elide: Text.ElideRight
+                }
+            }
+        }
+    }
+
+    // All-day strip: one lane column per person while PeopleService.active,
+    // laid out with the same laneWidth/laneX geometry as the timed grid
+    // below. With no people, laneCount is 1 and this is a single column,
+    // identical to before.
+    Row {
+        id: allDayStrip
+        anchors.top: laneHeader.visible ? laneHeader.bottom : (coreHoursWarning.visible ? coreHoursWarning.bottom : parent.top)
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.leftMargin: root.timeColumnWidth
+        spacing: root.laneGap
+        visible: root.allDayEvents.length > 0 || root.colleagueHasAllDay
+
+        Repeater {
+            model: root.laneCount
+
+            Column {
+                id: allDayLane
+                required property int index
+                readonly property bool isOwn: index === 0
+                readonly property var laneEvents: {
+                    root.eventsVersion;
+                    PeopleService.version;
+                    return root.laneAllDayEvents(index);
+                }
+                width: root.laneWidth(allDayStrip.width)
+                spacing: 2
+
+                Repeater {
+                    model: ScriptModel {
+                        values: allDayLane.laneEvents
                     }
-                    onContextRequested: (event, anchorItem, x, y) => root.eventContextRequested(event, anchorItem, x, y)
+
+                    Item {
+                        id: allDayItemDelegate
+                        required property var modelData
+                        width: allDayLane.width
+                        height: 22
+
+                        EventChipBackground {
+                            id: ownAllDayDayChip
+                            visible: allDayLane.isOwn
+                            readonly property bool isSelected: root.isEventSelected(allDayItemDelegate.modelData)
+                            readonly property var stripeColors: PeopleService.active ? PeopleService.stripesFor(allDayItemDelegate.modelData) : []
+                            anchors.fill: parent
+                            radius: Theme.cornerRadiusXS
+                            clip: true
+                            response: allDayItemDelegate.modelData.myResponse
+                            calendarColor: allDayItemDelegate.modelData.color
+                            selected: isSelected
+                            dimmed: PeopleService.active && PeopleService.sharedWith(allDayItemDelegate.modelData).length === 0
+                            hovered: allDayMouseArea.containsMouse
+
+                            StyledText {
+                                anchors.left: parent.left
+                                anchors.right: parent.right
+                                anchors.leftMargin: Theme.spacingS
+                                anchors.rightMargin: ownAllDayDayChip.stripeColors.length > 0 ? ownAllDayDayChip.stripeColors.length * 3 + Theme.spacingS + 4 : Theme.spacingS
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: allDayItemDelegate.modelData.title + "  ·  " + I18n.tr("all day", "suffix on all-day event chip in day view")
+                                font.pixelSize: Theme.fontSizeSmall
+                                color: parent.textColor
+                                font.strikeout: parent.strikeout
+                                wrapMode: Text.NoWrap
+                                maximumLineCount: 1
+                                elide: Text.ElideRight
+                            }
+
+                            AttendeeStripes {
+                                visible: ownAllDayDayChip.stripeColors.length > 0
+                                anchors.right: parent.right
+                                anchors.top: parent.top
+                                anchors.bottom: parent.bottom
+                                anchors.rightMargin: 3
+                                anchors.topMargin: 3
+                                anchors.bottomMargin: 3
+                                compact: true
+                                colors: ownAllDayDayChip.stripeColors
+                            }
+
+                            EventMouseArea {
+                                id: allDayMouseArea
+                                anchors.fill: parent
+                                eventData: allDayItemDelegate.modelData
+                                onEntered: chipTooltip.show(root.eventTooltip(allDayItemDelegate.modelData), ownAllDayDayChip)
+                                onExited: chipTooltip.hide()
+                                onActivated: (event, modifiers) => {
+                                    chipTooltip.hide();
+                                    root.eventClicked(event, modifiers);
+                                }
+                                onContextRequested: (event, anchorItem, x, y) => root.eventContextRequested(event, anchorItem, x, y)
+                            }
+                        }
+
+                        PersonEventChip {
+                            id: colleagueAllDayDayChip
+                            visible: !allDayLane.isOwn
+                            anchors.fill: parent
+                            kind: allDayItemDelegate.modelData.kind
+                            title: allDayItemDelegate.modelData.title
+                            location: allDayItemDelegate.modelData.location
+                            personColor: allDayItemDelegate.modelData.color
+                            isPrivate: !!allDayItemDelegate.modelData.private
+                            stripes: allDayItemDelegate.modelData.stripes || []
+                            compact: true
+                            titleLines: 1
+                            onEntered: chipTooltip.show(root.overlayTooltip(allDayItemDelegate.modelData), colleagueAllDayDayChip)
+                            onExited: chipTooltip.hide()
+                        }
+                    }
                 }
             }
         }
@@ -243,7 +423,7 @@ Item {
 
     Item {
         id: hiddenBeforeStrip
-        anchors.top: allDayStrip.visible ? allDayStrip.bottom : (coreHoursWarning.visible ? coreHoursWarning.bottom : parent.top)
+        anchors.top: allDayStrip.visible ? allDayStrip.bottom : (laneHeader.visible ? laneHeader.bottom : (coreHoursWarning.visible ? coreHoursWarning.bottom : parent.top))
         anchors.topMargin: allDayStrip.visible ? Theme.spacingS : (coreHoursWarning.visible ? Theme.spacingS : 0)
         anchors.left: parent.left
         anchors.right: parent.right
@@ -301,6 +481,7 @@ Item {
             }
 
             Item {
+                id: timedArea
                 anchors.right: parent.right
                 width: parent.width - root.timeColumnWidth
                 height: parent.height
@@ -313,6 +494,21 @@ Item {
                         y: (root.hourTicks[index] - root.startHour) * root.hourHeight
                         width: parent.width
                         height: 1
+                        color: Theme.gridLine
+                    }
+                }
+
+                // Lane separators, one per boundary between adjacent
+                // per-person columns; absent (no repeated items) when
+                // laneCount is 1.
+                Repeater {
+                    model: Math.max(0, root.laneCount - 1)
+
+                    Rectangle {
+                        required property int index
+                        x: root.laneX(timedArea.width, index + 1) - root.laneGap / 2
+                        width: 1
+                        height: parent.height
                         color: Theme.gridLine
                     }
                 }
@@ -367,16 +563,19 @@ Item {
                     }
 
                     EventChipBackground {
+                        id: ownDayTimedChip
                         required property var modelData
                         readonly property bool isSelected: root.isEventSelected(modelData)
+                        readonly property var stripeColors: PeopleService.active ? PeopleService.stripesFor(modelData) : []
                         onIsSelectedChanged: {
                             if (isSelected)
                                 root.revealHours(modelData.startHour, modelData.durationHours);
                         }
-                        readonly property real laneGap: 3
-                        readonly property real usableWidth: parent.width - 16
-                        readonly property real laneWidth: (usableWidth - (modelData.columns - 1) * laneGap) / modelData.columns
-                        x: 8 + modelData.column * (laneWidth + laneGap)
+                        readonly property real ownLaneGap: 3
+                        readonly property real ownLaneWidth: root.laneWidth(timedArea.width)
+                        readonly property real usableWidth: ownLaneWidth - 16
+                        readonly property real laneWidth: (usableWidth - (modelData.columns - 1) * ownLaneGap) / modelData.columns
+                        x: root.laneX(timedArea.width, 0) + 8 + modelData.column * (laneWidth + ownLaneGap)
                         y: modelData.startHour * root.hourHeight
                         width: laneWidth
                         height: modelData.durationHours * root.hourHeight - 4
@@ -384,11 +583,24 @@ Item {
                         response: modelData.myResponse
                         calendarColor: modelData.color
                         selected: isSelected
+                        dimmed: PeopleService.active && stripeColors.length === 0
                         hovered: timedMouseArea.containsMouse
+
+                        AttendeeStripes {
+                            visible: ownDayTimedChip.stripeColors.length > 0
+                            anchors.right: parent.right
+                            anchors.top: parent.top
+                            anchors.bottom: parent.bottom
+                            anchors.rightMargin: 3
+                            anchors.topMargin: 3
+                            anchors.bottomMargin: 3
+                            colors: ownDayTimedChip.stripeColors
+                        }
 
                         Row {
                             anchors.fill: parent
                             anchors.margins: Theme.spacingS
+                            anchors.rightMargin: ownDayTimedChip.stripeColors.length > 0 ? ownDayTimedChip.stripeColors.length * 3 + Theme.spacingS + 4 : Theme.spacingS
                             spacing: Theme.spacingS
 
                             Rectangle {
@@ -462,6 +674,39 @@ Item {
                             }
                             onContextRequested: (event, anchorItem, x, y) => root.eventContextRequested(event, anchorItem, x, y)
                         }
+                    }
+                }
+
+                // One PersonEventChip per colleague lane's timed item,
+                // laid out independently per lane (root.laneTimedEvents);
+                // read-only, matching Week/Month.
+                Repeater {
+                    model: ScriptModel {
+                        values: root.colleagueTimedEvents
+                    }
+
+                    PersonEventChip {
+                        id: colleagueDayTimedChip
+                        required property var modelData
+                        readonly property real colLaneWidth: root.laneWidth(timedArea.width)
+                        readonly property real colGap: 3
+                        readonly property real usableWidth: colLaneWidth - 8
+                        readonly property real colWidth: (usableWidth - (modelData.columns - 1) * colGap) / modelData.columns
+                        x: root.laneX(timedArea.width, modelData.lane) + 4 + modelData.column * (colWidth + colGap)
+                        y: modelData.startHour * root.hourHeight
+                        z: 1
+                        width: colWidth
+                        height: modelData.durationHours * root.hourHeight - 4
+                        kind: modelData.kind
+                        title: modelData.title
+                        location: modelData.location
+                        personColor: modelData.color
+                        isPrivate: !!modelData.private
+                        stripes: modelData.stripes || []
+                        compact: modelData.durationHours < 1
+                        titleLines: Math.max(1, Math.floor(height / 14))
+                        onEntered: chipTooltip.show(root.overlayTooltip(modelData), colleagueDayTimedChip)
+                        onExited: chipTooltip.hide()
                     }
                 }
             }
