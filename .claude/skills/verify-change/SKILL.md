@@ -85,7 +85,8 @@ deployed.
 `.claude/tools/dev-instance.sh` runs the branch's build **offline on a scratch copy of the real
 data**, as the transient user unit `dankcal-dev`. It stops `dcal.service` for the run (the owner
 approved this) and starts it again whenever `dankcal-dev` stops — `stop`, a crash, or the 2h
-limit. Each block is one Bash call from any directory. `<checkout>` is the literal absolute
+limit. **One dev instance per machine**: a lock refuses a second `start` while one runs or
+starts. Each block is one Bash call from any directory. `<checkout>` is the literal absolute
 path of the checkout under test: the main checkout, or a linked worktree after
 `git -C <checkout> submodule update --init`.
 
@@ -97,34 +98,48 @@ path of the checkout under test: the main checkout, or a linked worktree after
 `start` builds `<checkout>/core` (a failed build leaves the live calendar alone), stops
 `dcal.service`, copies `~/.local/share/dankcal`, `~/.config/dankcal` and
 `~/.local/state/dankcal` under `/tmp/claude-1000/dankcal-dev/home` (the real files are only
-read; `sqlite3` opens only the copies), and runs the build with `-c <checkout>/quickshell`
-and `PrivateNetwork=yes`: loopback is its only interface, and it refuses to start otherwise.
-Accounts keep their tokens, so they sync as offline (`network is unreachable` in the log).
-`probe` must end with `offline: no remote host reachable from the dev instance`.
+read; `sqlite3` opens only the copies; the XDG cache dir is scratch too), and runs the build
+with `-c <checkout>/quickshell` and `PrivateNetwork=yes`: loopback is its only interface, and
+it refuses to start otherwise. Accounts keep their tokens, so they sync as offline
+(`network is unreachable` in the log). `probe` must end with
+`offline: no remote host reachable from the dev instance`.
+
+The D-Bus session bus is shared with the desktop, outside that namespace: `start` refuses while
+a Secret Service (`org.freedesktop.secrets`) or Evolution Data Server is on it, or the data has
+an Evolution account, since those would hand the dev instance real credentials or sync for it.
+One that appears mid-run is not prevented; `stop` reports it as a `FAIL`.
 
 Then:
-1. Show the window, navigate to the feature, and capture with
-   `grim <scratchpad>/verify-<slug>.png`; Read the image and confirm what you expected is
-   visible. For backend-only changes, exercise it with `ipc <method> key=value` and show the
-   output. `status` prints the dev DB copy's goose and user version. Never use plain
-   `dcal show` or `dcal ipc` here: with no dev instance up they reach, or cold-start, a daemon
-   on the real data.
+1. Navigate to the feature with `ipc` (`ui.show`, `ui.openEvent`, …) and capture the dev window
+   with `screenshot` — plain `grim` captures whatever is on screen, which may not be the dev
+   window. `screenshot` (Hyprland) runs `ui.show`, refuses if the dev window is on a workspace
+   no monitor shows, and captures only the window's area; its `captured …` line names the
+   window and the dev `qs` pid. Read the PNG and confirm it shows the calendar with what you
+   expected (the window is translucent, so what is behind it shows faintly). For
+   backend-only changes, exercise it with `ipc <method> key=value` and show the output.
+   `status` prints the dev DB copy's goose and user version. Never use plain `dcal show` or
+   `dcal ipc` here: with no dev instance up they reach, or cold-start, a daemon on the real
+   data.
    ```bash
    /home/nozomi/Documents/code/calendar/.claude/tools/dev-instance.sh ipc ui.show
+   /home/nozomi/Documents/code/calendar/.claude/tools/dev-instance.sh screenshot <scratchpad>/verify-<slug>.png
    /home/nozomi/Documents/code/calendar/.claude/tools/dev-instance.sh status
    ```
 2. Check this run's logs for new errors:
-   `journalctl --user -u dankcal-dev -I --no-pager | grep -E 'WARN|ERROR'` (dcal logs at
-   journal priority info, so `-p warning` shows nothing). The per-account
+   `journalctl --user -u dankcal-dev -I --no-pager | grep -E 'WARN|ERROR|FATAL|panic'` (dcal
+   logs at journal priority info, so `-p warning` shows nothing). The per-account
    `sync error … network is unreachable` lines and `secret service unavailable` are expected.
 3. Exercise edge cases from the issue's Scenarios and Acceptance (empty state, offline account,
    all-day events, 24h vs 12h clock, long titles). Don't sign in, re-authenticate or open links
    in the dev instance: the desktop portal hands them to the browser outside its namespace.
-4. Always finish with the block below, and put its output in the report. It must end with
+4. Always finish with the block below — also when `start` failed or was cut off, since that can
+   leave `dcal.service` stopped — and put its output in the report. It must end with
    `dev instance stopped cleanly` (exit 0): the real DB's sha256 is unchanged across the time
-   `dcal.service` was stopped, no process runs the dev build or `<checkout>/quickshell`,
-   `dankcal-dev` is inactive and `dcal` active. A `FAIL` line is a failed check; if `dcal` runs
-   `<checkout>/quickshell`, `systemctl --user restart dcal` puts it back on its own UI.
+   `dcal.service` was stopped, no Secret Service or EDS appeared, no process runs the dev build
+   or `<checkout>/quickshell`, `dankcal-dev` is inactive and `dcal` active. A clean stop
+   deletes the scratch copy (`home/`, `after/`) and keeps the two `.sha256` files; a `FAIL`
+   keeps the copy for diagnosis. If `dcal` runs `<checkout>/quickshell`,
+   `systemctl --user restart dcal` puts it back on its own UI.
 
 ```bash
 /home/nozomi/Documents/code/calendar/.claude/tools/dev-instance.sh stop
