@@ -623,21 +623,31 @@ Singleton {
     // "needs-action", "declined" or "" for no-RSVP, see DankCalService.selfResponse).
     // Shared by MonthView, WeekView, DayView, AgendaView and MonthDayPopover so the
     // four looks (strong fill, hatch, outline, faded+struck-through) stay one decision.
+    // Calendar colors arrive as plain hex strings from DankCalService (JSON, not QML
+    // color objects), so every entry point normalizes with Qt.color() first: withAlpha()
+    // and Contrast.readableOn() both key off `c.r`, which is undefined on a string, so an
+    // unnormalized color silently reads as transparent (withAlpha) or as pure black
+    // (Contrast's relativeLuminance), which broke both the declined fill and text contrast.
+    function rsvpColor(color) {
+        return color && color.r !== undefined ? color : Qt.color(color);
+    }
+
     function rsvpFillColor(response, color) {
+        const c = rsvpColor(color);
         switch (response) {
         case "needs-action":
             return "transparent";
         case "tentative":
-            return withAlpha(color, 0.22);
+            return withAlpha(c, 0.22);
         case "declined":
-            return withAlpha(color, 0.14);
+            return withAlpha(c, 0.14);
         default:
-            return color;
+            return c;
         }
     }
 
     function rsvpBorderColor(response, color) {
-        return response === "needs-action" || response === "tentative" ? color : "transparent";
+        return response === "needs-action" || response === "tentative" ? rsvpColor(color) : "transparent";
     }
 
     function rsvpBorderWidth(response) {
@@ -646,7 +656,7 @@ Singleton {
 
     function rsvpTextColor(response, color) {
         if (response === "accepted" || response === "")
-            return Contrast.readableOn(color, onContainerCandidates);
+            return Contrast.readableOn(rsvpColor(color), onContainerCandidates);
         return surfaceText;
     }
 
@@ -657,7 +667,7 @@ Singleton {
     }
 
     function rsvpDotColor(response, color) {
-        return response === "accepted" || response === "" ? rsvpTextColor(response, color) : color;
+        return response === "accepted" || response === "" ? rsvpTextColor(response, color) : rsvpColor(color);
     }
 
     function rsvpHatchVisible(response) {
