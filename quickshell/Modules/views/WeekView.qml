@@ -253,8 +253,8 @@ Item {
         return DankCalService.eventsForDay(day).filter(ev => ev.allDay);
     }
 
-    // Colleague items are drawn over the own chips, not in their lanes, so own
-    // chips keep their positions; overlay items lane among themselves only.
+    // Colleague events with a title are drawn over the own chips, not in their
+    // lanes, so own chips keep their positions; they lane among themselves only.
     function overlayTimedEventsFor(day) {
         if (!PeopleService.active)
             return [];
@@ -262,7 +262,7 @@ Item {
         const list = PeopleService.overlayForDay(day);
         for (let i = 0; i < list.length; i++) {
             const item = list[i];
-            if (item.allDay)
+            if (item.allDay || PeopleService.isBusyTime(item))
                 continue;
             const slot = EventUtils.timedSlot(item, day, root.startHour, root.endHour);
             if (!slot)
@@ -270,6 +270,47 @@ Item {
             out.push(Object.assign({}, item, slot));
         }
         return DankCalService.layoutTimedEvents(out);
+    }
+
+    // Busy time is drawn as bands behind every chip. One person's overlapping
+    // spans merge into one band; bands of different people that overlap sit
+    // side by side so each label stays readable.
+    function busyBandsFor(day) {
+        if (!PeopleService.active)
+            return [];
+        const byPerson = {};
+        const order = [];
+        const list = PeopleService.overlayForDay(day);
+        for (let i = 0; i < list.length; i++) {
+            const item = list[i];
+            if (item.allDay || !PeopleService.isBusyTime(item))
+                continue;
+            const slot = EventUtils.timedSlot(item, day, root.startHour, root.endHour);
+            if (!slot)
+                continue;
+            if (!byPerson[item.email]) {
+                byPerson[item.email] = [];
+                order.push(item.email);
+            }
+            byPerson[item.email].push(Object.assign({}, item, slot));
+        }
+        const bands = [];
+        for (const email of order) {
+            const spans = byPerson[email].sort((a, b) => a.startHour - b.startHour);
+            let current = null;
+            for (const span of spans) {
+                if (current && span.startHour <= current.startHour + current.durationHours) {
+                    const end = Math.max(current.startHour + current.durationHours, span.startHour + span.durationHours);
+                    current.durationHours = end - current.startHour;
+                    if (span.end > current.end)
+                        current.end = span.end;
+                    continue;
+                }
+                current = span;
+                bands.push(current);
+            }
+        }
+        return DankCalService.layoutTimedEvents(bands);
     }
 
     function overlayAllDayEventsFor(day) {
@@ -772,6 +813,10 @@ Item {
                                     PeopleService.version;
                                     return root.overlayTimedEventsFor(root.dayAt(index - 1));
                                 }
+                                readonly property var busyBands: {
+                                    PeopleService.version;
+                                    return root.busyBandsFor(root.dayAt(index - 1));
+                                }
 
                                 width: root.dayWidth
                                 height: parent.height
@@ -814,6 +859,26 @@ Item {
                                     hourHeight: root.hourHeight
                                     flickable: weekFlickable
                                     onCreateRequested: (start, end) => root.createTimedRequested(start, end)
+                                }
+
+                                Repeater {
+                                    model: ScriptModel {
+                                        values: dayColumn.busyBands
+                                    }
+
+                                    BusyBand {
+                                        id: busyBand
+                                        required property var modelData
+                                        readonly property real bandWidth: (parent.width - 2) / modelData.columns
+                                        x: 1 + modelData.column * bandWidth
+                                        y: modelData.startHour * root.hourHeight
+                                        width: bandWidth
+                                        height: modelData.durationHours * root.hourHeight
+                                        personColor: modelData.color
+                                        label: PeopleService.bandLabel(modelData)
+                                        onEntered: chipTooltip.show(PeopleService.tooltipFor(modelData), busyBand)
+                                        onExited: chipTooltip.hide()
+                                    }
                                 }
 
                                 DankIcon {

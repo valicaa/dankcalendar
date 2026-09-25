@@ -360,9 +360,19 @@ Singleton {
         return shared.length === 0 ? [] : [ev.color].concat(shared);
     }
 
-    function _personLabel(email) {
+    function personLabel(email) {
         const person = people.find(p => p.email === email);
         return (person && person.name) || email;
+    }
+
+    // Busy time and private events carry no title; the time grid draws them
+    // as a background band rather than a chip.
+    function isBusyTime(item) {
+        return item.kind === "busy" || !!item.private;
+    }
+
+    function bandLabel(item) {
+        return busyLabel + " · " + personLabel(item.email);
     }
 
     // Tooltip text for an overlay item: title, time, location, person.
@@ -371,7 +381,7 @@ Singleton {
         const parts = [item.title, when];
         if (item.location)
             parts.push(item.location);
-        parts.push(_personLabel(item.email));
+        parts.push(personLabel(item.email));
         return parts.join(" · ");
     }
 }
