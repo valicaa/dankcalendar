@@ -10,8 +10,8 @@
 #   dev-instance.sh status             state of dankcal-dev and dcal, versions of the dev DB copy
 #   dev-instance.sh stop               stop dankcal-dev, check the real DB is unchanged, no dev
 #                                      process is left and dcal.service is active again;
-#                                      exits 1 unless it prints "dev instance stopped cleanly"
-#                                      or leaves running one started while it waited
+#                                      exits 1 unless it prints "dev instance stopped cleanly";
+#                                      exits 3 when it leaves running one started while it waited
 #
 # <checkout> is the absolute path of any checkout of this repo (the main one or a linked
 # worktree with its submodule initialised). Its QML runs from <checkout>/quickshell.
@@ -41,6 +41,7 @@
 #            or hits RuntimeMaxSec.
 set -euo pipefail
 umask 077
+unset STOP_INV
 
 BASE="/tmp/claude-$(id -u)"
 ROOT="$BASE/dankcal-dev"
@@ -89,6 +90,9 @@ scratch_ok() {
 
 cmd_start() {
 	local checkout=${1:-} shared
+	if [ -e "$ROOT/real-before.sha256" ] || [ -e "$ROOT/real-after.sha256" ]; then
+		die "the last dev run was not checked: run stop first (if it reported FAIL, inspect $ROOT and move real-*.sha256 aside)"
+	fi
 	[ -n "$checkout" ] || die "usage: dev-instance.sh start <absolute checkout path>"
 	case "$checkout" in /*) ;; *) die "checkout path must be absolute: $checkout" ;; esac
 	checkout=${checkout%/}
@@ -111,8 +115,13 @@ cmd_start() {
 
 	echo "== stop $LIVE and copy the real data"
 	systemctl --user stop "$LIVE"
-	# Until the unit exists (its ExecStopPost takes over), any failure restarts the live one.
-	trap 'systemctl --user start "$LIVE"' EXIT
+	# Until the unit exists (its ExecStopPost takes over), any failure restarts the live one and
+	# drops the before-hash, since no dev process ran. Once the unit has run (real-after exists)
+	# or runs, the hash is its evidence and stays.
+	trap 'if [ ! -e "$ROOT/real-after.sha256" ] && ! systemctl --user is-active --quiet "$UNIT"; then
+		rm -f "$ROOT/real-before.sha256"
+	fi
+	systemctl --user start "$LIVE"' EXIT
 	rm -rf "$ROOT/home" "$ROOT/after" "$ROOT/real-before.sha256" "$ROOT/real-after.sha256"
 	mkdir -p "$ROOT/home/data" "$ROOT/home/config" "$ROOT/home/state" "$ROOT/home/cache"
 	sha256sum "$REAL_DATA"/dankcal.db* >"$ROOT/real-before.sha256"
@@ -238,7 +247,7 @@ cmd_stop() {
 		case "$state" in
 		active | activating | reloading | deactivating)
 			echo "a newer dev instance started meanwhile; left running (pid $(dev_pid)), $LIVE stays stopped"
-			exit 0
+			exit 3
 			;;
 		esac
 	fi

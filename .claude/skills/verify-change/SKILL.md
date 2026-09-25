@@ -179,8 +179,10 @@ Then:
    clean stop deletes the scratch copy (`home/`, `after/`) and moves the two `.sha256` files
    to `/tmp/claude-1000/dankcal-dev/last-run/`, so a repeat `stop` prints `nothing to
    compare`; a `FAIL` keeps them all for diagnosis. A `stop` that waited for the lock while
-   someone else started a new dev instance leaves it running and says so. If `dcal` runs
-   `<checkout>/quickshell`, `systemctl --user restart dcal` puts it back on its own UI.
+   someone else started a new dev instance leaves it running and says so. Exit 3 means
+   another session's dev instance is running: report the check as not verified, never a
+   pass. If `dcal` runs `<checkout>/quickshell`, `systemctl --user restart dcal` puts it back
+   on its own UI.
 
 ```bash
 /home/nozomi/Documents/code/calendar/.claude/tools/dev-instance.sh stop
