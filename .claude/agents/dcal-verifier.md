@@ -18,8 +18,9 @@ for a narrow lookup is fine).
    A docs-only change (`verify-change` section 0's test prints nothing) gets only that section:
    `check-docs.py`, `git diff --check` and a read of the diff — no build, dev instance or
    service stop.
-3. If you stopped the `dcal` service for a dev run, kill the dev process and
-   `systemctl --user start dcal` before you finish.
+3. If you started a dev instance, finish with `.claude/tools/dev-instance.sh stop` (its literal
+   path in `verify-change` section 4); report its output, which must end with
+   `dev instance stopped cleanly`.
 4. To confirm a deploy (`new-feature` 6.4, after the owner merged the PR), run `deploy-local`
    step 4 on `master`: the installed commit must match `git rev-parse --short=8 HEAD`, and the
    brief's merge commit must be in it (`git merge-base --is-ancestor <M> HEAD`). Change nothing:

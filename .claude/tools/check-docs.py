@@ -92,6 +92,7 @@ REVIEW_RULES = [
     (r"^(Makefile|\.pre-commit-config\.yaml|core/\.golangci\.yml|core/\.pre-commit-config\.yaml|\.github/workflows/)",
      ["verify-change", "CLAUDE.md"], "build, lint and CI commands"),
     (r"^(\.graphifyignore|\.claude/tools/graph-)", ["code-graph"], "code graph usage"),
+    (r"^\.claude/tools/dev-instance\.sh$", ["verify-change"], "dev instance procedure"),
     (r"^\.claude/tools/check-docs\.py$", ["CLAUDE.md"], "doc-check rules"),
     (r"^\.claude/agents/", ["project-manager"], "agent roster (roster drift)"),
 ]
