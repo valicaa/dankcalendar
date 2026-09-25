@@ -10,14 +10,9 @@ Rectangle {
     property bool selected: false
     property bool hovered: false
     property real hatchOpacity: 0.55
-    // Faded while a colleague-schedule overlay is drawn on top (PeopleService),
-    // so the own chip stays visible but reads as "underneath". RSVP fill,
-    // border and hatch are scaled to Theme.overlayDimOpacity (background
-    // only). The title text instead stays fully opaque and picks its color
-    // by contrast against the dimmed composite (Theme.overlayDimComposite)
-    // rather than the undimmed fill, so it stays legible over whatever the
-    // 35%-alpha fill actually renders as on top of Theme.background.
-    // strikeout (declined, #22) is unaffected either way.
+    // Faded under a colleague overlay: fill, border and hatch are scaled to
+    // Theme.overlayDimOpacity; text stays opaque, with its colour picked
+    // against the dimmed fill so it stays legible.
     property bool dimmed: false
 
     readonly property real backgroundOpacity: dimmed ? Theme.overlayDimOpacity : 1

@@ -666,11 +666,8 @@ Singleton {
         return rsvpStrong(response) ? rsvpTextColor(response, color) : toColor(color);
     }
 
-    // Text/muted/dot colors computed against an explicit background rather
-    // than the pre-dim fill. Needed when EventChipBackground composites a
-    // "strong" RSVP fill down to overlayDimOpacity over Theme.background:
-    // rsvpTextColor() alone still picks contrast for the full-strength fill,
-    // illegible once that fill is mostly Theme.background underneath it.
+    // rsvp*Color variants for a chip whose fill is not the calendar colour,
+    // such as a dimmed one: contrast is picked against bg.
     function rsvpTextColorAgainst(response, bg) {
         if (rsvpStrong(response))
             return Contrast.readableOn(bg, onContainerCandidates);
@@ -687,10 +684,7 @@ Singleton {
         return rsvpStrong(response) ? rsvpTextColorAgainst(response, bg) : toColor(color);
     }
 
-    // The chip's actual on-screen fill once EventChipBackground dims a
-    // strong RSVP fill to overlayDimOpacity: Theme.background tinted by the
-    // fill at that opacity. What rsvp*ColorAgainst must be evaluated
-    // against, not the undimmed fill.
+    // The on-screen colour of a strong fill dimmed to overlayDimOpacity.
     function overlayDimComposite(color) {
         return Qt.tint(background, withAlpha(toColor(color), overlayDimOpacity));
     }
@@ -703,12 +697,7 @@ Singleton {
         return response === "declined";
     }
 
-    // Fade for the owner's own chips while a colleague-schedule overlay
-    // (PeopleService.active) is showing, so the overlay reads as "on top".
-    // Applied to the chip's fill/border/hatch only (EventChipBackground);
-    // its title text stays fully opaque and instead recomputes contrast
-    // against the dimmed composite (rsvp*ColorAgainst/overlayDimComposite
-    // above) so it stays readable.
+    // Fade for own chips while colleague schedules are shown.
     readonly property real overlayDimOpacity: 0.35
 
     function blendAlpha(c, a) {
@@ -717,11 +706,8 @@ Singleton {
         return Qt.rgba(c.r, c.g, c.b, c.a * a);
     }
 
-    // Reserved width for an AttendeeStripes group of `count` bars: the bars
-    // plus their 1px gaps, plus the padding of its Theme.surface backing
-    // panel on both sides (see AttendeeStripes.qml). Callers that leave
-    // room for the stripe group in a chip's text layout use this instead of
-    // duplicating the bar/gap/padding constants.
+    // Width of an AttendeeStripes group of `count` bars, for callers that
+    // keep chip text clear of it.
     function attendeeStripesWidth(count, compact) {
         if (count <= 1)
             return 0;
