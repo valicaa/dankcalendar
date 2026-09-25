@@ -157,7 +157,6 @@ Item {
                             width: root.width
                             height: Math.max(76, contentRow.implicitHeight + Theme.spacingM * 2)
                             radius: Theme.cornerRadiusM
-                            clip: Theme.rsvpHatchVisible(modelData.myResponse)
                             response: modelData.myResponse
                             calendarColor: modelData.color
                             selected: isSelected

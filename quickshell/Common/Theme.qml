@@ -627,8 +627,7 @@ Singleton {
         return color && color.r !== undefined ? color : Qt.color(color);
     }
 
-    // Everything that isn't explicitly muted gets the strong (full-fill) look, including
-    // an unrecognized response — never render an invitation state as if it were RSVP'd.
+    // An unrecognized or missing response falls back to the strong (accepted) look.
     function rsvpStrong(response) {
         return response !== "tentative" && response !== "needs-action" && response !== "declined";
     }
@@ -649,10 +648,6 @@ Singleton {
 
     function rsvpBorderColor(response, color) {
         return rsvpStrong(response) ? withAlpha(surfaceText, 0.08) : toColor(color);
-    }
-
-    function rsvpBorderWidth(response) {
-        return 1;
     }
 
     function rsvpTextColor(response, color) {

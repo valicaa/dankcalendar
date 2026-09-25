@@ -139,7 +139,6 @@ Item {
                     width: ListView.view.width
                     height: root.rowHeight - Theme.groupedListGap
                     radius: Theme.cornerRadiusXS
-                    clip: Theme.rsvpHatchVisible(modelData.myResponse)
                     response: modelData.myResponse
                     calendarColor: modelData.color
                     selected: isSelected
