@@ -39,7 +39,7 @@ in the main checkout, never with `isolation: worktree`.
    Use the `<-` and `~ call sites` lines from `graph-calls.py`, plus
    `graphify affected <node-id> --relation calls --depth 3` for transitive callers. Grep for
    interface implementations and callbacks, which the graph can't see.
-5. Write the issue body with `project-manager` step 2's template (8 headings). **Show it to
+5. Write the issue body with `write-issue`'s template (8 headings). **Show it to
    the user and get their yes before creating the issue.**
 
 ## 2. Branch

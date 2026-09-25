@@ -98,42 +98,11 @@ spec**. Features, bugs and chores all follow `new-feature`'s phases; this step i
 and 2. A bug or small chore skips phase 1 steps 3–4 (reading the closest feature, mapping
 layers and callers); when they apply, `dcal-scout` does them for the PM.
 
-```markdown
-## Problem        who, when, today's workaround (one paragraph)
-## Goal / Non-goals   Shape Up appetite: the size we are willing to spend; no-gos listed
-## Story          As <user>, I want <capability>, so that <outcome>   (INVEST)
-## Scenarios      Given <state> / When <action> / Then <observable result>   (1–5)
-## Constraints    CGO_ENABLED=0; migration needs explicit approval + backup; I18n.tr for
-                  strings; quickshell/DankCommon read-only; Upstream-worthy: yes/no
-## Acceptance     checkable list, each tied to a scenario or constraint
-## Risks          callers touched, data, providers, sync; layers touched (tick list: QML,
-                  UI setting, IPC, DB migration, provider, background engine, HTTP/CLI)
-## Size           t-shirt: S (one layer, <1h) | M (2–3 layers) | L (cross-cutting, schema,
-                  new provider); any new-feature phase that doesn't apply, and why
-```
-
-Always 8 headings. "Upstream-worthy: yes/no" is a line under Constraints, not a separate
-heading; the layers-touched tick list lives under Risks; a skipped phase is noted under Size.
-For a bug, Problem holds the repro steps and expected vs actual, and one scenario is the repro.
+The template (8 headings), the feature/bug/chore variants, the title/label/slug rules and the
+`gh issue create` command all live in `write-issue` — use it to write the body, then:
 
 **Order matters: show the spec to the user and get their yes first, then create the issue.**
 Ready = the user said yes AND the issue exists.
-
-```bash
-gh issue create -R valicaa/dankcalendar --title "<area>: <summary>" --body-file \
-  <scratchpad>/issue-body.md --label <enhancement|bug|chore> --label <size:S|size:M|size:L>
-```
-
-The title is `area: lowercase summary`, with `area` from the same vocabulary as commit subjects —
-upstream's most used are `ui`, `i18n`, `core`, `events`, `providers`, `caldav`, `settings`,
-`sync`, `reminders`, `notifications`, `keyring`, `ipc`, `nix`, `flatpak`, `ci`; fork-only work
-uses `docs` (CLAUDE.md, skills, agents), `tooling` (scripts, hooks) or `tasks` (only `tasks/`
-changes). One type label, one size
-label. `N` is the number at the end of the URL this command prints. The slug is the summary
-(without `area:`) as lowercase kebab-case, 2–5 words (a hyphenated or slashed word like
-`free/busy` counts as one): `events: add free/busy check` → `add-free-busy-check`. A longer
-summary keeps its 2–5 most specific words, dropping articles and filler:
-`ui: show week numbers in the month view header` → `week-numbers-month-header`.
 
 Then create the branch — in the main checkout, which must be on `master` with a clean tree
 (one feature worked at a time — see Branches; with the user's OK a checked-out one can be parked:
