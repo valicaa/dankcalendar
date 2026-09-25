@@ -2,19 +2,19 @@
   {
     "term": "%1 AM",
     "context": "%1 AM",
-    "reference": "Modules/views/DayView.qml:174, Modules/views/WeekView.qml:206",
+    "reference": "Modules/views/DayView.qml:154, Modules/views/WeekView.qml:206",
     "comment": "morning hour label in time gutter"
   },
   {
     "term": "%1 PM",
     "context": "%1 PM",
-    "reference": "Modules/views/DayView.qml:174, Modules/views/WeekView.qml:206",
+    "reference": "Modules/views/DayView.qml:154, Modules/views/WeekView.qml:206",
     "comment": "afternoon hour label in time gutter"
   },
   {
     "term": "%1 appointments fall outside core hours",
     "context": "%1 appointments fall outside core hours",
-    "reference": "Modules/views/DayView.qml:248, Modules/views/WeekView.qml:378",
+    "reference": "Modules/views/DayView.qml:228, Modules/views/WeekView.qml:364",
     "comment": "core hours warning banner, plural"
   },
   {
@@ -92,7 +92,7 @@
   {
     "term": "+%1 more",
     "context": "+%1 more",
-    "reference": "Modules/views/MonthView.qml:639",
+    "reference": "Modules/views/MonthView.qml:619",
     "comment": "overflow label in month grid day cell, %1 is the number of hidden events"
   },
   {
@@ -110,7 +110,7 @@
   {
     "term": "1 appointment falls outside core hours",
     "context": "1 appointment falls outside core hours",
-    "reference": "Modules/views/DayView.qml:248, Modules/views/WeekView.qml:378",
+    "reference": "Modules/views/DayView.qml:228, Modules/views/WeekView.qml:364",
     "comment": "core hours warning banner, singular"
   },
   {
@@ -308,19 +308,19 @@
   {
     "term": "Account options",
     "context": "Account options",
-    "reference": "Modules/CalendarSidebar.qml:1005",
+    "reference": "Modules/CalendarSidebar.qml:1018",
     "comment": "sidebar account row overflow menu button"
   },
   {
     "term": "Account problem — click for options",
     "context": "Account problem — click for options",
-    "reference": "Modules/CalendarSidebar.qml:942",
+    "reference": "Modules/CalendarSidebar.qml:955",
     "comment": "tooltip on the account warning icon for an unspecified problem"
   },
   {
     "term": "Accounts",
     "context": "Accounts",
-    "reference": "Modules/CalendarSidebar.qml:908, Modals/SettingsContent.qml:1110, Modals/SettingsSidebar.qml:74",
+    "reference": "Modules/CalendarSidebar.qml:921, Modals/SettingsContent.qml:1110, Modals/SettingsSidebar.qml:74",
     "comment": "accounts settings section header | settings sidebar tab label | sidebar section header for the account list"
   },
   {
@@ -350,7 +350,7 @@
   {
     "term": "Add account",
     "context": "Add account",
-    "reference": "Modules/CalendarSidebar.qml:1068, Modals/SettingsContent.qml:1247, Modals/AccountAddModal.qml:220, Modals/AccountAddModal.qml:302, Services/DankCalService.qml:1465",
+    "reference": "Modules/CalendarSidebar.qml:1081, Modals/SettingsContent.qml:1247, Modals/AccountAddModal.qml:220, Modals/AccountAddModal.qml:302, Services/DankCalService.qml:1465",
     "comment": "account add modal header title | account add modal window title | add account button on accounts page | sidebar button to add a provider account | toast action to re-add an account that failed to reconnect"
   },
   {
@@ -374,7 +374,7 @@
   {
     "term": "Add task",
     "context": "Add task",
-    "reference": "Modules/CalendarSidebar.qml:893, Modules/views/TasksView.qml:93",
+    "reference": "Modules/CalendarSidebar.qml:906, Modules/views/TasksView.qml:93",
     "comment": "sidebar button to add a task | tasks view button to create a new task"
   },
   {
@@ -404,7 +404,7 @@
   {
     "term": "Agenda",
     "context": "Agenda",
-    "reference": "Modules/CalendarSidebar.qml:53, Modules/CalendarContent.qml:51",
+    "reference": "Modules/CalendarSidebar.qml:54, Modules/CalendarContent.qml:51",
     "comment": "header title when the agenda view is active | view switcher option in sidebar"
   },
   {
@@ -422,13 +422,13 @@
   {
     "term": "All day",
     "context": "All day",
-    "reference": "Modals/SearchModal.qml:111, Modals/EventDetailsModal.qml:1075, Widgets/EventContextMenu.qml:41, Modules/views/MonthDayPopover.qml:177, Modules/views/MonthDayPopover.qml:239, Modules/views/AgendaView.qml:81, Modules/views/DayView.qml:74, Modules/views/DayView.qml:160, Modules/views/WeekView.qml:223, Modules/views/WeekView.qml:236, Modules/views/MonthView.qml:148, Modules/views/MonthView.qml:161",
+    "reference": "Modals/SearchModal.qml:111, Modals/EventDetailsModal.qml:1075, Services/PeopleService.qml:370, Widgets/EventContextMenu.qml:41, Modules/views/MonthDayPopover.qml:175, Modules/views/MonthDayPopover.qml:237, Modules/views/AgendaView.qml:81, Modules/views/DayView.qml:140, Modules/views/WeekView.qml:223, Modules/views/MonthView.qml:148",
     "comment": "all-day marker in event context menu | all-day marker in event tooltip | all-day marker in the month day-detail popover | event form toggle label for all-day events | search result subtitle for all-day events | time column label for all-day events on agenda card"
   },
   {
     "term": "All done",
     "context": "All done",
-    "reference": "Modules/CalendarSidebar.qml:794",
+    "reference": "Modules/CalendarSidebar.qml:807",
     "comment": "sidebar placeholder when there are no open tasks"
   },
   {
@@ -458,7 +458,7 @@
   {
     "term": "Already added",
     "context": "Already added",
-    "reference": "Services/PeopleService.qml:84",
+    "reference": "Services/PeopleService.qml:89",
     "comment": "people search validation error for a duplicate address"
   },
   {
@@ -584,8 +584,8 @@
   {
     "term": "Busy",
     "context": "Busy",
-    "reference": "Services/PeopleService.qml:280, Widgets/PersonEventChip.qml:76, Modules/views/DayView.qml:71, Modules/views/WeekView.qml:233, Modules/views/MonthView.qml:158",
-    "comment": "overlay label for a colleague's free/busy-only or private time block | overlay label for a colleague's free/busy-only time block"
+    "reference": "Services/PeopleService.qml:29",
+    "comment": "overlay label for a colleague's free/busy-only or private time block"
   },
   {
     "term": "Calendar",
@@ -614,7 +614,7 @@
   {
     "term": "Calendar options",
     "context": "Calendar options",
-    "reference": "Modules/CalendarSidebar.qml:752",
+    "reference": "Modules/CalendarSidebar.qml:765",
     "comment": "sidebar calendar row overflow menu button"
   },
   {
@@ -788,7 +788,7 @@
   {
     "term": "Connect a Google account to look up people",
     "context": "Connect a Google account to look up people",
-    "reference": "Modules/CalendarSidebar.qml:572",
+    "reference": "Modules/CalendarSidebar.qml:585",
     "comment": "sidebar people search hint shown when no Google account is connected"
   },
   {
@@ -914,7 +914,7 @@
   {
     "term": "Create event",
     "context": "Create event",
-    "reference": "Modules/CalendarSidebar.qml:469, Modals/KeyboardShortcutsOverlay.qml:185",
+    "reference": "Modules/CalendarSidebar.qml:480, Modals/KeyboardShortcutsOverlay.qml:185",
     "comment": "keyboard shortcut description | sidebar button to create a new event"
   },
   {
@@ -980,7 +980,7 @@
   {
     "term": "Daemon offline",
     "context": "Daemon offline",
-    "reference": "Modules/CalendarSidebar.qml:656",
+    "reference": "Modules/CalendarSidebar.qml:669",
     "comment": "sidebar placeholder when the daemon is not connected"
   },
   {
@@ -1028,7 +1028,7 @@
   {
     "term": "Day",
     "context": "Day",
-    "reference": "Modules/CalendarSidebar.qml:38",
+    "reference": "Modules/CalendarSidebar.qml:39",
     "comment": "view switcher option in sidebar"
   },
   {
@@ -1082,13 +1082,13 @@
   {
     "term": "Delete",
     "context": "Delete",
-    "reference": "Modules/CalendarSidebar.qml:304, Modals/SettingsContent.qml:1022, Modals/SettingsContent.qml:1028, Modals/TaskDetailsModal.qml:537, Modals/EventDetailsModal.qml:576, Widgets/EventSelectionBar.qml:42",
+    "reference": "Modules/CalendarSidebar.qml:315, Modals/SettingsContent.qml:1022, Modals/SettingsContent.qml:1028, Modals/TaskDetailsModal.qml:537, Modals/EventDetailsModal.qml:576, Widgets/EventSelectionBar.qml:42",
     "comment": "calendar row action tooltip | confirm button for deleting a calendar | delete calendar confirmation button | event details button to delete the event | multi-event action shelf label | task form button to delete the task"
   },
   {
     "term": "Delete \"%1\"?",
     "context": "Delete \"%1\"?",
-    "reference": "Modules/CalendarSidebar.qml:302, Modals/SettingsContent.qml:1026",
+    "reference": "Modules/CalendarSidebar.qml:313, Modals/SettingsContent.qml:1026",
     "comment": "confirm dialog title for deleting a calendar, %1 is the calendar name | delete calendar confirmation title"
   },
   {
@@ -1166,7 +1166,7 @@
   {
     "term": "Delete…",
     "context": "Delete…",
-    "reference": "Modules/CalendarSidebar.qml:1107",
+    "reference": "Modules/CalendarSidebar.qml:1120",
     "comment": "calendar context menu action to delete a calendar"
   },
   {
@@ -1196,13 +1196,13 @@
   {
     "term": "Disable core hours",
     "context": "Disable core hours",
-    "reference": "Modules/views/DayView.qml:258, Modules/views/WeekView.qml:388",
+    "reference": "Modules/views/DayView.qml:238, Modules/views/WeekView.qml:374",
     "comment": "core hours warning banner disable action"
   },
   {
     "term": "Disable sync",
     "context": "Disable sync",
-    "reference": "Modules/CalendarSidebar.qml:1101, Modals/SettingsContent.qml:1014",
+    "reference": "Modules/CalendarSidebar.qml:1114, Modals/SettingsContent.qml:1014",
     "comment": "calendar context menu action to stop syncing a calendar | calendar row action tooltip"
   },
   {
@@ -1316,7 +1316,7 @@
   {
     "term": "Enable sync",
     "context": "Enable sync",
-    "reference": "Modules/CalendarSidebar.qml:1101",
+    "reference": "Modules/CalendarSidebar.qml:1114",
     "comment": "calendar context menu action to resume syncing a calendar"
   },
   {
@@ -1346,13 +1346,13 @@
   {
     "term": "Enter a valid email address",
     "context": "Enter a valid email address",
-    "reference": "Services/PeopleService.qml:82",
+    "reference": "Services/PeopleService.qml:87",
     "comment": "people search validation error for a malformed address"
   },
   {
     "term": "Enter an email address",
     "context": "Enter an email address",
-    "reference": "Services/PeopleService.qml:80",
+    "reference": "Services/PeopleService.qml:85",
     "comment": "people search validation error for an empty field"
   },
   {
@@ -1502,7 +1502,7 @@
   {
     "term": "Hide",
     "context": "Hide",
-    "reference": "Modules/CalendarSidebar.qml:1089",
+    "reference": "Modules/CalendarSidebar.qml:1102",
     "comment": "calendar context menu action to hide a calendar"
   },
   {
@@ -1604,7 +1604,7 @@
   {
     "term": "Keyring locked — unlock it to sync",
     "context": "Keyring locked — unlock it to sync",
-    "reference": "Modules/CalendarSidebar.qml:935, Modals/SettingsContent.qml:1165",
+    "reference": "Modules/CalendarSidebar.qml:948, Modals/SettingsContent.qml:1165",
     "comment": "account status when the system keyring holding the credentials is locked | tooltip on the account warning icon when the system keyring holding the credentials is locked"
   },
   {
@@ -1682,7 +1682,7 @@
   {
     "term": "Local calendar",
     "context": "Local calendar",
-    "reference": "Modules/CalendarSidebar.qml:672",
+    "reference": "Modules/CalendarSidebar.qml:685",
     "comment": "fallback tooltip for a calendar without an account"
   },
   {
@@ -1742,7 +1742,7 @@
   {
     "term": "Me",
     "context": "Me",
-    "reference": "Modules/views/DayView.qml:300",
+    "reference": "Modules/views/DayView.qml:279",
     "comment": "day-view lane header label for the owner's own column"
   },
   {
@@ -1796,7 +1796,7 @@
   {
     "term": "Month",
     "context": "Month",
-    "reference": "Modules/CalendarSidebar.qml:48",
+    "reference": "Modules/CalendarSidebar.qml:49",
     "comment": "view switcher option in sidebar"
   },
   {
@@ -1892,7 +1892,7 @@
   {
     "term": "My calendars",
     "context": "My calendars",
-    "reference": "Modules/CalendarSidebar.qml:643",
+    "reference": "Modules/CalendarSidebar.qml:656",
     "comment": "sidebar section header for the calendar list"
   },
   {
@@ -1928,13 +1928,13 @@
   {
     "term": "New calendar…",
     "context": "New calendar…",
-    "reference": "Modules/CalendarSidebar.qml:1175",
+    "reference": "Modules/CalendarSidebar.qml:1188",
     "comment": "account context menu action to create a calendar in a local folder"
   },
   {
     "term": "New event",
     "context": "New event",
-    "reference": "Modals/EventDetailsModal.qml:523, Modals/EventDetailsModal.qml:542, Widgets/EventContextMenu.qml:64, Modules/views/MonthView.qml:451",
+    "reference": "Modals/EventDetailsModal.qml:523, Modals/EventDetailsModal.qml:542, Widgets/EventContextMenu.qml:64, Modules/views/MonthView.qml:433",
     "comment": "calendar day context menu action | event modal header when creating | event modal window title when creating | placeholder label on the event span shown while selecting days in the month grid"
   },
   {
@@ -2006,7 +2006,7 @@
   {
     "term": "No calendars yet",
     "context": "No calendars yet",
-    "reference": "Modules/CalendarSidebar.qml:656",
+    "reference": "Modules/CalendarSidebar.qml:669",
     "comment": "sidebar placeholder when the calendar list is empty"
   },
   {
@@ -2072,7 +2072,7 @@
   {
     "term": "Not signed in — click to reconnect or re-add this account",
     "context": "Not signed in — click to reconnect or re-add this account",
-    "reference": "Modules/CalendarSidebar.qml:941",
+    "reference": "Modules/CalendarSidebar.qml:954",
     "comment": "tooltip on the account warning icon when credentials are missing"
   },
   {
@@ -2306,7 +2306,7 @@
   {
     "term": "People",
     "context": "People",
-    "reference": "Modules/CalendarSidebar.qml:555",
+    "reference": "Modules/CalendarSidebar.qml:566",
     "comment": "sidebar section header for the colleague-schedule search"
   },
   {
@@ -2438,13 +2438,13 @@
   {
     "term": "Reconnect",
     "context": "Reconnect",
-    "reference": "Modules/CalendarSidebar.qml:626, Modules/CalendarSidebar.qml:1169, Modals/SettingsContent.qml:1216",
+    "reference": "Modules/CalendarSidebar.qml:639, Modules/CalendarSidebar.qml:1182, Modals/SettingsContent.qml:1216",
     "comment": "account context menu action to re-authorize the account | account row action tooltip | sidebar button that reconnects the account used for a colleague lookup"
   },
   {
     "term": "Reconnect %1 to see availability",
     "context": "Reconnect %1 to see availability",
-    "reference": "Modules/CalendarSidebar.qml:622",
+    "reference": "Modules/CalendarSidebar.qml:635",
     "comment": "sidebar message shown when a colleague lookup needs the account reconnected"
   },
   {
@@ -2498,13 +2498,13 @@
   {
     "term": "Remove",
     "context": "Remove",
-    "reference": "Modules/CalendarSidebar.qml:315, Modals/SettingsContent.qml:1231, Modals/SettingsContent.qml:1237, Widgets/PersonChip.qml:106",
+    "reference": "Modules/CalendarSidebar.qml:326, Modals/SettingsContent.qml:1231, Modals/SettingsContent.qml:1237, Widgets/PersonChip.qml:105",
     "comment": "confirm button for removing an account | person chip button to remove a colleague from the schedule search | remove account confirmation button"
   },
   {
     "term": "Remove \"%1\"?",
     "context": "Remove \"%1\"?",
-    "reference": "Modules/CalendarSidebar.qml:313, Modals/SettingsContent.qml:1235",
+    "reference": "Modules/CalendarSidebar.qml:324, Modals/SettingsContent.qml:1235",
     "comment": "confirm dialog title for removing an account, %1 is the account label | remove account confirmation title"
   },
   {
@@ -2522,19 +2522,19 @@
   {
     "term": "Removes this account and its calendars and events from Dank Calendar. Nothing is deleted from the provider.",
     "context": "Removes this account and its calendars and events from Dank Calendar. Nothing is deleted from the provider.",
-    "reference": "Modules/CalendarSidebar.qml:314, Modals/SettingsContent.qml:1236",
+    "reference": "Modules/CalendarSidebar.qml:325, Modals/SettingsContent.qml:1236",
     "comment": "confirm dialog body for removing an account | remove account confirmation message"
   },
   {
     "term": "Removes this calendar and its events from Dank Calendar. If the provider still offers it, it will come back on the next sync.",
     "context": "Removes this calendar and its events from Dank Calendar. If the provider still offers it, it will come back on the next sync.",
-    "reference": "Modules/CalendarSidebar.qml:303, Modals/SettingsContent.qml:1027",
+    "reference": "Modules/CalendarSidebar.qml:314, Modals/SettingsContent.qml:1027",
     "comment": "confirm dialog body for deleting a calendar | delete calendar confirmation message"
   },
   {
     "term": "Remove…",
     "context": "Remove…",
-    "reference": "Modules/CalendarSidebar.qml:1185",
+    "reference": "Modules/CalendarSidebar.qml:1198",
     "comment": "account context menu action to remove the account"
   },
   {
@@ -2552,7 +2552,7 @@
   {
     "term": "Rename…",
     "context": "Rename…",
-    "reference": "Modules/CalendarSidebar.qml:1094",
+    "reference": "Modules/CalendarSidebar.qml:1107",
     "comment": "calendar context menu action to rename a calendar"
   },
   {
@@ -2654,7 +2654,7 @@
   {
     "term": "Search for people",
     "context": "Search for people",
-    "reference": "Modules/CalendarSidebar.qml:569",
+    "reference": "Modules/CalendarSidebar.qml:582",
     "comment": "sidebar people search field placeholder"
   },
   {
@@ -2744,7 +2744,7 @@
   {
     "term": "Show",
     "context": "Show",
-    "reference": "Modules/CalendarSidebar.qml:1089",
+    "reference": "Modules/CalendarSidebar.qml:1102",
     "comment": "calendar context menu action to show a hidden calendar"
   },
   {
@@ -2834,7 +2834,7 @@
   {
     "term": "Sign-in expired — click to reconnect",
     "context": "Sign-in expired — click to reconnect",
-    "reference": "Modules/CalendarSidebar.qml:937",
+    "reference": "Modules/CalendarSidebar.qml:950",
     "comment": "tooltip on the account warning icon when re-authentication is required"
   },
   {
@@ -2954,7 +2954,7 @@
   {
     "term": "Sync now",
     "context": "Sync now",
-    "reference": "Modules/CalendarSidebar.qml:1180, Modules/CalendarContent.qml:169, Modals/SettingsContent.qml:1223",
+    "reference": "Modules/CalendarSidebar.qml:1193, Modules/CalendarContent.qml:169, Modals/SettingsContent.qml:1223",
     "comment": "account context menu action to sync the account | account row action tooltip"
   },
   {
@@ -3002,7 +3002,7 @@
   {
     "term": "Tasks",
     "context": "Tasks",
-    "reference": "Modules/CalendarSidebar.qml:60, Modules/CalendarSidebar.qml:781, Modules/CalendarContent.qml:53",
+    "reference": "Modules/CalendarSidebar.qml:61, Modules/CalendarSidebar.qml:794, Modules/CalendarContent.qml:53",
     "comment": "header title when the tasks view is active | sidebar section header for the task list | view switcher option in sidebar"
   },
   {
@@ -3032,7 +3032,7 @@
   {
     "term": "That's your own account",
     "context": "That's your own account",
-    "reference": "Services/PeopleService.qml:86",
+    "reference": "Services/PeopleService.qml:91",
     "comment": "people search validation error when the address is one of the user's own accounts"
   },
   {
@@ -3158,7 +3158,7 @@
   {
     "term": "Unavailable",
     "context": "Unavailable",
-    "reference": "Widgets/PersonChip.qml:41",
+    "reference": "Widgets/PersonChip.qml:40",
     "comment": "person chip status label when a colleague's schedule cannot be read"
   },
   {
@@ -3272,7 +3272,7 @@
   {
     "term": "Week",
     "context": "Week",
-    "reference": "Modules/CalendarSidebar.qml:43",
+    "reference": "Modules/CalendarSidebar.qml:44",
     "comment": "view switcher option in sidebar"
   },
   {
@@ -3344,7 +3344,7 @@
   {
     "term": "all day",
     "context": "all day",
-    "reference": "Modules/views/DayView.qml:368",
+    "reference": "Modules/views/DayView.qml:341",
     "comment": "suffix on all-day event chip in day view"
   },
   {

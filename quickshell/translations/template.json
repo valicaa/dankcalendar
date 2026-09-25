@@ -681,7 +681,7 @@
   {
     "term": "Busy",
     "translation": "",
-    "context": "overlay label for a colleague's free/busy-only or private time block | overlay label for a colleague's free/busy-only time block",
+    "context": "overlay label for a colleague's free/busy-only or private time block",
     "reference": "",
     "comment": ""
   },
