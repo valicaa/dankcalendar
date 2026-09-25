@@ -22,8 +22,8 @@ git diff --name-only master...HEAD | grep -vE '^(\.claude/|tasks/|CLAUDE\.md$|\.
 ```
 
 Any path it prints — code, the `dank-qml-common` submodule, `Makefile`, `scripts/`, `assets/`,
-`flake.nix`, `distro/`, `.github/` — means the full checks in sections 1–5. A docs-only change
-stops here, with no build, dev instance or service stop:
+`flake.nix`, `distro/`, `.github/` outside `ISSUE_TEMPLATE/` — means the full checks in
+sections 1–5. A docs-only change stops here, with no build, dev instance or service stop:
 
 ```bash
 .claude/tools/check-docs.py

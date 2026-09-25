@@ -76,8 +76,8 @@ body:
       label: Size
       description: T-shirt size. Triage adds the matching size:S/size:M/size:L label separately — picking here doesn't apply it.
       options:
-        - "S (0-1 layers, <1h, no migration)"
-        - "M (2-3 layers)"
-        - "L (4+ layers, cross-cutting, DB migration, or new provider)"
+        - "S (1 layer, or under 1h with no migration; tooling: under 1h)"
+        - "M (2-3 layers; tooling: up to 1 day)"
+        - "L (4+ layers, DB migration or new provider; tooling: over 1 day)"
     validations:
       required: true

@@ -101,7 +101,7 @@ layers and callers); when they apply, `dcal-scout` does them for the PM.
 The template (8 headings), the feature/bug/chore variants, and the title/label/slug rules live
 in `write-issue`. Write the body with `write-issue`, show it to the user and get their yes, then
 create the issue with its `gh issue create` command. Ready = the user said yes AND the issue
-exists.
+exists (an issue the owner filed through a form: Ready after `write-issue` triage).
 
 Then create the branch — in the main checkout, which must be on `master` with a clean tree
 (one feature worked at a time — see Branches; with the user's OK a checked-out one can be parked:

@@ -81,7 +81,7 @@ DCAL_ENABLE_HOTRELOAD=1 go run ./cmd/dcal run -c ../quickshell
 
 - `tasks/lessons.md` is injected at session start by a hook. When the user corrects you, or you
   catch your own mistake, add a dated rule there in the same session.
-- Facts and rules only, within 120 lines; multi-step procedures go in a `.claude/skills/` skill.
+- Facts and rules only, within 120 lines; a procedure of more than a few steps goes in a `.claude/skills/` skill.
 - A PreToolUse hook runs `.claude/tools/check-docs.py` on every commit: it blocks on broken doc
   references, the line budget, bad frontmatter, roster drift, commits off the branch model, and
   undocumented doc-relevant code changes — stage the listed docs, or `check-docs.py --ack`.
