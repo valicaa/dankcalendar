@@ -494,21 +494,18 @@ Item {
                                         values: allDayCell.dayEvents.slice(0, 2)
                                     }
 
-                                    Rectangle {
+                                    EventChipBackground {
                                         required property var modelData
                                         readonly property bool isSelected: root.isEventSelected(modelData)
                                         width: parent.width
                                         height: root.allDayChipHeight
                                         radius: Theme.cornerRadiusXS
                                         clip: true
-                                        color: modelData.myResponse === "needs-action" ? "transparent" : Theme.withAlpha(modelData.color, 0.22)
-                                        border.color: isSelected ? Theme.primary : modelData.color
-                                        border.width: isSelected ? 2 : 1
-
-                                        TentativeHatch {
-                                            visible: parent.modelData.myResponse === "tentative"
-                                            stripeColor: parent.modelData.color
-                                        }
+                                        compact: true
+                                        response: modelData.myResponse
+                                        calendarColor: modelData.color
+                                        selected: isSelected
+                                        hovered: allDayMouseArea.containsMouse
 
                                         StyledText {
                                             anchors.left: parent.left
@@ -516,15 +513,17 @@ Item {
                                             anchors.leftMargin: 4
                                             anchors.rightMargin: 4
                                             anchors.verticalCenter: parent.verticalCenter
-                                            text: modelData.title
+                                            text: parent.modelData.title
                                             font.pixelSize: 10
-                                            color: Theme.surfaceText
+                                            color: parent.textColor
+                                            font.strikeout: parent.strikeout
                                             wrapMode: Text.WordWrap
                                             maximumLineCount: SettingsData.weekEventTitleLines
                                             elide: Text.ElideRight
                                         }
 
                                         EventMouseArea {
+                                            id: allDayMouseArea
                                             anchors.fill: parent
                                             eventData: parent.modelData
                                             dragEnabled: !parent.modelData.readOnly
@@ -751,7 +750,7 @@ Item {
                                         values: dayColumn.timedEvents
                                     }
 
-                                    Rectangle {
+                                    EventChipBackground {
                                         required property var modelData
                                         readonly property bool isSelected: root.isEventSelected(modelData)
                                         onIsSelectedChanged: {
@@ -765,16 +764,11 @@ Item {
                                         y: modelData.startHour * root.hourHeight
                                         width: laneWidth
                                         height: modelData.durationHours * root.hourHeight - 2
-                                        radius: Theme.cornerRadiusS
                                         clip: true
-                                        color: modelData.myResponse === "needs-action" ? "transparent" : Theme.withAlpha(modelData.color, 0.22)
-                                        border.color: isSelected ? Theme.primary : modelData.color
-                                        border.width: isSelected ? 2 : 1
-
-                                        TentativeHatch {
-                                            visible: parent.modelData.myResponse === "tentative"
-                                            stripeColor: parent.modelData.color
-                                        }
+                                        response: modelData.myResponse
+                                        calendarColor: modelData.color
+                                        selected: isSelected
+                                        hovered: timedMouseArea.containsMouse
 
                                         Column {
                                             anchors.fill: parent
@@ -782,10 +776,11 @@ Item {
                                             spacing: 2
 
                                             StyledText {
-                                                text: modelData.title
+                                                text: parent.parent.modelData.title
                                                 font.pixelSize: 11
                                                 font.weight: Theme.fontWeightMedium
-                                                color: Theme.surfaceText
+                                                color: parent.parent.textColor
+                                                font.strikeout: parent.parent.strikeout
                                                 width: parent.width
                                                 wrapMode: Text.WordWrap
                                                 maximumLineCount: Math.min(SettingsData.weekEventTitleLines, Math.max(1, Math.floor(parent.height / 14)))
@@ -793,10 +788,10 @@ Item {
                                             }
 
                                             StyledText {
-                                                visible: text !== "" && modelData.durationHours >= 1
-                                                text: modelData.location
+                                                visible: text !== "" && parent.parent.modelData.durationHours >= 1
+                                                text: parent.parent.modelData.location
                                                 font.pixelSize: 10
-                                                color: Theme.surfaceVariantText
+                                                color: parent.parent.mutedTextColor
                                                 width: parent.width
                                                 wrapMode: Text.NoWrap
                                                 maximumLineCount: 1
@@ -805,6 +800,7 @@ Item {
                                         }
 
                                         EventMouseArea {
+                                            id: timedMouseArea
                                             anchors.fill: parent
                                             eventData: parent.modelData
                                             dragEnabled: !parent.modelData.readOnly

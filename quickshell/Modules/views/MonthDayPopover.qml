@@ -132,22 +132,17 @@ Item {
                 model: ScriptModel {
                     values: root.events
                 }
-                delegate: Rectangle {
+                delegate: EventChipBackground {
                     id: eventRow
                     required property var modelData
                     readonly property bool isSelected: root.isEventSelected(modelData)
-                    readonly property bool awaitingReply: modelData.myResponse === "needs-action"
                     width: ListView.view.width
                     height: root.rowHeight - Theme.groupedListGap
                     radius: Theme.cornerRadiusXS
-                    color: isSelected ? Theme.withAlpha(modelData.color, 0.28) : (rowHover.containsMouse ? Theme.withAlpha(modelData.color, 0.18) : "transparent")
-                    border.color: isSelected ? Theme.primary : (awaitingReply ? modelData.color : "transparent")
-                    border.width: isSelected ? 2 : (awaitingReply ? 1 : 0)
-
-                    TentativeHatch {
-                        visible: eventRow.modelData.myResponse === "tentative"
-                        stripeColor: eventRow.modelData.color
-                    }
+                    response: modelData.myResponse
+                    calendarColor: modelData.color
+                    selected: isSelected
+                    hovered: rowHover.containsMouse
 
                     Row {
                         anchors.left: parent.left
@@ -161,7 +156,7 @@ Item {
                             width: 3
                             height: 22
                             radius: Theme.fullRadius(width, height)
-                            color: eventRow.modelData.color
+                            color: eventRow.dotColor
                             anchors.verticalCenter: parent.verticalCenter
                         }
 
@@ -170,7 +165,7 @@ Item {
                             width: 64
                             text: eventRow.modelData.allDay ? I18n.tr("All day", "all-day marker in the month day-detail popover") : SettingsData.formatTime(eventRow.modelData.start)
                             font.pixelSize: Theme.fontSizeSmall
-                            color: Theme.surfaceVariantText
+                            color: eventRow.mutedTextColor
                             isMonospace: true
                             elide: Text.ElideRight
                         }
@@ -180,7 +175,8 @@ Item {
                             width: parent.width - 3 - 64 - Theme.spacingS * 2
                             text: eventRow.modelData.title
                             font.pixelSize: Theme.fontSizeSmall
-                            color: Theme.surfaceText
+                            color: eventRow.textColor
+                            font.strikeout: eventRow.strikeout
                             elide: Text.ElideRight
                             maximumLineCount: 1
                         }

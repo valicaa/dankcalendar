@@ -142,7 +142,7 @@ Item {
                             values: section.modelData.events
                         }
 
-                        StyledRect {
+                        EventChipBackground {
                             id: card
                             required property var modelData
                             readonly property bool isSelected: root.isEventSelected(modelData)
@@ -154,21 +154,14 @@ Item {
                                         root.revealItem(card);
                                 });
                             }
-                            readonly property bool awaitingReply: modelData.myResponse === "needs-action"
-                            readonly property bool tentativeReply: modelData.myResponse === "tentative"
                             width: root.width
                             height: Math.max(76, contentRow.implicitHeight + Theme.spacingM * 2)
-                            color: isSelected ? Theme.selectedContainer : (cardArea.containsMouse ? Theme.surfaceContainer : Theme.surfaceContainerLow)
                             radius: Theme.cornerRadiusM
-                            border.color: isSelected ? Theme.primary : (awaitingReply ? modelData.color : "transparent")
-                            border.width: isSelected ? 2 : (awaitingReply ? 1 : 0)
-                            clip: tentativeReply
-
-                            TentativeHatch {
-                                visible: card.tentativeReply
-                                stripeColor: card.modelData.color
-                                opacity: 0.15
-                            }
+                            response: modelData.myResponse
+                            calendarColor: modelData.color
+                            selected: isSelected
+                            hovered: cardArea.containsMouse
+                            hatchOpacity: 0.3
 
                             Row {
                                 id: contentRow
@@ -184,7 +177,7 @@ Item {
                                     height: 44
                                     anchors.verticalCenter: parent.verticalCenter
                                     radius: Theme.fullRadius(width, height)
-                                    color: card.modelData.color
+                                    color: card.dotColor
                                 }
 
                                 Column {
@@ -196,7 +189,7 @@ Item {
                                         text: card.modelData.time
                                         font.pixelSize: Theme.fontSizeMedium
                                         font.weight: Theme.fontWeightMedium
-                                        color: Theme.surfaceText
+                                        color: card.textColor
                                         isMonospace: true
                                         width: parent.width
                                     }
@@ -204,7 +197,7 @@ Item {
                                     StyledText {
                                         text: card.modelData.duration
                                         font.pixelSize: Theme.fontSizeSmall
-                                        color: Theme.surfaceVariantText
+                                        color: card.mutedTextColor
                                         visible: text !== ""
                                         width: parent.width
                                     }
@@ -219,7 +212,8 @@ Item {
                                         text: card.modelData.title
                                         font.pixelSize: Theme.fontSizeLarge
                                         font.weight: Theme.fontWeightMedium
-                                        color: Theme.surfaceText
+                                        color: card.textColor
+                                        font.strikeout: card.strikeout
                                         width: parent.width
                                         wrapMode: Text.WordWrap
                                         maximumLineCount: 2
@@ -235,14 +229,14 @@ Item {
                                             id: locationIcon
                                             name: "place"
                                             size: Theme.iconSizeSmall
-                                            color: Theme.surfaceVariantText
+                                            color: card.mutedTextColor
                                             anchors.verticalCenter: parent.verticalCenter
                                         }
 
                                         StyledText {
                                             text: card.modelData.location
                                             font.pixelSize: Theme.fontSizeSmall
-                                            color: Theme.surfaceVariantText
+                                            color: card.mutedTextColor
                                             anchors.verticalCenter: parent.verticalCenter
                                             width: parent.width - locationIcon.width - Theme.spacingXS
                                             wrapMode: Text.NoWrap
@@ -254,7 +248,7 @@ Item {
                                     StyledText {
                                         text: card.modelData.preview
                                         font.pixelSize: Theme.fontSizeSmall
-                                        color: Theme.surfaceVariantText
+                                        color: card.mutedTextColor
                                         visible: text !== ""
                                         width: parent.width
                                         wrapMode: Text.WordWrap
@@ -270,13 +264,13 @@ Item {
                                             height: 8
                                             radius: Theme.fullRadius(width, height)
                                             anchors.verticalCenter: parent.verticalCenter
-                                            color: card.modelData.color
+                                            color: card.dotColor
                                         }
 
                                         StyledText {
                                             text: card.modelData.calendar
                                             font.pixelSize: Theme.fontSizeSmall
-                                            color: Theme.surfaceVariantText
+                                            color: card.mutedTextColor
                                             anchors.verticalCenter: parent.verticalCenter
                                         }
                                     }

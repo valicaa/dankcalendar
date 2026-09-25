@@ -198,21 +198,17 @@ Item {
                 values: root.allDayEvents
             }
 
-            Rectangle {
+            EventChipBackground {
                 required property var modelData
                 readonly property bool isSelected: root.isEventSelected(modelData)
                 width: parent.width
                 height: 22
                 radius: Theme.cornerRadiusXS
                 clip: true
-                color: modelData.myResponse === "needs-action" ? "transparent" : Theme.withAlpha(modelData.color, 0.22)
-                border.color: isSelected ? Theme.primary : modelData.color
-                border.width: isSelected ? 2 : 1
-
-                TentativeHatch {
-                    visible: parent.modelData.myResponse === "tentative"
-                    stripeColor: parent.modelData.color
-                }
+                response: modelData.myResponse
+                calendarColor: modelData.color
+                selected: isSelected
+                hovered: allDayMouseArea.containsMouse
 
                 StyledText {
                     anchors.left: parent.left
@@ -220,15 +216,17 @@ Item {
                     anchors.leftMargin: Theme.spacingS
                     anchors.rightMargin: Theme.spacingS
                     anchors.verticalCenter: parent.verticalCenter
-                    text: modelData.title + "  ·  " + I18n.tr("all day", "suffix on all-day event chip in day view")
+                    text: parent.modelData.title + "  ·  " + I18n.tr("all day", "suffix on all-day event chip in day view")
                     font.pixelSize: Theme.fontSizeSmall
-                    color: Theme.surfaceText
+                    color: parent.textColor
+                    font.strikeout: parent.strikeout
                     wrapMode: Text.NoWrap
                     maximumLineCount: 1
                     elide: Text.ElideRight
                 }
 
                 EventMouseArea {
+                    id: allDayMouseArea
                     anchors.fill: parent
                     eventData: parent.modelData
                     onEntered: chipTooltip.show(root.eventTooltip(parent.modelData), parent)
@@ -368,7 +366,7 @@ Item {
                         values: root.timedEvents
                     }
 
-                    Rectangle {
+                    EventChipBackground {
                         required property var modelData
                         readonly property bool isSelected: root.isEventSelected(modelData)
                         onIsSelectedChanged: {
@@ -382,16 +380,11 @@ Item {
                         y: modelData.startHour * root.hourHeight
                         width: laneWidth
                         height: modelData.durationHours * root.hourHeight - 4
-                        radius: Theme.cornerRadiusS
                         clip: true
-                        color: modelData.myResponse === "needs-action" ? "transparent" : Theme.withAlpha(modelData.color, 0.22)
-                        border.color: isSelected ? Theme.primary : modelData.color
-                        border.width: isSelected ? 2 : 1
-
-                        TentativeHatch {
-                            visible: parent.modelData.myResponse === "tentative"
-                            stripeColor: parent.modelData.color
-                        }
+                        response: modelData.myResponse
+                        calendarColor: modelData.color
+                        selected: isSelected
+                        hovered: timedMouseArea.containsMouse
 
                         Row {
                             anchors.fill: parent
@@ -403,7 +396,7 @@ Item {
                                 height: parent.height - 4
                                 anchors.verticalCenter: parent.verticalCenter
                                 radius: Theme.fullRadius(width, height)
-                                color: parent.parent.modelData.color
+                                color: parent.parent.dotColor
                             }
 
                             Column {
@@ -414,7 +407,8 @@ Item {
                                     text: parent.parent.parent.modelData.title
                                     font.pixelSize: Theme.fontSizeMedium
                                     font.weight: Theme.fontWeightMedium
-                                    color: Theme.surfaceText
+                                    color: parent.parent.parent.textColor
+                                    font.strikeout: parent.parent.parent.strikeout
                                     width: parent.width
                                     wrapMode: Text.NoWrap
                                     maximumLineCount: 1
@@ -425,7 +419,7 @@ Item {
                                     visible: parent.parent.parent.modelData.durationHours >= 0.75
                                     text: parent.parent.parent.modelData.calendar
                                     font.pixelSize: Theme.fontSizeSmall
-                                    color: Theme.surfaceVariantText
+                                    color: parent.parent.parent.mutedTextColor
                                     width: parent.width
                                     wrapMode: Text.NoWrap
                                     maximumLineCount: 1
@@ -436,7 +430,7 @@ Item {
                                     visible: text !== "" && parent.parent.parent.modelData.durationHours >= 1.25
                                     text: parent.parent.parent.modelData.location
                                     font.pixelSize: Theme.fontSizeSmall
-                                    color: Theme.surfaceVariantText
+                                    color: parent.parent.parent.mutedTextColor
                                     width: parent.width
                                     wrapMode: Text.NoWrap
                                     maximumLineCount: 1
@@ -447,7 +441,7 @@ Item {
                                     visible: text !== "" && parent.parent.parent.modelData.durationHours >= 2
                                     text: DankCalService.descriptionPreview(parent.parent.parent.modelData)
                                     font.pixelSize: Theme.fontSizeSmall
-                                    color: Theme.surfaceVariantText
+                                    color: parent.parent.parent.mutedTextColor
                                     width: parent.width
                                     wrapMode: Text.WordWrap
                                     maximumLineCount: 2
@@ -457,6 +451,7 @@ Item {
                         }
 
                         EventMouseArea {
+                            id: timedMouseArea
                             anchors.fill: parent
                             eventData: parent.modelData
                             onEntered: chipTooltip.show(root.eventTooltip(parent.modelData), parent)

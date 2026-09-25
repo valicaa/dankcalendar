@@ -619,6 +619,61 @@ Singleton {
         return Qt.rgba(c.r, c.g, c.b, a);
     }
 
+    // Event chip/card styling by RSVP response ("accepted"/"tentative"/"needs-action"/
+    // "declined"/""), shared via EventChipBackground. Calendar colors arrive as hex
+    // strings from DankCalService (JSON): normalize with toColor() before withAlpha()
+    // or Contrast.readableOn(), which both key off `c.r`, undefined on a string.
+    function toColor(color) {
+        return color && color.r !== undefined ? color : Qt.color(color);
+    }
+
+    // An unrecognized or missing response falls back to the strong (accepted) look.
+    function rsvpStrong(response) {
+        return response !== "tentative" && response !== "needs-action" && response !== "declined";
+    }
+
+    function rsvpFillColor(response, color) {
+        const c = toColor(color);
+        switch (response) {
+        case "needs-action":
+            return "transparent";
+        case "tentative":
+            return withAlpha(c, 0.22);
+        case "declined":
+            return withAlpha(c, 0.14);
+        default:
+            return c;
+        }
+    }
+
+    function rsvpBorderColor(response, color) {
+        return rsvpStrong(response) ? withAlpha(surfaceText, 0.08) : toColor(color);
+    }
+
+    function rsvpTextColor(response, color) {
+        if (rsvpStrong(response))
+            return Contrast.readableOn(toColor(color), onContainerCandidates);
+        return response === "declined" ? surfaceVariantText : surfaceText;
+    }
+
+    function rsvpMutedTextColor(response, color) {
+        if (rsvpStrong(response))
+            return withAlpha(rsvpTextColor(response, color), 0.75);
+        return surfaceVariantText;
+    }
+
+    function rsvpDotColor(response, color) {
+        return rsvpStrong(response) ? rsvpTextColor(response, color) : toColor(color);
+    }
+
+    function rsvpHatchVisible(response) {
+        return response === "tentative";
+    }
+
+    function rsvpStrikeout(response) {
+        return response === "declined";
+    }
+
     function blendAlpha(c, a) {
         if (!c || c.r === undefined)
             return Qt.rgba(0, 0, 0, 0);
