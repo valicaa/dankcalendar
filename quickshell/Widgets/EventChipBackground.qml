@@ -11,16 +11,16 @@ Rectangle {
     property bool hovered: false
     property real hatchOpacity: 0.55
     // Faded under a colleague overlay: fill, border and hatch are scaled to
-    // Theme.overlayDimOpacity and laid over Theme.background, so the faded
-    // chip stays opaque and nothing drawn behind it (a busy band's label)
-    // shows through its title. Text stays opaque, with its colour picked
-    // against the faded fill.
+    // Theme.overlayDimOpacity and laid over Theme.surface, the views'
+    // background, so the faded chip stays opaque and nothing behind it (a
+    // busy band's label) shows through its title. Text stays opaque, with
+    // its colour picked against the faded fill.
     property bool dimmed: false
 
     readonly property real backgroundOpacity: dimmed ? Theme.overlayDimOpacity : 1
     readonly property color _contrastBg: dimmed ? Theme.overlayDimComposite(calendarColor) : Theme.toColor(calendarColor)
 
-    readonly property color fillColor: dimmed ? Qt.tint(Theme.background, Theme.blendAlpha(Theme.rsvpFillColor(response, calendarColor), backgroundOpacity)) : Theme.rsvpFillColor(response, calendarColor)
+    readonly property color fillColor: dimmed ? Qt.tint(Theme.surface, Theme.blendAlpha(Theme.rsvpFillColor(response, calendarColor), backgroundOpacity)) : Theme.rsvpFillColor(response, calendarColor)
     readonly property color textColor: dimmed ? Theme.rsvpTextColorAgainst(response, _contrastBg) : Theme.rsvpTextColor(response, calendarColor)
     readonly property color mutedTextColor: dimmed ? Theme.rsvpMutedTextColorAgainst(response, _contrastBg) : Theme.rsvpMutedTextColor(response, calendarColor)
     readonly property color dotColor: dimmed ? Theme.rsvpDotColorAgainst(response, _contrastBg, calendarColor) : Theme.rsvpDotColor(response, calendarColor)
@@ -31,7 +31,7 @@ Rectangle {
 
     radius: Theme.cornerRadiusS
     color: fillColor
-    border.color: dimmed ? Qt.tint(Theme.background, Theme.blendAlpha(selected ? Theme.primary : Theme.rsvpBorderColor(response, calendarColor), backgroundOpacity)) : (selected ? Theme.primary : Theme.rsvpBorderColor(response, calendarColor))
+    border.color: dimmed ? Qt.tint(Theme.surface, Theme.blendAlpha(selected ? Theme.primary : Theme.rsvpBorderColor(response, calendarColor), backgroundOpacity)) : (selected ? Theme.primary : Theme.rsvpBorderColor(response, calendarColor))
     border.width: selected ? ringWidth : 1
 
     TentativeHatch {

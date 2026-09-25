@@ -684,9 +684,10 @@ Singleton {
         return rsvpStrong(response) ? rsvpTextColorAgainst(response, bg) : toColor(color);
     }
 
-    // The on-screen colour of a strong fill dimmed to overlayDimOpacity.
+    // The on-screen colour of a strong fill dimmed to overlayDimOpacity over
+    // the views' Theme.surface.
     function overlayDimComposite(color) {
-        return Qt.tint(background, withAlpha(toColor(color), overlayDimOpacity));
+        return Qt.tint(surface, withAlpha(toColor(color), overlayDimOpacity));
     }
 
     function rsvpHatchVisible(response) {
