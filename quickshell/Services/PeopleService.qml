@@ -15,23 +15,38 @@ Singleton {
 
     readonly property var log: Log.scoped("PeopleService")
 
-    // Each entry: {email, name, color, status, loading, accountId, events, busy, error, seq}.
+    // Each entry: {email, name, color, status, accountId, events, busy, error, window}.
     // status is the outcome of the last lookup: pending (none yet) | details |
-    // busy | unavailable | reconnect | error. A refetch keeps status and data
-    // and only sets loading, so the overlay stays up while paging.
+    // busy | unavailable | reconnect | error. A refetch keeps status and data,
+    // so the overlay stays up while paging; `loading` marks it for the chips.
     property var people: []
+    // email -> true while a lookup is in flight. Read by the chips only.
+    property var loading: ({})
+    // Bumped once per rebuild of the overlay index; the one signal views
+    // depend on. The lookups below read it so their callers re-evaluate.
     property int version: 0
+    // The people with a Day lane. Reassigned only when that list changes.
+    property var lanes: []
 
     readonly property bool active: people.length > 0
-    readonly property var lanes: people.filter(p => p.status === "details" || p.status === "busy")
     readonly property bool hasGoogleAccount: DankCalService.accounts.some(a => a.kind === "google")
     readonly property var reconnectPerson: people.find(p => p.status === "reconnect") || null
     readonly property string busyLabel: I18n.tr("Busy", "overlay label for a colleague's free/busy-only or private time block")
 
     property int _seq: 0
     property string _windowKey: ""
-    property var _window: null
-    readonly property var _index: _buildIndex(people)
+    // Mutated in place, so it notifies nothing: index, latest seq per email,
+    // the window being fetched and the window each person's fetch asked for.
+    readonly property var _store: ({
+            "index": {
+                "shared": {},
+                "byDay": {},
+                "lanes": {}
+            },
+            "seqs": {},
+            "window": null,
+            "fetchWindows": {}
+        })
 
     Connections {
         target: DankCalService
@@ -58,13 +73,42 @@ Singleton {
         };
     }
 
+    function _setWindow() {
+        _windowKey = _monthKey(DankCalService.focusDate);
+        _store.window = _windowFor(DankCalService.focusDate);
+    }
+
     function _maybeRefetchAll() {
         const key = _monthKey(DankCalService.focusDate);
         if (key === _windowKey || people.length === 0)
             return;
-        _windowKey = key;
+        _setWindow();
         for (const p of people)
             _fetch(p.email);
+    }
+
+    function _laneKey(list) {
+        return list.map(p => p.email + "|" + p.status + "|" + p.name + "|" + p.color).join(",");
+    }
+
+    // Every change to people goes through here: one index rebuild, one
+    // version bump.
+    function _commit(next) {
+        people = next;
+        _store.index = _buildIndex(next);
+        const nextLanes = next.filter(p => p.status === "details" || p.status === "busy");
+        if (_laneKey(nextLanes) !== _laneKey(lanes))
+            lanes = nextLanes;
+        version++;
+    }
+
+    function _setLoading(email, value) {
+        const next = Object.assign({}, loading);
+        if (value)
+            next[email] = true;
+        else
+            delete next[email];
+        loading = next;
     }
 
     function _nextColor() {
@@ -90,38 +134,45 @@ Singleton {
         if (DankCalService.accounts.some(a => (a.id || "").toLowerCase() === trimmed))
             return I18n.tr("That's your own account", "people search validation error when the address is one of the user's own accounts");
 
-        people = people.concat([{
-                "email": trimmed,
-                "name": "",
-                "color": _nextColor(),
-                "status": "pending",
-                "loading": false,
-                "accountId": "",
-                "events": [],
-                "busy": [],
-                "error": "",
-                "seq": 0
-            }]);
-        version++;
+        if (people.length === 0)
+            _setWindow();
+        _commit(people.concat([{
+                    "email": trimmed,
+                    "name": "",
+                    "color": _nextColor(),
+                    "status": "pending",
+                    "accountId": "",
+                    "events": [],
+                    "busy": [],
+                    "error": "",
+                    "window": null
+                }]));
         _fetch(trimmed);
         return "";
+    }
+
+    function _forget(email) {
+        delete _store.seqs[email];
+        delete _store.fetchWindows[email];
+        _setLoading(email, false);
     }
 
     function remove(email) {
         const next = people.filter(p => p.email !== email);
         if (next.length === people.length)
             return;
-        people = next;
-        version++;
-        if (people.length === 0)
+        _forget(email);
+        _commit(next);
+        if (next.length === 0)
             _windowKey = "";
     }
 
     function clear() {
         if (people.length === 0)
             return;
-        people = [];
-        version++;
+        for (const p of people)
+            _forget(p.email);
+        _commit([]);
         _windowKey = "";
     }
 
@@ -144,38 +195,37 @@ Singleton {
             return;
         const next = people.slice();
         next[idx] = Object.assign({}, next[idx], patch);
-        people = next;
-        version++;
+        _commit(next);
     }
 
+    // Fetches the current window. Only the first add and a month change move
+    // the window, so an add or retry during the refetch debounce cannot make
+    // the debounced refetch skip everyone else.
     function _fetch(email) {
         if (!people.some(p => p.email === email))
             return;
         const seq = ++_seq;
-        _setPerson(email, {
-            "loading": true,
-            "seq": seq
-        });
-        _window = _windowFor(DankCalService.focusDate);
-        _windowKey = _monthKey(DankCalService.focusDate);
+        const win = _store.window;
+        _store.seqs[email] = seq;
+        _store.fetchWindows[email] = win;
+        _setLoading(email, true);
         DankCalService.sendRequest("people.schedule", {
             "email": email,
-            "from": _window.from.toISOString(),
-            "to": _window.to.toISOString()
+            "from": win.from.toISOString(),
+            "to": win.to.toISOString()
         }, response => root.ingest(email, response, seq));
     }
 
     // The people.schedule reply for the fetch numbered seq. A reply for a
     // superseded fetch, or for a person removed since, is dropped.
     function ingest(email, response, seq) {
-        const person = people.find(p => p.email === email);
-        if (!person || person.seq !== seq)
+        if (_store.seqs[email] !== seq || !people.some(p => p.email === email))
             return;
+        _setLoading(email, false);
         if (response.error) {
             log.warn("colleague lookup failed");
             _setPerson(email, {
                 "status": "error",
-                "loading": false,
                 "error": response.error
             });
             return;
@@ -183,7 +233,7 @@ Singleton {
         const result = response.result || {};
         _setPerson(email, {
             "status": result.status || "error",
-            "loading": false,
+            "window": _store.fetchWindows[email],
             "name": result.name || "",
             "accountId": result.accountId || "",
             "events": (result.events || []).map(e => _normalizeEvent(e)),
@@ -222,14 +272,14 @@ Singleton {
 
     // Local day keys an item overlaps (start < dayEnd && end > dayStart, the
     // rule DankCalService.eventsForRange applies to own events), clamped to
-    // the fetched window.
-    function _daysOf(start, end) {
+    // the window it was fetched for.
+    function _daysOf(start, end, win) {
         const keys = [];
         let lo = start;
         let hi = end;
-        if (_window) {
-            lo = new Date(Math.max(lo.getTime(), _window.from.getTime()));
-            hi = new Date(Math.min(hi.getTime(), _window.to.getTime()));
+        if (win) {
+            lo = new Date(Math.max(lo.getTime(), win.from.getTime()));
+            hi = new Date(Math.min(hi.getTime(), win.to.getTime()));
         }
         for (let day = new Date(lo.getFullYear(), lo.getMonth(), lo.getDate()); day < hi; day = new Date(day.getFullYear(), day.getMonth(), day.getDate() + 1))
             keys.push(_dayKeyOf(day));
@@ -249,6 +299,7 @@ Singleton {
             "color": p.color,
             "stripes": [],
             "email": p.email,
+            "emails": [p.email],
             "private": isPrivate
         };
     }
@@ -266,7 +317,8 @@ Singleton {
     //    matches an own occurrence is carried by the own chip's stripes
     //    instead. The rest are grouped by `key` (iCalUID + start), so a
     //    meeting several colleagues share is one item in the first person's
-    //    colour, striped with every participant. Busy spans never merge.
+    //    colour, striped with every participant. Busy spans and private
+    //    events never merge: each person keeps their own band.
     //  - lanes: email -> day key -> that person's own items, unmerged, for
     //    the Day view.
     function _buildIndex(list) {
@@ -280,13 +332,18 @@ Singleton {
             if (p.status === "details") {
                 for (const ev of p.events) {
                     const item = _overlayItem(p, "event", ev, ev.private);
-                    const days = _daysOf(ev.start, ev.end);
+                    const days = _daysOf(ev.start, ev.end, p.window);
                     for (const day of days)
                         _push(lane, day, item);
                     if (ev.ownKey) {
                         const colors = shared[ev.ownKey] || (shared[ev.ownKey] = []);
                         if (colors.indexOf(p.color) === -1)
                             colors.push(p.color);
+                        continue;
+                    }
+                    if (ev.private) {
+                        for (const day of days)
+                            _push(busyByDay, day, item);
                         continue;
                     }
                     // Without an iCalUID an event merges with nobody.
@@ -298,12 +355,15 @@ Singleton {
                             });
                         const existing = dayGroups.byKey[mergeKey];
                         if (existing) {
-                            if (existing.stripes.indexOf(p.color) === -1)
+                            if (existing.emails.indexOf(p.email) === -1) {
                                 existing.stripes.push(p.color);
+                                existing.emails.push(p.email);
+                            }
                             continue;
                         }
                         const merged = Object.assign({}, item, {
-                            "stripes": [p.color]
+                            "stripes": [p.color],
+                            "emails": [p.email]
                         });
                         dayGroups.byKey[mergeKey] = merged;
                         dayGroups.order.push(merged);
@@ -312,7 +372,7 @@ Singleton {
             } else if (p.status === "busy") {
                 for (const b of p.busy) {
                     const item = _overlayItem(p, "busy", b, false);
-                    for (const day of _daysOf(b.start, b.end)) {
+                    for (const day of _daysOf(b.start, b.end, p.window)) {
                         _push(lane, day, item);
                         _push(busyByDay, day, item);
                     }
@@ -339,18 +399,55 @@ Singleton {
 
     // Merged overlay items overlapping a day, for Week and Month.
     function overlayForDay(day) {
-        return _index.byDay[_dayKeyOf(day)] || [];
+        version;
+        return _store.index.byDay[_dayKeyOf(day)] || [];
     }
 
     // One person's own items overlapping a day, unmerged, for a Day lane.
     function personItemsForDay(email, day) {
-        const lane = _index.lanes[email];
+        version;
+        const lane = _store.index.lanes[email];
         return (lane && lane[_dayKeyOf(day)]) || [];
     }
 
     // Colours of the colleagues who share an own event, in chip order.
     function sharedWith(ev) {
-        return (ev && _index.shared[EventUtils.eventKey(ev)]) || [];
+        version;
+        return (ev && _store.index.shared[EventUtils.eventKey(ev)]) || [];
+    }
+
+    function _byStart(items) {
+        return items.map((item, i) => ({
+                    "item": item,
+                    "i": i
+                })).sort((a, b) => (a.item.start - b.item.start) || (a.i - b.i)).map(e => e.item);
+    }
+
+    // Own events (in their eventsForDay order) and overlay items as one list
+    // of {isOverlay, event}: all-day items first, then timed, each by start
+    // with a colleague first on a tie. With no overlay items the own events
+    // keep their order.
+    function mergeWithOwn(ownEvents, overlayItems) {
+        const wrap = (isOverlay, ev) => ({
+                "isOverlay": isOverlay,
+                "event": ev
+            });
+        if (overlayItems.length === 0)
+            return ownEvents.map(ev => wrap(false, ev));
+        const merge = (own, overlay) => {
+            const out = [];
+            let i = 0;
+            let j = 0;
+            while (i < own.length || j < overlay.length) {
+                if (j < overlay.length && (i >= own.length || overlay[j].start <= own[i].start))
+                    out.push(wrap(true, overlay[j++]));
+                else
+                    out.push(wrap(false, own[i++]));
+            }
+            return out;
+        };
+        const overlay = _byStart(overlayItems);
+        return merge(ownEvents.filter(ev => ev.allDay), overlay.filter(ev => ev.allDay)).concat(merge(ownEvents.filter(ev => !ev.allDay), overlay.filter(ev => !ev.allDay)));
     }
 
     // Stripe colours for an own chip: its own colour, then every colleague
@@ -375,13 +472,14 @@ Singleton {
         return busyLabel + " · " + personLabel(item.email);
     }
 
-    // Tooltip text for an overlay item: title, time, location, person.
+    // Tooltip text for an overlay item: title, time, location, then every
+    // person who has it.
     function tooltipFor(item) {
         const when = item.allDay ? I18n.tr("All day", "all-day marker in event tooltip") : SettingsData.formatTime(item.start) + " – " + SettingsData.formatTime(item.end);
         const parts = [item.title, when];
         if (item.location)
             parts.push(item.location);
-        parts.push(personLabel(item.email));
+        parts.push((item.emails || [item.email]).map(email => personLabel(email)).join(", "));
         return parts.join(" · ");
     }
 }

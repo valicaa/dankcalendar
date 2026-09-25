@@ -132,7 +132,7 @@ Item {
                 model: ScriptModel {
                     values: root.events
                 }
-                // Rows are MonthView.mergeDayItems wrappers: {isOverlay, event}.
+                // Rows are PeopleService.mergeWithOwn wrappers: {isOverlay, event}.
                 delegate: Item {
                     id: rowDelegate
                     required property var modelData

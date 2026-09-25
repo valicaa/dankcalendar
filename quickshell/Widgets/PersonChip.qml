@@ -1,5 +1,6 @@
 import QtQuick
 import qs.Common
+import qs.Services
 import qs.DankCommon.Widgets
 
 // One colleague-lookup chip in the sidebar People search (PeopleService).
@@ -15,7 +16,7 @@ StyledRect {
     readonly property bool isError: person.status === "error"
     readonly property bool isUnavailable: person.status === "unavailable"
     readonly property bool isReconnect: person.status === "reconnect"
-    readonly property bool isLoading: !!person.loading
+    readonly property bool isLoading: !!PeopleService.loading[person.email]
     readonly property string label: person.name || person.email
 
     color: Theme.surfaceContainerHigh

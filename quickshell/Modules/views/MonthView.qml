@@ -155,33 +155,6 @@ Item {
         return PeopleService.overlayForDay(day);
     }
 
-    // A cell is a list, so "colleague on top" means order: all-day items
-    // first, then timed items by start, a colleague first on a tie. A shared
-    // meeting is listed once, as the own event (overlayForDay leaves it out).
-    function mergeDayItems(ownEvents, overlayEvents) {
-        const own = ownEvents.map(ev => ({
-                    "isOverlay": false,
-                    "event": ev
-                }));
-        if (overlayEvents.length === 0)
-            return own;
-        const colleague = overlayEvents.map(ev => ({
-                    "isOverlay": true,
-                    "event": ev
-                }));
-        const allDayItems = own.filter(i => i.event.allDay).concat(colleague.filter(i => i.event.allDay));
-        const timed = own.filter(i => !i.event.allDay).concat(colleague.filter(i => !i.event.allDay));
-        timed.sort((a, b) => {
-            const dt = a.event.start.getTime() - b.event.start.getTime();
-            if (dt !== 0)
-                return dt;
-            if (a.isOverlay === b.isOverlay)
-                return 0;
-            return a.isOverlay ? -1 : 1;
-        });
-        return allDayItems.concat(timed);
-    }
-
     readonly property int firstDayOfWeek: SettingsData.effectiveFirstDayOfWeek
     readonly property real weekGutter: SettingsData.showWeekNumbers ? 28 : 0
     readonly property real eventChipHeight: Math.max(18, SettingsData.monthEventTitleLines * 14 + 4)
@@ -352,7 +325,7 @@ Item {
                             return root.overlayEventsFor(cellDate);
                         }
 
-                        readonly property var mergedItems: root.mergeDayItems(cellEvents, cellOverlayEvents)
+                        readonly property var mergedItems: PeopleService.mergeWithOwn(cellEvents, cellOverlayEvents)
 
                         // On today, items that have already ended yield their
                         // chip slots to ones still upcoming; they fall into the
