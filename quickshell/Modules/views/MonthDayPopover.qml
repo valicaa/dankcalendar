@@ -136,16 +136,17 @@ Item {
                     id: eventRow
                     required property var modelData
                     readonly property bool isSelected: root.isEventSelected(modelData)
-                    readonly property bool awaitingReply: modelData.myResponse === "needs-action"
                     width: ListView.view.width
                     height: root.rowHeight - Theme.groupedListGap
                     radius: Theme.cornerRadiusXS
-                    color: isSelected ? Theme.withAlpha(modelData.color, 0.28) : (rowHover.containsMouse ? Theme.withAlpha(modelData.color, 0.18) : "transparent")
-                    border.color: isSelected ? Theme.primary : (awaitingReply ? modelData.color : "transparent")
-                    border.width: isSelected ? 2 : (awaitingReply ? 1 : 0)
+                    opacity: Theme.rsvpFaded(modelData.myResponse)
+                    color: isSelected ? Theme.withAlpha(modelData.color, 0.28) : (rowHover.containsMouse ? Theme.withAlpha(modelData.color, 0.18) : Theme.rsvpFillColor(modelData.myResponse, modelData.color))
+                    border.color: isSelected ? Theme.primary : Theme.rsvpBorderColor(modelData.myResponse, modelData.color)
+                    border.width: isSelected ? 2 : Theme.rsvpBorderWidth(modelData.myResponse)
+                    clip: Theme.rsvpHatchVisible(modelData.myResponse)
 
                     TentativeHatch {
-                        visible: eventRow.modelData.myResponse === "tentative"
+                        visible: Theme.rsvpHatchVisible(eventRow.modelData.myResponse)
                         stripeColor: eventRow.modelData.color
                     }
 
@@ -161,7 +162,7 @@ Item {
                             width: 3
                             height: 22
                             radius: Theme.fullRadius(width, height)
-                            color: eventRow.modelData.color
+                            color: Theme.rsvpDotColor(eventRow.modelData.myResponse, eventRow.modelData.color)
                             anchors.verticalCenter: parent.verticalCenter
                         }
 
@@ -170,7 +171,7 @@ Item {
                             width: 64
                             text: eventRow.modelData.allDay ? I18n.tr("All day", "all-day marker in the month day-detail popover") : SettingsData.formatTime(eventRow.modelData.start)
                             font.pixelSize: Theme.fontSizeSmall
-                            color: Theme.surfaceVariantText
+                            color: Theme.rsvpMutedTextColor(eventRow.modelData.myResponse, eventRow.modelData.color)
                             isMonospace: true
                             elide: Text.ElideRight
                         }
@@ -180,7 +181,8 @@ Item {
                             width: parent.width - 3 - 64 - Theme.spacingS * 2
                             text: eventRow.modelData.title
                             font.pixelSize: Theme.fontSizeSmall
-                            color: Theme.surfaceText
+                            color: Theme.rsvpTextColor(eventRow.modelData.myResponse, eventRow.modelData.color)
+                            font.strikeout: Theme.rsvpStrikeout(eventRow.modelData.myResponse)
                             elide: Text.ElideRight
                             maximumLineCount: 1
                         }
