@@ -35,7 +35,9 @@ Worked example: `system.autostart.get/set`.
 7. **QML client.** Add a function to `quickshell/Services/DankCalService.qml` shaped like
    `setAutostart`: `sendRequest("…", {params}, response => { if (response.error) lastError = response.error; else …; if (callback) callback(response); })`.
    If it's state, add a `property` and a `refreshX()` called on connect (~line 118).
-8. Try it: `dcal ipc group.thing.do id=… ` against the dev daemon.
+8. Try it on a dev instance (`verify-change` section 4): after `dev-instance.sh start`, run
+   `/home/nozomi/Documents/code/calendar/.claude/tools/dev-instance.sh ipc group.thing.do id=…`.
+   Plain `dcal ipc` reaches the live daemon and the real data.
 
 `ParamSpec` has a naming trap. Inside handlers, `req` is the Request, which shadows the `req()` helper. Only call
 `req()`/`opt()` in `registry.go`.
