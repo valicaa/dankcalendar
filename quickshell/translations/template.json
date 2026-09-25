@@ -2,14 +2,14 @@
   {
     "term": "%1 AM",
     "translation": "",
-    "context": "morning hour label in time gutter",
+    "context": "core hours dropdown hour label, morning | morning hour label in time gutter",
     "reference": "",
     "comment": ""
   },
   {
     "term": "%1 PM",
     "translation": "",
-    "context": "afternoon hour label in time gutter",
+    "context": "afternoon hour label in time gutter | core hours dropdown hour label, afternoon",
     "reference": "",
     "comment": ""
   },
@@ -408,7 +408,7 @@
   {
     "term": "Add account",
     "translation": "",
-    "context": "account add modal header title | account add modal window title | add account button on accounts page | sidebar button to add a provider account | toast action to re-add an account that failed to reconnect",
+    "context": "account add modal header title | account add modal window title | add account button on accounts page | sidebar button to add a provider account",
     "reference": "",
     "comment": ""
   },
@@ -1022,13 +1022,6 @@
     "comment": ""
   },
   {
-    "term": "Couldn't reconnect. Add the account again to sign in.",
-    "translation": "",
-    "context": "toast when reconnecting an account fails",
-    "reference": "",
-    "comment": ""
-  },
-  {
     "term": "Couldn't update task",
     "translation": "",
     "context": "toast when a task update fails",
@@ -1515,13 +1508,6 @@
     "term": "Enable sync",
     "translation": "",
     "context": "calendar context menu action to resume syncing a calendar",
-    "reference": "",
-    "comment": ""
-  },
-  {
-    "term": "End",
-    "translation": "",
-    "context": "event form end date and time label",
     "reference": "",
     "comment": ""
   },
@@ -3293,13 +3279,6 @@
     "term": "Square",
     "translation": "",
     "context": "radius strength slider label at zero",
-    "reference": "",
-    "comment": ""
-  },
-  {
-    "term": "Start",
-    "translation": "",
-    "context": "event form start date and time label",
     "reference": "",
     "comment": ""
   },
