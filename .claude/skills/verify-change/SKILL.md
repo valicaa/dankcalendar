@@ -86,22 +86,35 @@ deployed.
 data**, as the transient user unit `dankcal-dev`. It stops `dcal.service` for the run (the owner
 approved this) and starts it again whenever `dankcal-dev` stops — `stop`, a crash, or the 2h
 limit. **One dev instance per machine**: `start` refuses while `dankcal-dev` runs, and a lock
-lets only one `start` or `stop` run at a time. Each block is one Bash call from any directory.
+lets only one `start` or `stop` run at a time (`stop` waits up to 180s for it). Each block is
+one Bash call from any directory.
 `<checkout>` is the literal absolute path of the checkout under test: the main checkout, or a
-linked worktree whose submodule is initialised from the main checkout's clone (local, no
-network):
+linked worktree `<worktree>` of this repo. This procedure never re-initialises the main
+checkout's submodule. A new worktree has no `dank-qml-common` yet; initialise it from the main
+checkout's clone (local, no network). The first two lines stop unless `<worktree>` is a linked
+worktree of this repo:
 
 ```bash
-timeout 60 git -C <checkout> -c protocol.file.allow=always -c submodule.dank-qml-common.url=/home/nozomi/Documents/code/calendar/dank-qml-common submodule update --init
+c=$(git -C <worktree> rev-parse --path-format=absolute --git-common-dir) && g=$(git -C <worktree> rev-parse --absolute-git-dir) || exit 1
+[ "$c" = /home/nozomi/Documents/code/calendar/.git ] && case "$g" in "$c"/worktrees/?*) true ;; *) false ;; esac || { echo "STOP: <worktree> is not a linked worktree of this repo"; exit 1; }
+timeout 60 git -C <worktree> -c protocol.file.allow=always -c submodule.dank-qml-common.url=/home/nozomi/Documents/code/calendar/dank-qml-common submodule update --init
 ```
 
-If that fails or times out, remove the half-made clone, and if the error names a commit the
-main checkout's clone lacks, fetch it there first; then retry. Never `git submodule deinit` in
-a worktree: it deletes the submodule's entries from the config all checkouts share.
+If the error names a commit the local clone lacks (`not our ref <sha>`, `did not contain
+<sha>`), fetch it from GitHub into the worktree's own clone, never into the main checkout's,
+then run the block above again:
 
 ```bash
-d=$(git -C <checkout> rev-parse --absolute-git-dir) && [ -n "$d" ] && rm -rf <checkout>/dank-qml-common "$d/modules/dank-qml-common"
-timeout 120 git -C /home/nozomi/Documents/code/calendar/dank-qml-common fetch origin
+timeout 120 git -C <worktree>/dank-qml-common fetch https://github.com/AvengeMedia/dank-qml-common.git <sha>
+```
+
+On any other failure or a timeout, don't repair the submodule by hand (and never
+`git submodule deinit` in a worktree: it deletes the entries every checkout shares from the
+config). Remove the worktree, which also removes its submodule clone, create it again, and
+rerun the block:
+
+```bash
+git -C /home/nozomi/Documents/code/calendar worktree remove --force <worktree> && git -C /home/nozomi/Documents/code/calendar worktree prune
 ```
 
 Then start the dev instance and prove it is offline:

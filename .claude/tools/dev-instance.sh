@@ -15,7 +15,8 @@
 # <checkout> is the absolute path of any checkout of this repo (the main one or a linked
 # worktree with its submodule initialised). Its QML runs from <checkout>/quickshell.
 # One dev instance per machine: start and stop each hold the lock $LOCK while they run (never
-# passed to the dev instance), and start refuses while dankcal-dev is active or activating.
+# passed to the dev instance; start fails if it is taken, stop waits up to 180s), and start
+# refuses while dankcal-dev is active or activating.
 #
 # Isolation:
 #   data     XDG_DATA_HOME, XDG_CONFIG_HOME, XDG_STATE_HOME, XDG_CACHE_HOME point under
@@ -94,7 +95,7 @@ cmd_start() {
 		die "$checkout is not the top of a git checkout"
 	[ -d "$checkout/core/cmd/dcal" ] || die "$checkout has no core/cmd/dcal"
 	[ -f "$checkout/quickshell/DankCommon/Widgets/DankIcon.qml" ] ||
-		die "DankCommon missing: git -C $checkout submodule update --init"
+		die "DankCommon missing in $checkout: initialise its submodule as in verify-change section 4"
 	case "$(systemctl --user is-active "$UNIT" || true)" in
 	active | activating | reloading | deactivating) die "$UNIT is running; stop it first" ;;
 	esac
@@ -238,7 +239,9 @@ cmd_stop() {
 	systemctl --user is-active --quiet "$LIVE" || systemctl --user start "$LIVE" || true
 
 	echo "== real DB"
-	if [ -f "$ROOT/real-before.sha256" ] && [ -f "$ROOT/real-after.sha256" ]; then
+	if [ ! -d "$ROOT/home" ]; then
+		echo "no dev run since the last clean stop: nothing to compare"
+	elif [ -f "$ROOT/real-before.sha256" ] && [ -f "$ROOT/real-after.sha256" ] && [ -f "$ROOT/after/dankcal.db" ]; then
 		echo "before:" && cat "$ROOT/real-before.sha256"
 		echo "after:" && cat "$ROOT/real-after.sha256"
 		if cmp -s "$ROOT/real-before.sha256" "$ROOT/real-after.sha256"; then
@@ -248,7 +251,7 @@ cmd_stop() {
 		fi
 		echo "real DB after: $(db_versions "$ROOT/after/dankcal.db")"
 	else
-		echo "FAIL: missing $ROOT/real-before.sha256 or real-after.sha256"; fail=1
+		echo "FAIL: missing $ROOT/real-before.sha256, real-after.sha256 or after/dankcal.db"; fail=1
 	fi
 
 	echo "== session bus"
@@ -284,10 +287,15 @@ cmd_stop() {
 }
 
 case "${1:-}" in
-start | stop)
+start)
 	scratch_ok
 	exec 9>"$LOCK"
 	flock -n 9 || die "another dev-instance start or stop is running (lock $LOCK)"
+	;;
+stop) # waits out a peer's start (build included) rather than leaving dcal stopped
+	scratch_ok
+	exec 9>"$LOCK"
+	flock -w 180 9 || die "lock $LOCK still held after 180s"
 	;;
 esac
 
