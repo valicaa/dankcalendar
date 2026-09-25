@@ -16,20 +16,19 @@ Rectangle {
     readonly property color mutedTextColor: Theme.rsvpMutedTextColor(response, calendarColor)
     readonly property color dotColor: Theme.rsvpDotColor(response, calendarColor)
     readonly property bool strikeout: Theme.rsvpStrikeout(response)
-    // Short chips (month/all-day, ~18px) get a 1px ring so it doesn't crowd the text.
-    readonly property bool compact: height > 0 && height < 24
+    // Short chips (month/all-day, ~18-32px) get a 1px ring so it doesn't crowd the text.
+    property bool compact: height < 24
     readonly property int ringWidth: compact ? 1 : 2
 
     radius: Theme.cornerRadiusS
     color: fillColor
     border.color: selected ? Theme.primary : Theme.rsvpBorderColor(response, calendarColor)
     border.width: selected ? ringWidth : 1
-    clip: Theme.rsvpHatchVisible(response)
 
     TentativeHatch {
         visible: Theme.rsvpHatchVisible(root.response)
         anchors.fill: parent
-        anchors.margins: root.border.width
+        anchors.margins: Math.max(root.border.width, root.radius * 0.3)
         stripeColor: root.calendarColor
         opacity: root.hatchOpacity
     }

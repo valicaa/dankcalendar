@@ -501,6 +501,7 @@ Item {
                                         height: root.allDayChipHeight
                                         radius: Theme.cornerRadiusXS
                                         clip: true
+                                        compact: true
                                         response: modelData.myResponse
                                         calendarColor: modelData.color
                                         selected: isSelected
