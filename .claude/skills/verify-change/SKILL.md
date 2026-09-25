@@ -18,12 +18,12 @@ docs-only only if this prints nothing for its range — `master...HEAD` on the b
 `<M>~1..<M>` for a PR's merge commit `<M>`:
 
 ```bash
-git diff --name-only master...HEAD | grep -vE '^(\.claude/|tasks/|CLAUDE\.md$|\.graphifyignore$|[^/]+\.md$)'
+git diff --name-only master...HEAD | grep -vE '^(\.claude/|tasks/|CLAUDE\.md$|\.graphifyignore$|\.github/ISSUE_TEMPLATE/|[^/]+\.md$)'
 ```
 
 Any path it prints — code, the `dank-qml-common` submodule, `Makefile`, `scripts/`, `assets/`,
-`flake.nix`, `distro/`, `.github/` — means the full checks in sections 1–5. A docs-only change
-stops here, with no build, dev instance or service stop:
+`flake.nix`, `distro/`, `.github/` outside `ISSUE_TEMPLATE/` — means the full checks in
+sections 1–5. A docs-only change stops here, with no build, dev instance or service stop:
 
 ```bash
 .claude/tools/check-docs.py

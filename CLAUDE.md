@@ -26,20 +26,21 @@ The main session follows `project-manager`: it elicits, specs (a GitHub issue), 
 | `sync-upstream` | Pulling new commits from AvengeMedia into the fork. |
 | `upstream-pr` | Turning a finished feature into a clean PR against AvengeMedia. |
 | `code-graph` | Before reading source to trace call chains, callers, blast radius (`.claude/tools/graph-calls.py <path>`); refreshing the graph. Overrides the global graphify skill's "run `graphify query` first" default here. |
+| `write-issue` | Writing, editing or triaging an issue on `valicaa/dankcalendar`: template, labels, slug. |
 
 ## Branch model
 
-- **Issue-first:** every change except `project-manager` step 0's trivial ones starts as an
-  issue on `valicaa/dankcalendar` (body = spec, template: `project-manager` step 2), then a branch.
-- `master` = `upstream/master` + fork tooling (this file, `.claude/`, `tasks/`,
-  `.graphifyignore`) and finished features; the only branch deployed. It moves only when the
-  owner merges a PR on GitHub — that merge is the OK to deploy, never asked in chat.
+- **Issue-first:** every change but `project-manager` step 0's trivial ones starts as an issue
+  on `valicaa/dankcalendar` (spec; template: `write-issue`), then a branch.
+- `master` = `upstream/master` + fork tooling (this file, `.claude/`, `tasks/`, `.graphifyignore`,
+  `.github/ISSUE_TEMPLATE/`) and finished features; the only branch deployed, moved only by the
+  owner merging a PR on GitHub (that merge is the deploy OK, never asked in chat).
 - `feat|fix|chore/<N>-<slug>` branches off `master` via `gh issue develop N -R
   valicaa/dankcalendar --name <prefix>/<N>-<slug> --base master --checkout` (every `gh` command
   carries `-R`, never `gh repo set-default`) and ends as a PR (`Closes #N` in its body only),
   the checkout back on `master`. Other PR branches: `docs/<slug>` (step 0), `sync/upstream-<hash>`.
 - `pr/<slug>` is created by the `upstream-pr` skill off `upstream/master`, code commits only —
-  never `CLAUDE.md`, `.claude/`, `tasks/`, `.graphifyignore` or a fork `#N`.
+  never the fork tooling above or a fork `#N`.
 - One feature is worked at a time (its branch checked out) until `new-feature` 6.2 opens its PR;
   writing agents take turns there (never `isolation: worktree`); the PM commits all of `tasks/`.
 
@@ -80,8 +81,7 @@ DCAL_ENABLE_HOTRELOAD=1 go run ./cmd/dcal run -c ../quickshell
 
 - `tasks/lessons.md` is injected at session start by a hook. When the user corrects you, or you
   catch your own mistake, add a dated rule there in the same session.
-- This file holds facts and rules only, within 120 lines. A procedure of more than a few steps
-  belongs in a skill under `.claude/skills/`, with a row in the table above.
+- Facts and rules only, within 120 lines; a procedure of more than a few steps goes in a `.claude/skills/` skill.
 - A PreToolUse hook runs `.claude/tools/check-docs.py` on every commit: it blocks on broken doc
   references, the line budget, bad frontmatter, roster drift, commits off the branch model, and
   undocumented doc-relevant code changes — stage the listed docs, or `check-docs.py --ack`.

@@ -1,0 +1,79 @@
+name: Chore
+description: Tooling, docs, refactor or other fork housekeeping with no direct user-facing behaviour.
+title: "area: "
+labels: ["chore"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Fill in all 8 sections — see [write-issue](https://github.com/valicaa/dankcalendar/blob/master/.claude/skills/write-issue/SKILL.md)
+        for the full template. Title stays `area: lowercase summary`; fork-only work uses `docs` or `tooling`.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What's wrong today (debt, drift, a missing check) and who it slows down. One paragraph.
+    validations:
+      required: true
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal / Non-goals
+      description: Shape Up appetite — the size we're willing to spend — plus an explicit no-gos list.
+    validations:
+      required: true
+  - type: textarea
+    id: story
+    attributes:
+      label: Story
+      description: Often no end user — say who benefits instead (a future contributor, CI, the PM).
+      placeholder: "As <contributor/CI/the PM>, I want <capability>, so that <outcome>."
+    validations:
+      required: true
+  - type: textarea
+    id: scenarios
+    attributes:
+      label: Scenarios
+      description: 1-5 scenarios, each strict Given/When/Then with an observable Then.
+      placeholder: |
+        1. Given <state>, When <action>, Then <observable result>.
+    validations:
+      required: true
+  - type: textarea
+    id: constraints
+    attributes:
+      label: Constraints
+      description: "Standing rules that bind this change, then one line — write \"Upstream-worthy: yes\" or \"Upstream-worthy: no\"."
+      placeholder: |
+        Upstream-worthy: no
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance
+      description: Checkable list; every item names the scenario or constraint it proves.
+      placeholder: |
+        - [ ] ...
+    validations:
+      required: true
+  - type: textarea
+    id: risks
+    attributes:
+      label: Risks
+      description: "Callers/data touched, then the layers-touched line below with [x] for every layer touched, or for no layer touched (fork tooling, docs, CI, packaging, build) replace the line with exactly `Layers touched: none`."
+      placeholder: |
+        Layers touched: [ ] QML  [ ] UI setting  [ ] IPC  [ ] DB migration  [ ] provider  [ ] background engine  [ ] HTTP/CLI
+    validations:
+      required: true
+  - type: dropdown
+    id: size
+    attributes:
+      label: Size
+      description: T-shirt size. Triage adds the matching size:S/size:M/size:L label separately — picking here doesn't apply it.
+      options:
+        - "S (1 layer, or under 1h with no migration; tooling: under 1h)"
+        - "M (2-3 layers; tooling: up to 1 day)"
+        - "L (4+ layers, DB migration or new provider; tooling: over 1 day)"
+    validations:
+      required: true

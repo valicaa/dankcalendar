@@ -48,9 +48,9 @@ change goes on. Two trivial changes skip the issue, but not the PR — every cha
 - **A typo in any other doc** (CLAUDE.md, a skill, an agent): a `dcal-builder`, as a
   `docs: <summary>` commit on a trivial branch — only while the main checkout is on `master`.
 
-A trivial branch is `docs/<slug>`, no issue; `<slug>` comes from the commit summary by step 2's
-slug rule. The check-docs hook takes commits on it only while every uncommitted path is a doc
-(`.claude/**.md`, `tasks/`, CLAUDE.md, a root `*.md`). The committer creates it:
+A trivial branch is `docs/<slug>`, no issue; `<slug>` comes from the commit summary by
+`write-issue`'s slug rule. The check-docs hook takes commits on it only while every uncommitted
+path is a doc (`.claude/**.md`, `tasks/`, CLAUDE.md, a root `*.md`). The committer creates it:
 
 ```bash
 [ -f CLAUDE.md ] && [ "$(git rev-parse --show-toplevel)" = "$PWD" ] && [ "$(git branch --show-current)" = master ] && [ -z "$(git status --short)" ] || { echo "STOP: not the main checkout on a clean master"; exit 1; }
@@ -98,42 +98,10 @@ spec**. Features, bugs and chores all follow `new-feature`'s phases; this step i
 and 2. A bug or small chore skips phase 1 steps 3–4 (reading the closest feature, mapping
 layers and callers); when they apply, `dcal-scout` does them for the PM.
 
-```markdown
-## Problem        who, when, today's workaround (one paragraph)
-## Goal / Non-goals   Shape Up appetite: the size we are willing to spend; no-gos listed
-## Story          As <user>, I want <capability>, so that <outcome>   (INVEST)
-## Scenarios      Given <state> / When <action> / Then <observable result>   (1–5)
-## Constraints    CGO_ENABLED=0; migration needs explicit approval + backup; I18n.tr for
-                  strings; quickshell/DankCommon read-only; Upstream-worthy: yes/no
-## Acceptance     checkable list, each tied to a scenario or constraint
-## Risks          callers touched, data, providers, sync; layers touched (tick list: QML,
-                  UI setting, IPC, DB migration, provider, background engine, HTTP/CLI)
-## Size           t-shirt: S (one layer, <1h) | M (2–3 layers) | L (cross-cutting, schema,
-                  new provider); any new-feature phase that doesn't apply, and why
-```
-
-Always 8 headings. "Upstream-worthy: yes/no" is a line under Constraints, not a separate
-heading; the layers-touched tick list lives under Risks; a skipped phase is noted under Size.
-For a bug, Problem holds the repro steps and expected vs actual, and one scenario is the repro.
-
-**Order matters: show the spec to the user and get their yes first, then create the issue.**
-Ready = the user said yes AND the issue exists.
-
-```bash
-gh issue create -R valicaa/dankcalendar --title "<area>: <summary>" --body-file \
-  <scratchpad>/issue-body.md --label <enhancement|bug|chore> --label <size:S|size:M|size:L>
-```
-
-The title is `area: lowercase summary`, with `area` from the same vocabulary as commit subjects —
-upstream's most used are `ui`, `i18n`, `core`, `events`, `providers`, `caldav`, `settings`,
-`sync`, `reminders`, `notifications`, `keyring`, `ipc`, `nix`, `flatpak`, `ci`; fork-only work
-uses `docs` (CLAUDE.md, skills, agents), `tooling` (scripts, hooks) or `tasks` (only `tasks/`
-changes). One type label, one size
-label. `N` is the number at the end of the URL this command prints. The slug is the summary
-(without `area:`) as lowercase kebab-case, 2–5 words (a hyphenated or slashed word like
-`free/busy` counts as one): `events: add free/busy check` → `add-free-busy-check`. A longer
-summary keeps its 2–5 most specific words, dropping articles and filler:
-`ui: show week numbers in the month view header` → `week-numbers-month-header`.
+The template (8 headings), the feature/bug/chore variants, and the title/label/slug rules live
+in `write-issue`. Write the body with `write-issue`, show it to the user and get their yes, then
+create the issue with its `gh issue create` command. Ready = the user said yes AND the issue
+exists (an issue the owner filed through a form: Ready after `write-issue` triage).
 
 Then create the branch — in the main checkout, which must be on `master` with a clean tree
 (one feature worked at a time — see Branches; with the user's OK a checked-out one can be parked:
@@ -148,7 +116,7 @@ git rev-list --count origin/master..master     # must print 0
 gh issue develop <N> -R valicaa/dankcalendar --name <feat|fix|chore>/<N>-<slug> --base master --checkout
 ```
 
-Prefix by issue label: `feat/` for `enhancement`, `fix/` for `bug`, `chore/` otherwise.
+Prefix by issue label — see `write-issue`'s Branch name section.
 `gh issue develop` creates the branch on GitHub from origin's `master`: the pull brings a
 local `master` that is behind up to date (phases 4–5 diff against it), and a local-only commit
 would be missing from the branch. `master` never holds local commits, so a nonzero count or a

@@ -68,8 +68,8 @@ cd "<main>" && [ -f CLAUDE.md ] && [ "$(git rev-parse --show-toplevel)" = "$PWD"
 for m in <M1> [<M2>…]; do
   git cat-file -e "$m^2" || { echo "STOP: $m is not a merge commit"; exit 1; }
   for c in $(git rev-list --reverse --no-merges "$m^1..$m^2"); do
-    code=$(git diff-tree --no-commit-id --name-only -r "$c" -- . ':!tasks' ':!.claude' ':!CLAUDE.md' ':!.graphifyignore')
-    fork=$(git diff-tree --no-commit-id --name-only -r "$c" -- tasks .claude CLAUDE.md .graphifyignore)
+    code=$(git diff-tree --no-commit-id --name-only -r "$c" -- . ':!tasks' ':!.claude' ':!CLAUDE.md' ':!.graphifyignore' ':!.github/ISSUE_TEMPLATE')
+    fork=$(git diff-tree --no-commit-id --name-only -r "$c" -- tasks .claude CLAUDE.md .graphifyignore .github/ISSUE_TEMPLATE)
     kind=code; [ -n "$fork" ] && kind=mixed; [ -z "$code" ] && kind=fork-only
     echo "$c $kind $(git log -1 --format=%s "$c")"
   done
@@ -101,7 +101,7 @@ version rather than deleted:
 
 ```bash
 cd "<W>" && [ "$(git branch --show-current)" = "pr/<slug>" ] && [ "$(git rev-parse --show-toplevel)" = "$PWD" ] || { echo "STOP: not the pr/<slug> worktree"; exit 1; }
-for p in tasks .claude CLAUDE.md .graphifyignore; do
+for p in tasks .claude CLAUDE.md .graphifyignore .github/ISSUE_TEMPLATE; do
   if git cat-file -e "upstream/master:$p" 2>/dev/null; then
     git restore --source=upstream/master --staged --worktree -- "$p"; echo "reset $p to upstream"
   else
@@ -129,7 +129,7 @@ eye — a hex colour like `#333` is a false positive, not a leak:
 
 ```bash
 cd "<W>" && [ "$(git branch --show-current)" = "pr/<slug>" ] && [ "$(git rev-parse --show-toplevel)" = "$PWD" ] || { echo "STOP: not the pr/<slug> worktree"; exit 1; }
-git diff --name-only upstream/master...HEAD | grep -E '^(tasks/|\.claude/|CLAUDE\.md$|\.graphifyignore$)'
+git diff --name-only upstream/master...HEAD | grep -E '^(tasks/|\.claude/|CLAUDE\.md$|\.graphifyignore$|\.github/ISSUE_TEMPLATE/)'
 git log --format=%B upstream/master..HEAD | grep -niE '#[0-9]+|valicaa/dankcalendar(/issues/|/pull/)[0-9]+|\bGH-[0-9]+'
 ```
 

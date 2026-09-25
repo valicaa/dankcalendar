@@ -94,6 +94,7 @@ REVIEW_RULES = [
     (r"^(\.graphifyignore|\.claude/tools/graph-)", ["code-graph"], "code graph usage"),
     (r"^\.claude/tools/check-docs\.py$", ["CLAUDE.md"], "doc-check rules"),
     (r"^\.claude/agents/", ["project-manager"], "agent roster (roster drift)"),
+    (r"^\.github/ISSUE_TEMPLATE/", ["write-issue"], "issue forms mirror the template"),
 ]
 
 # Paths the docs name on purpose because they don't exist (e.g. a stale comment in the code).

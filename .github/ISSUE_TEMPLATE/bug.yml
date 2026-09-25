@@ -1,0 +1,83 @@
+name: Bug report
+description: Something in Dank Calendar is broken.
+title: "area: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Fill in all 8 sections — see [write-issue](https://github.com/valicaa/dankcalendar/blob/master/.claude/skills/write-issue/SKILL.md)
+        for the full template and worked example. Title stays `area: lowercase summary` (e.g. `caldav: free/busy resets`).
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: The repro steps, then expected vs actual result — how often, and since when. Include the account/provider and, if you have them, logs (`journalctl --user -u dcal`).
+      placeholder: |
+        Steps: 1) ... 2) ... 3) ...
+        Expected: ...
+        Actual: ...
+    validations:
+      required: true
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal / Non-goals
+      description: Usually just "fix it" — list anything explicitly out of scope (e.g. other providers not affected).
+    validations:
+      required: true
+  - type: textarea
+    id: story
+    attributes:
+      label: Story
+      description: One INVEST line.
+      placeholder: "As <user>, I want <capability>, so that <outcome>."
+    validations:
+      required: true
+  - type: textarea
+    id: scenarios
+    attributes:
+      label: Scenarios
+      description: 1-5 scenarios; one must be the repro itself, as Given/When/Then with the EXPECTED (correct) result as Then — the actual, wrong result stays in Problem. "Scenario passes" means the bug is fixed.
+      placeholder: |
+        1. Given <state>, When <action>, Then <expected, correct result>.
+    validations:
+      required: true
+  - type: textarea
+    id: constraints
+    attributes:
+      label: Constraints
+      description: "Standing rules that bind this change (CGO, migrations, I18n, DankCommon), then one line — write \"Upstream-worthy: yes\" or \"Upstream-worthy: no\"."
+      placeholder: |
+        Upstream-worthy: yes
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance
+      description: Checkable list; every item names the scenario or constraint it proves.
+      placeholder: |
+        - [ ] ...
+    validations:
+      required: true
+  - type: textarea
+    id: risks
+    attributes:
+      label: Risks
+      description: Callers/data/providers/sync touched, then the layers-touched line below with [x] for every layer this change touches.
+      placeholder: |
+        Layers touched: [ ] QML  [ ] UI setting  [ ] IPC  [ ] DB migration  [ ] provider  [ ] background engine  [ ] HTTP/CLI
+    validations:
+      required: true
+  - type: dropdown
+    id: size
+    attributes:
+      label: Size
+      description: T-shirt size. Triage adds the matching size:S/size:M/size:L label separately — picking here doesn't apply it.
+      options:
+        - "S (1 layer, or under 1h with no migration; tooling: under 1h)"
+        - "M (2-3 layers; tooling: up to 1 day)"
+        - "L (4+ layers, DB migration or new provider; tooling: over 1 day)"
+    validations:
+      required: true
