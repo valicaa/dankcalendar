@@ -11,6 +11,7 @@
 #   dev-instance.sh stop               stop dankcal-dev, check the real DB is unchanged, no dev
 #                                      process is left and dcal.service is active again;
 #                                      exits 1 unless it prints "dev instance stopped cleanly"
+#                                      or leaves running one started while it waited
 #
 # <checkout> is the absolute path of any checkout of this repo (the main one or a linked
 # worktree with its submodule initialised). Its QML runs from <checkout>/quickshell.
@@ -228,8 +229,20 @@ cmd_status() {
 }
 
 cmd_stop() {
-	local fail=0 pid shared
-	case "$(systemctl --user is-active "$UNIT" || true)" in
+	local fail=0 pid shared state before="$ROOT/real-before.sha256" after="$ROOT/real-after.sha256"
+	state=$(systemctl --user is-active "$UNIT" || true)
+	# STOP_INV is the dev instance seen before waiting for the lock (unset on start's own
+	# failure path). A different one running now was started meanwhile by someone else.
+	if [ -n "${STOP_INV+set}" ] &&
+		[ "$(systemctl --user show -p InvocationID --value "$UNIT" 2>/dev/null || true)" != "$STOP_INV" ]; then
+		case "$state" in
+		active | activating | reloading | deactivating)
+			echo "a newer dev instance started meanwhile; left running (pid $(dev_pid)), $LIVE stays stopped"
+			exit 0
+			;;
+		esac
+	fi
+	case "$state" in
 	active | activating | reloading | deactivating) systemctl --user stop "$UNIT" ;;
 	esac
 	for _ in $(seq 1 30); do
@@ -239,19 +252,23 @@ cmd_stop() {
 	systemctl --user is-active --quiet "$LIVE" || systemctl --user start "$LIVE" || true
 
 	echo "== real DB"
-	if [ ! -d "$ROOT/home" ]; then
+	if [ ! -e "$before" ] && [ ! -e "$after" ]; then
 		echo "no dev run since the last clean stop: nothing to compare"
-	elif [ -f "$ROOT/real-before.sha256" ] && [ -f "$ROOT/real-after.sha256" ] && [ -f "$ROOT/after/dankcal.db" ]; then
-		echo "before:" && cat "$ROOT/real-before.sha256"
-		echo "after:" && cat "$ROOT/real-after.sha256"
-		if cmp -s "$ROOT/real-before.sha256" "$ROOT/real-after.sha256"; then
+	elif [ -f "$before" ] && [ -f "$after" ]; then
+		echo "before:" && cat "$before"
+		echo "after:" && cat "$after"
+		if cmp -s "$before" "$after"; then
 			echo "real DB unchanged while dcal.service was stopped"
 		else
 			echo "FAIL: real DB changed"; fail=1
 		fi
-		echo "real DB after: $(db_versions "$ROOT/after/dankcal.db")"
+		if [ -f "$ROOT/after/dankcal.db" ]; then
+			echo "real DB after: $(db_versions "$ROOT/after/dankcal.db")"
+		else
+			echo "FAIL: missing $ROOT/after/dankcal.db"; fail=1
+		fi
 	else
-		echo "FAIL: missing $ROOT/real-before.sha256, real-after.sha256 or after/dankcal.db"; fail=1
+		echo "FAIL: only one of $before and $after exists"; fail=1
 	fi
 
 	echo "== session bus"
@@ -281,9 +298,12 @@ cmd_stop() {
 	echo "$LIVE: $(systemctl --user is-active "$LIVE" || true)"
 	systemctl --user is-active --quiet "$LIVE" || { echo "FAIL: $LIVE not active"; fail=1; }
 	[ "$fail" -eq 0 ] || { echo "scratch copy kept for diagnosis: $ROOT/home, $ROOT/after"; exit 1; }
-	# The copy holds the accounts' tokens and data; the .sha256 files are the run's evidence.
+	# The copy holds the accounts' tokens and data. The .sha256 files are the run's evidence;
+	# moving them marks the run as checked, so a repeat stop has nothing to compare.
 	rm -rf "$ROOT/home" "$ROOT/after"
-	echo "dev instance stopped cleanly"
+	mkdir -p "$ROOT/last-run"
+	[ ! -e "$before" ] || mv -f "$before" "$after" "$ROOT/last-run/"
+	echo "dev instance stopped cleanly (evidence in $ROOT/last-run)"
 }
 
 case "${1:-}" in
@@ -294,6 +314,7 @@ start)
 	;;
 stop) # waits out a peer's start (build included) rather than leaving dcal stopped
 	scratch_ok
+	STOP_INV=$(systemctl --user show -p InvocationID --value "$UNIT" 2>/dev/null || true)
 	exec 9>"$LOCK"
 	flock -w 180 9 || die "lock $LOCK still held after 180s"
 	;;
@@ -308,5 +329,5 @@ screenshot) shift; cmd_screenshot "$@" ;;
 probe) cmd_probe ;;
 status) cmd_status ;;
 stop) cmd_stop ;;
-*) sed -n '2,18p' "$0" | sed 's/^# \{0,1\}//'; exit 2 ;;
+*) awk 'NR > 1 && /^# Isolation:/ { exit } NR > 1' "$0" | sed 's/^# \{0,1\}//'; exit 2 ;;
 esac

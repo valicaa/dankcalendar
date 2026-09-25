@@ -105,17 +105,27 @@ If the error names a commit the local clone lacks (`not our ref <sha>`, `did not
 then run the block above again:
 
 ```bash
+[ -f <worktree>/dank-qml-common/.git ] || { echo "STOP: no submodule clone; use the remove-and-recreate block"; exit 1; }
 timeout 120 git -C <worktree>/dank-qml-common fetch https://github.com/AvengeMedia/dank-qml-common.git <sha>
 ```
 
 On any other failure or a timeout, don't repair the submodule by hand (and never
 `git submodule deinit` in a worktree: it deletes the entries every checkout shares from the
 config). Remove the worktree, which also removes its submodule clone, create it again, and
-rerun the block:
+rerun the block. The removal stops unless `<worktree>` is a linked worktree of this repo with
+no uncommitted changes (commit or save them first):
 
 ```bash
+c=$(git -C <worktree> rev-parse --path-format=absolute --git-common-dir) && g=$(git -C <worktree> rev-parse --absolute-git-dir) || exit 1
+[ "$c" = /home/nozomi/Documents/code/calendar/.git ] && case "$g" in "$c"/worktrees/?*) true ;; *) false ;; esac || { echo "STOP: <worktree> is not a linked worktree of this repo"; exit 1; }
+s=$(git -C <worktree> status --short --ignore-submodules=all) || exit 1
+[ -z "$s" ] || { echo "STOP: <worktree> has uncommitted changes:"; echo "$s"; exit 1; }
 git -C /home/nozomi/Documents/code/calendar worktree remove --force <worktree> && git -C /home/nozomi/Documents/code/calendar worktree prune
 ```
+
+Recreate it the way it was made: a detached verification worktree with
+`git -C /home/nozomi/Documents/code/calendar worktree add --detach <worktree> <branch>`, a
+`pr/<slug>` worktree as in `upstream-pr`.
 
 Then start the dev instance and prove it is offline:
 
@@ -166,9 +176,11 @@ Then:
    `dev instance stopped cleanly` (exit 0): the real DB's sha256 is unchanged across the time
    `dcal.service` was stopped, no Secret Service or EDS is on the bus at stop, no process runs
    the dev build or `<checkout>/quickshell`, `dankcal-dev` is inactive and `dcal` active. A
-   clean stop deletes the scratch copy (`home/`, `after/`) and keeps the two `.sha256` files;
-   a `FAIL` keeps the copy for diagnosis. If `dcal` runs `<checkout>/quickshell`,
-   `systemctl --user restart dcal` puts it back on its own UI.
+   clean stop deletes the scratch copy (`home/`, `after/`) and moves the two `.sha256` files
+   to `/tmp/claude-1000/dankcal-dev/last-run/`, so a repeat `stop` prints `nothing to
+   compare`; a `FAIL` keeps them all for diagnosis. A `stop` that waited for the lock while
+   someone else started a new dev instance leaves it running and says so. If `dcal` runs
+   `<checkout>/quickshell`, `systemctl --user restart dcal` puts it back on its own UI.
 
 ```bash
 /home/nozomi/Documents/code/calendar/.claude/tools/dev-instance.sh stop
