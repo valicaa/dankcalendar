@@ -96,6 +96,8 @@ var Methods = []MethodSpec{
 	{Name: "ui.toggle", Group: "ui", Desc: "Toggle the calendar window", Params: []ParamSpec{opt("view", "month|week|day|agenda")}},
 	{Name: "ui.quit", Group: "ui", Desc: "Quit the running daemon"},
 
+	{Name: "people.schedule", Group: "people", Desc: "Read a colleague's schedule for a range (not stored)", Params: []ParamSpec{req("email", ""), req("from", "RFC3339"), req("to", "RFC3339"), opt("accountId", "defaults to a domain match, else the first Google account")}},
+
 	{Name: "system.autostart.get", Group: "system", Desc: "Report autostart status"},
 	{Name: "system.autostart.set", Group: "system", Desc: "Enable or disable autostart", Params: []ParamSpec{req("enabled", "true|false")}},
 	{Name: "system.colorScheme.get", Group: "system", Desc: "Current portal color scheme (0 no-preference, 1 dark, 2 light)"},

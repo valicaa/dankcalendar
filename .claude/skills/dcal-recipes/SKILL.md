@@ -20,7 +20,7 @@ Worked example: `system.autostart.get/set`.
    `{Name: "group.thing.do", Group: "group", Desc: "…", Params: []ParamSpec{req("id", ""), opt("limit", "")}}`.
    The registry feeds `dcal ipc list`, shell completion and `describe`. There's no separate docs file.
 2. **Handler.** Add a `case` to the group's switch: `system.go`, `handlers.go` (calendars/events),
-   `tasks.go`, `accounts.go`, `ui.go` or `reminders.go`. Read params with `ParamString`,
+   `tasks.go`, `accounts.go`, `ui.go`, `reminders.go` or `people.go`. Read params with `ParamString`,
    `ParamInt`, `ParamBool` or `ParamStringSlice` (from `models.go`). Reply with
    `Respond(w, req.ID, map[string]any{…})` or `RespondError(w, req.ID, msg)` and `return`
    early. Validate required params explicitly, the way `system.openUri` checks `uri`.

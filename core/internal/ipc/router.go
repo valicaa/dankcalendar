@@ -28,6 +28,8 @@ func Route(ctx context.Context, w *ConnWriter, req Request, deps Deps) {
 		HandleReminders(ctx, w, req, deps)
 	case strings.HasPrefix(req.Method, "ui."):
 		HandleUI(ctx, w, req, deps)
+	case strings.HasPrefix(req.Method, "people."):
+		HandlePeople(ctx, w, req, deps)
 	case strings.HasPrefix(req.Method, "system."):
 		HandleSystem(ctx, w, req, deps)
 	case strings.HasPrefix(req.Method, "files."):

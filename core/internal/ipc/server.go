@@ -16,7 +16,7 @@ func NewServer(deps Deps) *Server {
 	cfg := dankipc.Config{
 		AppName:                "dankcal",
 		APIVersion:             APIVersion,
-		Capabilities:           []string{"accounts", "calendars", "events", "reminders", "subscribe", "ui", "system", "files"},
+		Capabilities:           []string{"accounts", "calendars", "events", "reminders", "subscribe", "ui", "system", "files", "people"},
 		DefaultSubscribeTopics: []string{"accounts", "calendars", "events", "tasks", "sync"},
 		Bus:                    deps.Bus,
 		OnSubscribe: func(topics []string, _ *Subscriber) {
