@@ -149,6 +149,27 @@ Item {
         return ev.title + " · " + SettingsData.formatTime(ev.start) + " – " + SettingsData.formatTime(ev.end) + (ev.calendar ? " · " + ev.calendar : "");
     }
 
+    function overlayPersonLabel(item) {
+        const person = PeopleService.people.find(p => p.email === item.email);
+        return (person && (person.name || person.email)) || item.email;
+    }
+
+    function overlayTooltip(item) {
+        const title = item.title || I18n.tr("Busy", "overlay label for a colleague's free/busy-only or private time block");
+        const suffix = " · " + root.overlayPersonLabel(item);
+        if (item.allDay)
+            return title + " · " + I18n.tr("All day", "all-day marker in event tooltip") + suffix;
+        return title + " · " + SettingsData.formatTime(item.start) + " – " + SettingsData.formatTime(item.end) + suffix;
+    }
+
+    // Colleague-schedule overlay for one cell, drawn on top of the (faded)
+    // own chips rather than pushed below them.
+    function overlayEventsFor(day) {
+        if (!PeopleService.active)
+            return [];
+        return PeopleService.overlayForDay(day);
+    }
+
     readonly property int firstDayOfWeek: SettingsData.effectiveFirstDayOfWeek
     readonly property real weekGutter: SettingsData.showWeekNumbers ? 28 : 0
     readonly property real eventChipHeight: Math.max(18, SettingsData.monthEventTitleLines * 14 + 4)
@@ -313,6 +334,11 @@ Item {
                             root.eventsVersion;
                             return DankCalService.eventsForDay(cellDate);
                         }
+                        readonly property var cellOverlayEvents: {
+                            root.eventsVersion;
+                            PeopleService.version;
+                            return root.overlayEventsFor(cellDate);
+                        }
 
                         // On today, events that have already ended yield their
                         // chip slots to ones still upcoming; they fall into the
@@ -467,6 +493,7 @@ Item {
                                     response: modelData.myResponse
                                     calendarColor: modelData.color
                                     selected: isSelected
+                                    dimmed: PeopleService.active && PeopleService.sharedWith(modelData).length === 0
                                     hovered: chipMouseArea.containsMouse
 
                                     Row {
@@ -546,6 +573,41 @@ Item {
                                         mouse.accepted = true;
                                         dayPopover.show(dayCell.cellDate, dayCell.displayEvents, moreLabel);
                                     }
+                                }
+                            }
+                        }
+
+                        // Colleague-schedule overlay, drawn on top of the
+                        // (faded) own chips above rather than pushed below
+                        // them, so it never changes the cell's own layout.
+                        Column {
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            anchors.top: SettingsData.monthShowAllEvents ? dayBadge.bottom : undefined
+                            anchors.bottom: SettingsData.monthShowAllEvents ? undefined : parent.bottom
+                            anchors.margins: Theme.spacingXS
+                            spacing: 2
+                            z: 2
+
+                            Repeater {
+                                model: ScriptModel {
+                                    values: dayCell.cellOverlayEvents.slice(0, dayCell.maxChips)
+                                }
+
+                                PersonEventChip {
+                                    id: overlayMonthChip
+                                    required property var modelData
+                                    width: parent.width
+                                    height: root.eventChipHeight
+                                    kind: modelData.kind
+                                    title: modelData.title
+                                    location: modelData.location
+                                    personColor: modelData.color
+                                    isPrivate: !!modelData.private
+                                    compact: true
+                                    titleLines: SettingsData.monthEventTitleLines
+                                    onEntered: chipTooltip.show(root.overlayTooltip(modelData), overlayMonthChip)
+                                    onExited: chipTooltip.hide()
                                 }
                             }
                         }

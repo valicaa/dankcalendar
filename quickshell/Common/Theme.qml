@@ -674,6 +674,10 @@ Singleton {
         return response === "declined";
     }
 
+    // Fade for the owner's own chips while a colleague-schedule overlay
+    // (PeopleService.active) is showing, so the overlay reads as "on top".
+    readonly property real overlayDimOpacity: 0.35
+
     function blendAlpha(c, a) {
         if (!c || c.r === undefined)
             return Qt.rgba(0, 0, 0, 0);

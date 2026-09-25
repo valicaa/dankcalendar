@@ -10,6 +10,10 @@ Rectangle {
     property bool selected: false
     property bool hovered: false
     property real hatchOpacity: 0.55
+    // Faded while a colleague-schedule overlay is drawn on top (PeopleService),
+    // so the own chip stays visible but reads as "underneath". RSVP fill,
+    // border, hatch and strikeout are unaffected; opacity multiplies the lot.
+    property bool dimmed: false
 
     readonly property color fillColor: Theme.rsvpFillColor(response, calendarColor)
     readonly property color textColor: Theme.rsvpTextColor(response, calendarColor)
@@ -24,6 +28,7 @@ Rectangle {
     color: fillColor
     border.color: selected ? Theme.primary : Theme.rsvpBorderColor(response, calendarColor)
     border.width: selected ? ringWidth : 1
+    opacity: dimmed ? Theme.overlayDimOpacity : 1
 
     TentativeHatch {
         visible: Theme.rsvpHatchVisible(root.response)

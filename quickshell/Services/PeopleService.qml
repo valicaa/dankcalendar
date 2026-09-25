@@ -243,7 +243,10 @@ Singleton {
                         "allDay": ev.allDay,
                         "color": p.color,
                         "stripes": [],
-                        "email": p.email
+                        "email": p.email,
+                        // A private detail event under reader access carries
+                        // no disclosed title; drawn with the busy look.
+                        "private": ev.private
                     });
                 }
             } else if (p.status === "busy") {

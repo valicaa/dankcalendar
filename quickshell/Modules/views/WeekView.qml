@@ -224,6 +224,19 @@ Item {
         return ev.title + " · " + SettingsData.formatTime(ev.start) + " – " + SettingsData.formatTime(ev.end) + suffix;
     }
 
+    function overlayPersonLabel(item) {
+        const person = PeopleService.people.find(p => p.email === item.email);
+        return (person && (person.name || person.email)) || item.email;
+    }
+
+    function overlayTooltip(item) {
+        const title = item.title || I18n.tr("Busy", "overlay label for a colleague's free/busy-only or private time block");
+        const suffix = (item.location ? " · " + item.location : "") + " · " + root.overlayPersonLabel(item);
+        if (item.allDay)
+            return title + " · " + I18n.tr("All day", "all-day marker in event tooltip") + suffix;
+        return title + " · " + SettingsData.formatTime(item.start) + " – " + SettingsData.formatTime(item.end) + suffix;
+    }
+
     function dayAt(index) {
         const d = new Date(firstDay);
         d.setDate(d.getDate() + index);
@@ -251,6 +264,33 @@ Item {
 
     function allDayEventsFor(day) {
         return DankCalService.eventsForDay(day).filter(ev => ev.allDay);
+    }
+
+    // Colleague-schedule overlay (PeopleService), drawn on top of the
+    // owner's own (faded) chips rather than sharing lanes with them, so a
+    // simultaneous own event stays exactly where it was before the overlay
+    // existed. Overlay items lane among themselves only.
+    function overlayTimedEventsFor(day) {
+        if (!PeopleService.active)
+            return [];
+        const out = [];
+        const list = PeopleService.overlayForDay(day);
+        for (let i = 0; i < list.length; i++) {
+            const item = list[i];
+            if (item.allDay)
+                continue;
+            const slot = EventUtils.timedSlot(item, day, root.startHour, root.endHour);
+            if (!slot)
+                continue;
+            out.push(Object.assign({}, item, slot));
+        }
+        return DankCalService.layoutTimedEvents(out);
+    }
+
+    function overlayAllDayEventsFor(day) {
+        if (!PeopleService.active)
+            return [];
+        return PeopleService.overlayForDay(day).filter(item => item.allDay);
     }
 
     readonly property int allDayMax: {
@@ -505,6 +545,7 @@ Item {
                                         response: modelData.myResponse
                                         calendarColor: modelData.color
                                         selected: isSelected
+                                        dimmed: PeopleService.active && PeopleService.sharedWith(modelData).length === 0
                                         hovered: allDayMouseArea.containsMouse
 
                                         StyledText {
@@ -547,6 +588,45 @@ Item {
                                                     root.finishEventDrag(parent.modelData);
                                             }
                                         }
+                                    }
+                                }
+                            }
+
+                            // Colleague-schedule overlay, drawn on top of the
+                            // (faded) own all-day chips above rather than
+                            // pushed below them.
+                            Column {
+                                id: overlayAllDayColumn
+                                anchors.fill: parent
+                                anchors.margins: 2
+                                spacing: 2
+                                z: 1
+
+                                readonly property var overlayEvents: {
+                                    root.eventsVersion;
+                                    PeopleService.version;
+                                    return root.overlayAllDayEventsFor(allDayCell.day);
+                                }
+
+                                Repeater {
+                                    model: ScriptModel {
+                                        values: overlayAllDayColumn.overlayEvents.slice(0, 2)
+                                    }
+
+                                    PersonEventChip {
+                                        id: overlayAllDayChip
+                                        required property var modelData
+                                        width: parent.width
+                                        height: root.allDayChipHeight
+                                        kind: modelData.kind
+                                        title: modelData.title
+                                        location: modelData.location
+                                        personColor: modelData.color
+                                        isPrivate: !!modelData.private
+                                        compact: true
+                                        titleLines: SettingsData.weekEventTitleLines
+                                        onEntered: chipTooltip.show(root.overlayTooltip(modelData), overlayAllDayChip)
+                                        onExited: chipTooltip.hide()
                                     }
                                 }
                             }
@@ -689,6 +769,11 @@ Item {
                                     root.eventsVersion;
                                     return root.timedEventsFor(root.dayAt(index - 1));
                                 }
+                                readonly property var overlayTimedEvents: {
+                                    root.eventsVersion;
+                                    PeopleService.version;
+                                    return root.overlayTimedEventsFor(root.dayAt(index - 1));
+                                }
 
                                 width: root.dayWidth
                                 height: parent.height
@@ -768,6 +853,7 @@ Item {
                                         response: modelData.myResponse
                                         calendarColor: modelData.color
                                         selected: isSelected
+                                        dimmed: PeopleService.active && PeopleService.sharedWith(modelData).length === 0
                                         hovered: timedMouseArea.containsMouse
 
                                         Column {
@@ -824,6 +910,36 @@ Item {
                                                     root.finishEventDrag(parent.modelData);
                                             }
                                         }
+                                    }
+                                }
+
+                                // Colleague-schedule overlay, drawn on top of
+                                // the (faded) own timed chips above rather
+                                // than sharing their lanes.
+                                Repeater {
+                                    model: ScriptModel {
+                                        values: dayColumn.overlayTimedEvents
+                                    }
+
+                                    PersonEventChip {
+                                        id: overlayTimedChip
+                                        required property var modelData
+                                        readonly property real laneGap: 2
+                                        readonly property real usableWidth: parent.width - 8
+                                        readonly property real laneWidth: (usableWidth - (modelData.columns - 1) * laneGap) / modelData.columns
+                                        x: 4 + modelData.column * (laneWidth + laneGap)
+                                        y: modelData.startHour * root.hourHeight
+                                        z: 1
+                                        width: laneWidth
+                                        height: modelData.durationHours * root.hourHeight - 2
+                                        kind: modelData.kind
+                                        title: modelData.title
+                                        location: modelData.location
+                                        personColor: modelData.color
+                                        isPrivate: !!modelData.private
+                                        titleLines: Math.min(SettingsData.weekEventTitleLines, Math.max(1, Math.floor(height / 14)))
+                                        onEntered: chipTooltip.show(root.overlayTooltip(modelData), overlayTimedChip)
+                                        onExited: chipTooltip.hide()
                                     }
                                 }
 
