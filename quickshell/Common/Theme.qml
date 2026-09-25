@@ -619,6 +619,59 @@ Singleton {
         return Qt.rgba(c.r, c.g, c.b, a);
     }
 
+    // Event chip/card styling by the user's own RSVP response ("accepted", "tentative",
+    // "needs-action", "declined" or "" for no-RSVP, see DankCalService.selfResponse).
+    // Shared by MonthView, WeekView, DayView, AgendaView and MonthDayPopover so the
+    // four looks (strong fill, hatch, outline, faded+struck-through) stay one decision.
+    function rsvpFillColor(response, color) {
+        switch (response) {
+        case "needs-action":
+            return "transparent";
+        case "tentative":
+            return withAlpha(color, 0.22);
+        case "declined":
+            return withAlpha(color, 0.14);
+        default:
+            return color;
+        }
+    }
+
+    function rsvpBorderColor(response, color) {
+        return response === "needs-action" || response === "tentative" ? color : "transparent";
+    }
+
+    function rsvpBorderWidth(response) {
+        return response === "needs-action" || response === "tentative" ? 1 : 0;
+    }
+
+    function rsvpTextColor(response, color) {
+        if (response === "accepted" || response === "")
+            return Contrast.readableOn(color, onContainerCandidates);
+        return surfaceText;
+    }
+
+    function rsvpMutedTextColor(response, color) {
+        if (response === "accepted" || response === "")
+            return withAlpha(rsvpTextColor(response, color), 0.75);
+        return surfaceVariantText;
+    }
+
+    function rsvpDotColor(response, color) {
+        return response === "accepted" || response === "" ? rsvpTextColor(response, color) : color;
+    }
+
+    function rsvpHatchVisible(response) {
+        return response === "tentative";
+    }
+
+    function rsvpFaded(response) {
+        return response === "declined" ? 0.55 : 1;
+    }
+
+    function rsvpStrikeout(response) {
+        return response === "declined";
+    }
+
     function blendAlpha(c, a) {
         if (!c || c.r === undefined)
             return Qt.rgba(0, 0, 0, 0);
