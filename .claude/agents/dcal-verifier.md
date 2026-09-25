@@ -1,6 +1,6 @@
 ---
 name: dcal-verifier
-description: Runs the verify-change skill on a Dank Calendar branch — static checks, build, and proof in the running app (screenshot or dcal ipc output). Reports pass/fail per check with evidence. Never fixes code. Use before any "done", commit of a finished step, merge or PR.
+description: Runs the verify-change skill on a Dank Calendar branch — static checks, build, and proof in the running app (screenshot or `dev-instance.sh ipc` output). Reports pass/fail per check with evidence. Never fixes code. Use before any "done", commit of a finished step, merge or PR.
 disallowedTools: Edit, Write, NotebookEdit
 model: sonnet
 effort: low
