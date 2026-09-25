@@ -198,22 +198,17 @@ Item {
                 values: root.allDayEvents
             }
 
-            Rectangle {
+            EventChipBackground {
                 required property var modelData
                 readonly property bool isSelected: root.isEventSelected(modelData)
                 width: parent.width
                 height: 22
                 radius: Theme.cornerRadiusXS
                 clip: true
-                opacity: Theme.rsvpFaded(modelData.myResponse)
-                color: Theme.rsvpFillColor(modelData.myResponse, modelData.color)
-                border.color: isSelected ? Theme.primary : Theme.rsvpBorderColor(modelData.myResponse, modelData.color)
-                border.width: isSelected ? 2 : Theme.rsvpBorderWidth(modelData.myResponse)
-
-                TentativeHatch {
-                    visible: Theme.rsvpHatchVisible(parent.modelData.myResponse)
-                    stripeColor: parent.modelData.color
-                }
+                response: modelData.myResponse
+                calendarColor: modelData.color
+                selected: isSelected
+                hovered: allDayMouseArea.containsMouse
 
                 StyledText {
                     anchors.left: parent.left
@@ -221,16 +216,17 @@ Item {
                     anchors.leftMargin: Theme.spacingS
                     anchors.rightMargin: Theme.spacingS
                     anchors.verticalCenter: parent.verticalCenter
-                    text: modelData.title + "  ·  " + I18n.tr("all day", "suffix on all-day event chip in day view")
+                    text: parent.modelData.title + "  ·  " + I18n.tr("all day", "suffix on all-day event chip in day view")
                     font.pixelSize: Theme.fontSizeSmall
-                    color: Theme.rsvpTextColor(modelData.myResponse, modelData.color)
-                    font.strikeout: Theme.rsvpStrikeout(modelData.myResponse)
+                    color: parent.textColor
+                    font.strikeout: parent.strikeout
                     wrapMode: Text.NoWrap
                     maximumLineCount: 1
                     elide: Text.ElideRight
                 }
 
                 EventMouseArea {
+                    id: allDayMouseArea
                     anchors.fill: parent
                     eventData: parent.modelData
                     onEntered: chipTooltip.show(root.eventTooltip(parent.modelData), parent)
@@ -370,7 +366,7 @@ Item {
                         values: root.timedEvents
                     }
 
-                    Rectangle {
+                    EventChipBackground {
                         required property var modelData
                         readonly property bool isSelected: root.isEventSelected(modelData)
                         onIsSelectedChanged: {
@@ -384,17 +380,11 @@ Item {
                         y: modelData.startHour * root.hourHeight
                         width: laneWidth
                         height: modelData.durationHours * root.hourHeight - 4
-                        radius: Theme.cornerRadiusS
                         clip: true
-                        opacity: Theme.rsvpFaded(modelData.myResponse)
-                        color: Theme.rsvpFillColor(modelData.myResponse, modelData.color)
-                        border.color: isSelected ? Theme.primary : Theme.rsvpBorderColor(modelData.myResponse, modelData.color)
-                        border.width: isSelected ? 2 : Theme.rsvpBorderWidth(modelData.myResponse)
-
-                        TentativeHatch {
-                            visible: Theme.rsvpHatchVisible(parent.modelData.myResponse)
-                            stripeColor: parent.modelData.color
-                        }
+                        response: modelData.myResponse
+                        calendarColor: modelData.color
+                        selected: isSelected
+                        hovered: timedMouseArea.containsMouse
 
                         Row {
                             anchors.fill: parent
@@ -406,7 +396,7 @@ Item {
                                 height: parent.height - 4
                                 anchors.verticalCenter: parent.verticalCenter
                                 radius: Theme.fullRadius(width, height)
-                                color: Theme.rsvpDotColor(parent.parent.modelData.myResponse, parent.parent.modelData.color)
+                                color: parent.parent.dotColor
                             }
 
                             Column {
@@ -417,8 +407,8 @@ Item {
                                     text: parent.parent.parent.modelData.title
                                     font.pixelSize: Theme.fontSizeMedium
                                     font.weight: Theme.fontWeightMedium
-                                    color: Theme.rsvpTextColor(parent.parent.parent.modelData.myResponse, parent.parent.parent.modelData.color)
-                                    font.strikeout: Theme.rsvpStrikeout(parent.parent.parent.modelData.myResponse)
+                                    color: parent.parent.parent.textColor
+                                    font.strikeout: parent.parent.parent.strikeout
                                     width: parent.width
                                     wrapMode: Text.NoWrap
                                     maximumLineCount: 1
@@ -429,7 +419,7 @@ Item {
                                     visible: parent.parent.parent.modelData.durationHours >= 0.75
                                     text: parent.parent.parent.modelData.calendar
                                     font.pixelSize: Theme.fontSizeSmall
-                                    color: Theme.rsvpMutedTextColor(parent.parent.parent.modelData.myResponse, parent.parent.parent.modelData.color)
+                                    color: parent.parent.parent.mutedTextColor
                                     width: parent.width
                                     wrapMode: Text.NoWrap
                                     maximumLineCount: 1
@@ -440,7 +430,7 @@ Item {
                                     visible: text !== "" && parent.parent.parent.modelData.durationHours >= 1.25
                                     text: parent.parent.parent.modelData.location
                                     font.pixelSize: Theme.fontSizeSmall
-                                    color: Theme.rsvpMutedTextColor(parent.parent.parent.modelData.myResponse, parent.parent.parent.modelData.color)
+                                    color: parent.parent.parent.mutedTextColor
                                     width: parent.width
                                     wrapMode: Text.NoWrap
                                     maximumLineCount: 1
@@ -451,7 +441,7 @@ Item {
                                     visible: text !== "" && parent.parent.parent.modelData.durationHours >= 2
                                     text: DankCalService.descriptionPreview(parent.parent.parent.modelData)
                                     font.pixelSize: Theme.fontSizeSmall
-                                    color: Theme.rsvpMutedTextColor(parent.parent.parent.modelData.myResponse, parent.parent.parent.modelData.color)
+                                    color: parent.parent.parent.mutedTextColor
                                     width: parent.width
                                     wrapMode: Text.WordWrap
                                     maximumLineCount: 2
@@ -461,6 +451,7 @@ Item {
                         }
 
                         EventMouseArea {
+                            id: timedMouseArea
                             anchors.fill: parent
                             eventData: parent.modelData
                             onEntered: chipTooltip.show(root.eventTooltip(parent.modelData), parent)

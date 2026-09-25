@@ -456,22 +456,17 @@ Item {
                                     values: dayCell.displayEvents.slice(0, dayCell.maxChips)
                                 }
 
-                                Rectangle {
+                                EventChipBackground {
                                     required property var modelData
                                     readonly property bool isSelected: root.isEventSelected(modelData)
                                     width: parent.width
                                     height: root.eventChipHeight
                                     radius: Theme.cornerRadiusXS
                                     clip: true
-                                    opacity: Theme.rsvpFaded(modelData.myResponse)
-                                    color: Theme.rsvpFillColor(modelData.myResponse, modelData.color)
-                                    border.color: isSelected ? Theme.primary : Theme.rsvpBorderColor(modelData.myResponse, modelData.color)
-                                    border.width: isSelected ? 2 : Theme.rsvpBorderWidth(modelData.myResponse)
-
-                                    TentativeHatch {
-                                        visible: Theme.rsvpHatchVisible(parent.modelData.myResponse)
-                                        stripeColor: parent.modelData.color
-                                    }
+                                    response: modelData.myResponse
+                                    calendarColor: modelData.color
+                                    selected: isSelected
+                                    hovered: chipMouseArea.containsMouse
 
                                     Row {
                                         anchors.left: parent.left
@@ -485,7 +480,7 @@ Item {
                                             width: 3
                                             height: 12
                                             radius: Theme.fullRadius(width, height)
-                                            color: Theme.rsvpDotColor(parent.parent.modelData.myResponse, parent.parent.modelData.color)
+                                            color: parent.parent.dotColor
                                             anchors.verticalCenter: parent.verticalCenter
                                         }
 
@@ -493,8 +488,8 @@ Item {
                                             anchors.verticalCenter: parent.verticalCenter
                                             text: parent.parent.modelData.title
                                             font.pixelSize: 11
-                                            color: Theme.rsvpTextColor(parent.parent.modelData.myResponse, parent.parent.modelData.color)
-                                            font.strikeout: Theme.rsvpStrikeout(parent.parent.modelData.myResponse)
+                                            color: parent.parent.textColor
+                                            font.strikeout: parent.parent.strikeout
                                             wrapMode: Text.WordWrap
                                             maximumLineCount: SettingsData.monthEventTitleLines
                                             elide: Text.ElideRight
@@ -503,6 +498,7 @@ Item {
                                     }
 
                                     EventMouseArea {
+                                        id: chipMouseArea
                                         anchors.fill: parent
                                         eventData: parent.modelData
                                         dragEnabled: !parent.modelData.readOnly

@@ -619,21 +619,22 @@ Singleton {
         return Qt.rgba(c.r, c.g, c.b, a);
     }
 
-    // Event chip/card styling by the user's own RSVP response ("accepted", "tentative",
-    // "needs-action", "declined" or "" for no-RSVP, see DankCalService.selfResponse).
-    // Shared by MonthView, WeekView, DayView, AgendaView and MonthDayPopover so the
-    // four looks (strong fill, hatch, outline, faded+struck-through) stay one decision.
-    // Calendar colors arrive as plain hex strings from DankCalService (JSON, not QML
-    // color objects), so every entry point normalizes with Qt.color() first: withAlpha()
-    // and Contrast.readableOn() both key off `c.r`, which is undefined on a string, so an
-    // unnormalized color silently reads as transparent (withAlpha) or as pure black
-    // (Contrast's relativeLuminance), which broke both the declined fill and text contrast.
-    function rsvpColor(color) {
+    // Event chip/card styling by RSVP response ("accepted"/"tentative"/"needs-action"/
+    // "declined"/""), shared via EventChipBackground. Calendar colors arrive as hex
+    // strings from DankCalService (JSON): normalize with toColor() before withAlpha()
+    // or Contrast.readableOn(), which both key off `c.r`, undefined on a string.
+    function toColor(color) {
         return color && color.r !== undefined ? color : Qt.color(color);
     }
 
+    // Everything that isn't explicitly muted gets the strong (full-fill) look, including
+    // an unrecognized response — never render an invitation state as if it were RSVP'd.
+    function rsvpStrong(response) {
+        return response !== "tentative" && response !== "needs-action" && response !== "declined";
+    }
+
     function rsvpFillColor(response, color) {
-        const c = rsvpColor(color);
+        const c = toColor(color);
         switch (response) {
         case "needs-action":
             return "transparent";
@@ -647,35 +648,31 @@ Singleton {
     }
 
     function rsvpBorderColor(response, color) {
-        return response === "needs-action" || response === "tentative" ? rsvpColor(color) : "transparent";
+        return rsvpStrong(response) ? withAlpha(surfaceText, 0.08) : toColor(color);
     }
 
     function rsvpBorderWidth(response) {
-        return response === "needs-action" || response === "tentative" ? 1 : 0;
+        return 1;
     }
 
     function rsvpTextColor(response, color) {
-        if (response === "accepted" || response === "")
-            return Contrast.readableOn(rsvpColor(color), onContainerCandidates);
-        return surfaceText;
+        if (rsvpStrong(response))
+            return Contrast.readableOn(toColor(color), onContainerCandidates);
+        return response === "declined" ? surfaceVariantText : surfaceText;
     }
 
     function rsvpMutedTextColor(response, color) {
-        if (response === "accepted" || response === "")
+        if (rsvpStrong(response))
             return withAlpha(rsvpTextColor(response, color), 0.75);
         return surfaceVariantText;
     }
 
     function rsvpDotColor(response, color) {
-        return response === "accepted" || response === "" ? rsvpTextColor(response, color) : rsvpColor(color);
+        return rsvpStrong(response) ? rsvpTextColor(response, color) : toColor(color);
     }
 
     function rsvpHatchVisible(response) {
         return response === "tentative";
-    }
-
-    function rsvpFaded(response) {
-        return response === "declined" ? 0.55 : 1;
     }
 
     function rsvpStrikeout(response) {

@@ -142,7 +142,7 @@ Item {
                             values: section.modelData.events
                         }
 
-                        StyledRect {
+                        EventChipBackground {
                             id: card
                             required property var modelData
                             readonly property bool isSelected: root.isEventSelected(modelData)
@@ -156,17 +156,13 @@ Item {
                             }
                             width: root.width
                             height: Math.max(76, contentRow.implicitHeight + Theme.spacingM * 2)
-                            opacity: Theme.rsvpFaded(modelData.myResponse)
-                            color: isSelected ? Theme.selectedContainer : (cardArea.containsMouse ? Theme.surfaceContainer : Theme.rsvpFillColor(modelData.myResponse, modelData.color))
                             radius: Theme.cornerRadiusM
-                            border.color: isSelected ? Theme.primary : Theme.rsvpBorderColor(modelData.myResponse, modelData.color)
-                            border.width: isSelected ? 2 : Theme.rsvpBorderWidth(modelData.myResponse)
                             clip: Theme.rsvpHatchVisible(modelData.myResponse)
-
-                            TentativeHatch {
-                                visible: Theme.rsvpHatchVisible(card.modelData.myResponse)
-                                stripeColor: card.modelData.color
-                            }
+                            response: modelData.myResponse
+                            calendarColor: modelData.color
+                            selected: isSelected
+                            hovered: cardArea.containsMouse
+                            hatchOpacity: 0.3
 
                             Row {
                                 id: contentRow
@@ -182,7 +178,7 @@ Item {
                                     height: 44
                                     anchors.verticalCenter: parent.verticalCenter
                                     radius: Theme.fullRadius(width, height)
-                                    color: Theme.rsvpDotColor(card.modelData.myResponse, card.modelData.color)
+                                    color: card.dotColor
                                 }
 
                                 Column {
@@ -194,7 +190,7 @@ Item {
                                         text: card.modelData.time
                                         font.pixelSize: Theme.fontSizeMedium
                                         font.weight: Theme.fontWeightMedium
-                                        color: Theme.rsvpTextColor(card.modelData.myResponse, card.modelData.color)
+                                        color: card.textColor
                                         isMonospace: true
                                         width: parent.width
                                     }
@@ -202,7 +198,7 @@ Item {
                                     StyledText {
                                         text: card.modelData.duration
                                         font.pixelSize: Theme.fontSizeSmall
-                                        color: Theme.rsvpMutedTextColor(card.modelData.myResponse, card.modelData.color)
+                                        color: card.mutedTextColor
                                         visible: text !== ""
                                         width: parent.width
                                     }
@@ -217,8 +213,8 @@ Item {
                                         text: card.modelData.title
                                         font.pixelSize: Theme.fontSizeLarge
                                         font.weight: Theme.fontWeightMedium
-                                        color: Theme.rsvpTextColor(card.modelData.myResponse, card.modelData.color)
-                                        font.strikeout: Theme.rsvpStrikeout(card.modelData.myResponse)
+                                        color: card.textColor
+                                        font.strikeout: card.strikeout
                                         width: parent.width
                                         wrapMode: Text.WordWrap
                                         maximumLineCount: 2
@@ -234,14 +230,14 @@ Item {
                                             id: locationIcon
                                             name: "place"
                                             size: Theme.iconSizeSmall
-                                            color: Theme.rsvpMutedTextColor(card.modelData.myResponse, card.modelData.color)
+                                            color: card.mutedTextColor
                                             anchors.verticalCenter: parent.verticalCenter
                                         }
 
                                         StyledText {
                                             text: card.modelData.location
                                             font.pixelSize: Theme.fontSizeSmall
-                                            color: Theme.rsvpMutedTextColor(card.modelData.myResponse, card.modelData.color)
+                                            color: card.mutedTextColor
                                             anchors.verticalCenter: parent.verticalCenter
                                             width: parent.width - locationIcon.width - Theme.spacingXS
                                             wrapMode: Text.NoWrap
@@ -253,7 +249,7 @@ Item {
                                     StyledText {
                                         text: card.modelData.preview
                                         font.pixelSize: Theme.fontSizeSmall
-                                        color: Theme.rsvpMutedTextColor(card.modelData.myResponse, card.modelData.color)
+                                        color: card.mutedTextColor
                                         visible: text !== ""
                                         width: parent.width
                                         wrapMode: Text.WordWrap
@@ -269,13 +265,13 @@ Item {
                                             height: 8
                                             radius: Theme.fullRadius(width, height)
                                             anchors.verticalCenter: parent.verticalCenter
-                                            color: Theme.rsvpDotColor(card.modelData.myResponse, card.modelData.color)
+                                            color: card.dotColor
                                         }
 
                                         StyledText {
                                             text: card.modelData.calendar
                                             font.pixelSize: Theme.fontSizeSmall
-                                            color: Theme.rsvpMutedTextColor(card.modelData.myResponse, card.modelData.color)
+                                            color: card.mutedTextColor
                                             anchors.verticalCenter: parent.verticalCenter
                                         }
                                     }
