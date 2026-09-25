@@ -108,7 +108,7 @@ func handlePeopleSchedule(ctx context.Context, w *ConnWriter, req Request, deps 
 
 	switch sched.Access {
 	case calendar.ScheduleDetails:
-		idx, err := newOwnerScheduleIndex(ctx, deps, email, from, to)
+		idx, err := newOwnerScheduleIndex(ctx, deps, from, to)
 		if err != nil {
 			RespondError(w, req.ID, err.Error())
 			return
@@ -180,16 +180,17 @@ type ownerMatch struct {
 
 // ownerScheduleIndex looks up the owner's own occurrences by the identity a
 // colleague's copy of the same event carries: the RFC 5545 pair UID +
-// RECURRENCE-ID. Only the owner's own visible Google calendars are
-// candidates: a hidden calendar's copy never suppresses a colleague chip
-// behind an event the owner never draws, and a calendar merely subscribed
-// from someone else's account never masquerades as the owner's own.
+// RECURRENCE-ID. Only visible primary Google calendars are candidates. A
+// hidden calendar's event is never drawn, so it must not stand in for the
+// colleague's copy, and a stored calendar does not record whether the owner
+// owns it (only read_only), so a secondary calendar the owner owns cannot be
+// told apart from someone else's calendar shared with write access.
 type ownerScheduleIndex struct {
 	byUID      map[string]ownerMatch
 	byUIDStart map[string]ownerMatch
 }
 
-func newOwnerScheduleIndex(ctx context.Context, deps Deps, email string, from, to time.Time) (*ownerScheduleIndex, error) {
+func newOwnerScheduleIndex(ctx context.Context, deps Deps, from, to time.Time) (*ownerScheduleIndex, error) {
 	idx := &ownerScheduleIndex{byUID: map[string]ownerMatch{}, byUIDStart: map[string]ownerMatch{}}
 
 	cals, err := deps.Repo.ListCalendars(ctx)
@@ -199,26 +200,19 @@ func newOwnerScheduleIndex(ctx context.Context, deps Deps, email string, from, t
 
 	var ownedGoogleIDs []string
 	for _, c := range cals {
+		acc := c.Edges.Account
 		switch {
-		case c.Hidden || c.Edges.Account == nil || c.Edges.Account.Kind != account.KindGoogle:
+		case c.Hidden || acc == nil || acc.Kind != account.KindGoogle:
 			continue
-		case c.RemoteID == email:
-			// A calendar subscribed from the colleague's own account carries
-			// their address as its RemoteID; it is never one the owner owns,
-			// and matching against it would report the colleague's events
-			// as the owner's own.
-			continue
-		case c.RemoteID != "primary" && c.RemoteID != c.Edges.Account.ID:
-			// Only the owner's primary calendar is indexed: a calendar the
-			// owner merely subscribes to (any other RemoteID) is not one of
-			// their own occurrences.
+		case !strings.EqualFold(c.RemoteID, acc.ID):
+			// Google names a primary calendar by its owner's address, which is
+			// the account ID.
 			continue
 		}
 		ownedGoogleIDs = append(ownedGoogleIDs, c.ID)
 	}
 	if len(ownedGoogleIDs) == 0 {
-		// No candidates: passing an empty CalendarIDs filter to ListEvents
-		// would mean "every calendar", the opposite of what's intended here.
+		// An empty CalendarIDs filter would mean every calendar.
 		return idx, nil
 	}
 
@@ -232,11 +226,8 @@ func newOwnerScheduleIndex(ctx context.Context, deps Deps, email string, from, t
 	for _, ev := range events {
 		m := ownerMatch{eventID: ev.ID, uid: ev.UID, start: ev.Start}
 		if ev.RecurringID != ev.UID {
-			// A generated recurrence copy shares the master's UID (and
-			// RecurringID == UID), so indexing it here would let whichever
-			// occurrence is visited last in this loop overwrite the real
-			// single/exception match for that UID; byUIDStart is where
-			// these copies are looked up instead.
+			// Expanded occurrences share the master's UID (RecurringID == UID)
+			// and would overwrite each other here; byUIDStart holds them.
 			idx.byUID[ev.UID] = m
 		}
 		idx.byUIDStart[ev.UID+"|"+ev.Start.UTC().Format(time.RFC3339)] = m

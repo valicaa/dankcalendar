@@ -55,11 +55,8 @@ type scheduleMockProvider struct {
 	*mocks.MockScheduleReader
 }
 
-// peopleFixture seeds two Google accounts, gmail before acme, so a domain
-// match (acme) and a fallback to the first account (gmail) pick different
-// accounts and a test asserting on which one was built actually proves
-// something. It returns the acme account's id, the one every domain-match
-// test expects.
+// peopleFixture seeds two Google accounts, gmail first, so a domain match
+// (acme) and the first-account fallback (gmail) differ. It returns acme's id.
 func peopleFixture(t *testing.T) (icsFixture, string) {
 	t.Helper()
 	f := newIcsFixture(t, account.KindCaldav, false)
@@ -74,9 +71,8 @@ func peopleFixture(t *testing.T) (icsFixture, string) {
 	return f, acmeID
 }
 
-// schedulePeopleFactory registers provider only for a Build call for
-// wantAccountID, so a test using it proves which account the daemon actually
-// chose rather than just that some Google account got one.
+// schedulePeopleFactory builds provider only for wantAccountID, so a test
+// proves which account was chosen.
 func schedulePeopleFactory(t *testing.T, wantAccountID string, provider calendar.Provider) *mocks.MockProviderFactory {
 	factory := mocks.NewMockProviderFactory(t)
 	factory.EXPECT().Kind().Return(calendar.AccountGoogle)
@@ -133,9 +129,7 @@ func TestPeopleScheduleDomainMatchBuildsAccount(t *testing.T) {
 			Start: time.Date(2026, 9, 2, 10, 0, 0, 0, time.UTC),
 			End:   time.Date(2026, 9, 2, 11, 0, 0, 0, time.UTC),
 		}}}, nil)
-	// alice@acme.com domain-matches the acme account, not gmail (the first
-	// account, and the fallback if domain matching were broken): registering
-	// the factory to build only for acmeID proves which account was chosen.
+	// alice@acme.com domain-matches acme, not gmail, the first account.
 	f.registry.Register(schedulePeopleFactory(t, acmeID, provider))
 
 	result := resultOf(t, routeAndRead(t, Request{ID: 1, Method: "people.schedule", Params: map[string]any{
@@ -187,13 +181,21 @@ func TestPeopleScheduleOwnerMatch(t *testing.T) {
 	f, acmeID := peopleFixture(t)
 	ctx := context.Background()
 
-	visibleCal, err := f.repo.UpsertCalendar(ctx, repo.UpsertCalendarInput{AccountID: acmeID, RemoteID: "primary", Name: "Work", Hidden: false})
+	// Google's calendarList names a primary calendar by its owner's address.
+	visibleCal, err := f.repo.UpsertCalendar(ctx, repo.UpsertCalendarInput{AccountID: acmeID, RemoteID: acmeID, Name: "Work", Hidden: false})
 	require.NoError(t, err)
-	hiddenCal, err := f.repo.UpsertCalendar(ctx, repo.UpsertCalendarInput{AccountID: acmeID, RemoteID: "extra", Name: "Extra", Hidden: true})
+	hiddenCal, err := f.repo.UpsertCalendar(ctx, repo.UpsertCalendarInput{AccountID: "me@gmail.com", RemoteID: "me@gmail.com", Name: "Personal", Hidden: true})
 	require.NoError(t, err)
-	// A calendar the owner subscribes to, showing alice's own events on the
-	// owner's calendar: its RemoteID is alice's address, not the owner's own
-	// account or "primary", so it must never be indexed as the owner's own.
+	// A secondary calendar: the stored row cannot say whether the owner owns
+	// it or was given write access to someone else's, so it is not indexed.
+	secondaryCal, err := f.repo.UpsertCalendar(ctx, repo.UpsertCalendarInput{AccountID: acmeID, RemoteID: "team@group.calendar.google.com", Name: "Team", Hidden: false})
+	require.NoError(t, err)
+	_, err = f.repo.UpsertEvent(ctx, repo.UpsertEventInput{
+		CalendarID: secondaryCal.ID, UID: "evt-team", Summary: "Team sync",
+		Start: time.Date(2026, 9, 4, 9, 0, 0, 0, time.UTC), End: time.Date(2026, 9, 4, 9, 30, 0, 0, time.UTC),
+	})
+	require.NoError(t, err)
+	// Alice's primary calendar, subscribed by the owner.
 	subscribedCal, err := f.repo.UpsertCalendar(ctx, repo.UpsertCalendarInput{AccountID: acmeID, RemoteID: "alice@acme.com", Name: "Alice", Hidden: false})
 	require.NoError(t, err)
 	_, err = f.repo.UpsertEvent(ctx, repo.UpsertEventInput{
@@ -254,6 +256,13 @@ func TestPeopleScheduleOwnerMatch(t *testing.T) {
 			},
 			{
 				Event: calendar.Event{
+					UID: "evt-team", Summary: "Team sync",
+					Start: time.Date(2026, 9, 4, 9, 0, 0, 0, time.UTC), End: time.Date(2026, 9, 4, 9, 30, 0, 0, time.UTC),
+				},
+				ICalUID: "ical-team",
+			},
+			{
+				Event: calendar.Event{
 					UID: "evt-mirror", Summary: "Mirror",
 					Start: time.Date(2026, 9, 5, 9, 0, 0, 0, time.UTC), End: time.Date(2026, 9, 5, 9, 30, 0, 0, time.UTC),
 				},
@@ -270,12 +279,9 @@ func TestPeopleScheduleOwnerMatch(t *testing.T) {
 	assert.Equal(t, "Alice Doe", result["name"])
 
 	events := resultEvents(t, result)
-	require.Len(t, events, 4)
+	require.Len(t, events, 5)
 
-	// Keyed by the JSON "key" field (ICalUID|start), not the event's own
-	// UID: several colleague occurrences can share a UID (a recurring
-	// series), so this map identifies rows, it does not identify owner
-	// events.
+	// Keyed by ICalUID|start: occurrences of a series share a UID.
 	byKey := map[string]map[string]any{}
 	for _, e := range events {
 		byKey[e["key"].(string)] = e
@@ -293,9 +299,13 @@ func TestPeopleScheduleOwnerMatch(t *testing.T) {
 	require.NotNil(t, hidden)
 	assert.Nil(t, hidden["ownEventId"], "a match behind a hidden calendar must not be reported")
 
+	team := byKey["ical-team|"+time.Date(2026, 9, 4, 9, 0, 0, 0, time.UTC).Format(time.RFC3339)]
+	require.NotNil(t, team)
+	assert.Nil(t, team["ownEventId"], "a secondary calendar is not known to be the owner's own")
+
 	mirror := byKey["ical-mirror|"+time.Date(2026, 9, 5, 9, 0, 0, 0, time.UTC).Format(time.RFC3339)]
 	require.NotNil(t, mirror)
-	assert.Nil(t, mirror["ownEventId"], "a calendar subscribed from the colleague's own account must not match as the owner's own event")
+	assert.Nil(t, mirror["ownEventId"], "the colleague's own calendar, subscribed, must not match as the owner's")
 }
 
 func TestPeopleScheduleUnavailableStatus(t *testing.T) {
