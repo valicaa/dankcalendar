@@ -323,3 +323,30 @@ func TestPeopleScheduleUnavailableStatus(t *testing.T) {
 	assert.Empty(t, result["events"].([]any))
 	assert.Empty(t, result["busy"].([]any))
 }
+
+func TestScheduleEventKey(t *testing.T) {
+	start := time.Date(2026, 9, 2, 10, 0, 0, 0, time.UTC)
+	original := time.Date(2026, 9, 1, 10, 0, 0, 0, time.UTC)
+	cases := map[string]struct {
+		ev   calendar.ScheduleEvent
+		want string
+	}{
+		"single event": {
+			ev:   calendar.ScheduleEvent{Event: calendar.Event{Start: start}, ICalUID: "ical-1"},
+			want: "ical-1|2026-09-02T10:00:00Z",
+		},
+		"moved occurrence keys on its original start": {
+			ev:   calendar.ScheduleEvent{Event: calendar.Event{Start: start, OriginalStart: original}, ICalUID: "ical-1"},
+			want: "ical-1|2026-09-01T10:00:00Z",
+		},
+		"no iCalUID merges with nobody": {
+			ev:   calendar.ScheduleEvent{Event: calendar.Event{Start: start}},
+			want: "",
+		},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			assert.Equal(t, tc.want, scheduleEventKey(tc.ev))
+		})
+	}
+}

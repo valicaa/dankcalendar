@@ -250,15 +250,25 @@ func (idx *ownerScheduleIndex) match(ev calendar.ScheduleEvent) (ownerMatch, boo
 	return m, ok
 }
 
+// scheduleEventKey identifies an occurrence across calendars: iCalUID plus
+// its original start. Without an iCalUID there is nothing to match on, so the
+// key is empty and the event merges with nobody.
+func scheduleEventKey(ev calendar.ScheduleEvent) string {
+	if ev.ICalUID == "" {
+		return ""
+	}
+	keyStart := ev.OriginalStart
+	if keyStart.IsZero() {
+		keyStart = ev.Start
+	}
+	return ev.ICalUID + "|" + keyStart.UTC().Format(time.RFC3339)
+}
+
 func scheduleEventsJSON(events []calendar.ScheduleEvent, idx *ownerScheduleIndex) []any {
 	out := make([]any, 0, len(events))
 	for _, ev := range events {
-		keyStart := ev.OriginalStart
-		if keyStart.IsZero() {
-			keyStart = ev.Start
-		}
 		entry := map[string]any{
-			"key":      ev.ICalUID + "|" + keyStart.UTC().Format(time.RFC3339),
+			"key":      scheduleEventKey(ev),
 			"summary":  ev.Summary,
 			"location": ev.Location,
 			"start":    ev.Start.UTC().Format(time.RFC3339),
