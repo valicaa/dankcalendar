@@ -68,7 +68,7 @@ func TestCreateEventUsesUIDAsIdempotentID(t *testing.T) {
 	created := `{"id": "` + uid + `", "summary": "Lunch", "start": {"dateTime": "2026-09-30T09:00:00Z"}, "end": {"dateTime": "2026-09-30T10:00:00Z"}}`
 	const (
 		duplicate = `{"error": {"code": 409, "message": "The requested identifier already exists.", "errors": [{"reason": "duplicate"}]}}`
-		deleted   = `{"error": {"code": 409, "message": "Resource has been deleted", "errors": [{"reason": "deleted"}]}}`
+		conflict  = `{"error": {"code": 409, "message": "Conflict", "errors": [{"reason": "conflict"}]}}`
 		forbidden = `{"error": {"code": 403, "message": "forbidden", "errors": [{"reason": "forbidden"}]}}`
 	)
 
@@ -91,7 +91,7 @@ func TestCreateEventUsesUIDAsIdempotentID(t *testing.T) {
 		{name: "retry whose update fails", uid: uid, insertCode: http.StatusConflict, insertBody: duplicate,
 			putCode: http.StatusForbidden, putBody: forbidden, wantID: uid, wantErr: true,
 			wantCalls: []string{"POST /calendars/primary/events", "PUT /calendars/primary/events/" + uid}},
-		{name: "conflict for a deleted id is not resurrected", uid: uid, insertCode: http.StatusConflict, insertBody: deleted,
+		{name: "a 409 other than duplicate is returned, not updated", uid: uid, insertCode: http.StatusConflict, insertBody: conflict,
 			wantID: uid, wantErr: true, wantCalls: []string{"POST /calendars/primary/events"}},
 		{name: "uid outside google's id alphabet", uid: "abc@example.com", insertCode: http.StatusOK, insertBody: created,
 			wantCalls: []string{"POST /calendars/primary/events"}},

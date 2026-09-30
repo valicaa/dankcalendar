@@ -255,8 +255,9 @@ func (p *Provider) ListEvents(ctx context.Context, c cal.Calendar, opts cal.List
 	return out, nil
 }
 
-// isDuplicateID reports Google's answer to inserting an id that exists. Other
-// 409s (a deleted id, for one) must not turn into an update that resurrects it.
+// isDuplicateID reports a 409 with reason "duplicate", the only answer taken to
+// mean an earlier attempt created the event. Any other 409 is returned to the
+// caller rather than turned into an update.
 func isDuplicateID(err error) bool {
 	var apiErr *googleapi.Error
 	if !errors.As(err, &apiErr) || apiErr.Code != http.StatusConflict {
