@@ -825,7 +825,8 @@ Singleton {
     // "respond") picks the wording of an unclassified failure.
     function writeFailure(response, calendarId, action) {
         const code = response.errorCode || "generic";
-        log.warn("event write failed (" + code + "): " + response.error);
+        if (!response.logged)
+            log.warn("event write failed (" + code + "): " + response.error);
         const cal = calendarById(calendarId);
         const acc = cal ? accountById(cal.accountId) : null;
         const flavor = accountFlavor(acc);
@@ -1032,7 +1033,8 @@ Singleton {
     }
 
     // batchFailure summarises the failures of a mutateEvents reply through
-    // writeFailure (which logs each raw error). reason is the plain-language
+    // writeFailure (which logs each raw error once: a failure carried into a
+    // later round is marked logged). reason is the plain-language
     // cause, taken from the first retryable failure, else the first one with an
     // account to reconnect; empty when every failure is unclassified. retry
     // holds the retryable failures, the only ones worth resending; other the
@@ -1044,6 +1046,7 @@ Singleton {
         const failures = response.failures || [];
         for (let i = 0; i < failures.length; i++) {
             const failure = writeFailure(failures[i], failures[i].calendarId, action);
+            failures[i].logged = true;
             const classified = failure.retryable || failure.account;
             if (failure.retryable)
                 retry.push(failures[i]);
