@@ -35,6 +35,34 @@
     "comment": ""
   },
   {
+    "term": "%1 of %2 events couldn't be created.",
+    "translation": "",
+    "context": "toast when some events failed to create; %1 is failed count, %2 is total count",
+    "reference": "",
+    "comment": ""
+  },
+  {
+    "term": "%1 of %2 events couldn't be deleted.",
+    "translation": "",
+    "context": "toast when some events failed to delete; %1 is failed count, %2 is total count",
+    "reference": "",
+    "comment": ""
+  },
+  {
+    "term": "%1 of %2 events couldn't be moved.",
+    "translation": "",
+    "context": "toast when some events failed to move; %1 is failed count, %2 is total count",
+    "reference": "",
+    "comment": ""
+  },
+  {
+    "term": "%1 of %2 events couldn't be pasted.",
+    "translation": "",
+    "context": "toast when some events failed to paste; %1 is failed count, %2 is total count",
+    "reference": "",
+    "comment": ""
+  },
+  {
     "term": "%1 selected",
     "translation": "",
     "context": "multi-event action shelf selection count; %1 is event count",
@@ -563,6 +591,13 @@
     "term": "Always use the light theme.",
     "translation": "",
     "context": "theme mode setting description",
+    "reference": "",
+    "comment": ""
+  },
+  {
+    "term": "Another change is still in progress. Try again in a moment.",
+    "translation": "",
+    "context": "toast when Try again is pressed while an event batch is still running",
     "reference": "",
     "comment": ""
   },
@@ -3398,6 +3433,13 @@
     "term": "Some calendars couldn't be synced; their events may be missing or out of date.",
     "translation": "",
     "context": "account notice when at least one calendar failed to sync",
+    "reference": "",
+    "comment": ""
+  },
+  {
+    "term": "Some original events couldn't be deleted and still exist next to their copies.",
+    "translation": "",
+    "context": "toast note when a cut-paste could not delete originals whose copies were created",
     "reference": "",
     "comment": ""
   },

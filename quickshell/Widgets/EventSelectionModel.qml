@@ -146,9 +146,148 @@ Item {
         return "";
     }
 
-    function finishOperation(action, total, response) {
+    function failureSummary(action, count, total) {
+        switch (action) {
+        case "paste":
+            return I18n.tr("%1 of %2 events couldn't be pasted.", "toast when some events failed to paste; %1 is failed count, %2 is total count").arg(count).arg(total);
+        case "move":
+            return I18n.tr("%1 of %2 events couldn't be moved.", "toast when some events failed to move; %1 is failed count, %2 is total count").arg(count).arg(total);
+        case "create":
+            return I18n.tr("%1 of %2 events couldn't be created.", "toast when some events failed to create; %1 is failed count, %2 is total count").arg(count).arg(total);
+        }
+        return I18n.tr("%1 of %2 events couldn't be deleted.", "toast when some events failed to delete; %1 is failed count, %2 is total count").arg(count).arg(total);
+    }
+
+    // finishOperation reports a batch that ended. A failure toast states how many
+    // items are still not done and why (the raw error only goes to the log) and
+    // offers Try again for the retryable ones only; failures that can't be
+    // retried are carried into the retry's reply so they are reported again once
+    // it settles, never dropped. retry = {method, done, resume, writeAction,
+    // note}: the IPC method to resend with, how many items succeeded before this
+    // reply, what to call with the merged reply of a retry (default: report it
+    // here again), the wording class of an unclassified failure (default from
+    // action) and a sentence to append to the toast.
+    function finishOperation(action, total, response, retry) {
         busy = false;
-        ToastService.info(operationToast(action, (response.results || []).length, total));
+        const completed = retry.done + (response.results || []).length;
+        if (!response.error) {
+            ToastService.info(operationToast(action, completed, total));
+            return;
+        }
+        const resume = retry.resume || ((next, nextDone) => root.finishOperation(action, total, next, {
+                    "method": retry.method,
+                    "done": nextDone
+                }));
+        const resend = (failures, carried) => {
+            if (root.busy) {
+                ToastService.info(I18n.tr("Another change is still in progress. Try again in a moment.", "toast when Try again is pressed while an event batch is still running"));
+                return;
+            }
+            root.busy = true;
+            DankCalService.retryBatch(retry.method, failures, next => {
+                const merged = Object.assign({}, next, {
+                    "failures": next.failures.concat(carried)
+                });
+                if (merged.failures.length > 0)
+                    merged.error = merged.failures[0].error;
+                resume(merged, completed);
+            });
+        };
+        const writeAction = retry.writeAction || (action === "delete" ? "delete" : "save");
+        if (total === 1) {
+            const only = response.failures[0];
+            DankCalService.showWriteFailure(only, only.calendarId, writeAction, () => resend([only], []));
+            return;
+        }
+        const failed = DankCalService.batchFailure(response, writeAction);
+        let message = failureSummary(action, total - completed, total);
+        if (failed.reason !== "")
+            message += " " + failed.reason;
+        if (retry.note)
+            message += " " + retry.note;
+        const opts = {};
+        if (failed.retry.length > 0) {
+            opts.actionLabel = I18n.tr("Try again", "toast action to resend a failed event change");
+            opts.action = () => resend(failed.retry, failed.other);
+        } else if (failed.account) {
+            opts.actionLabel = I18n.tr("Reconnect", "toast action to sign in to an account again");
+            opts.action = () => DankCalService.reconnectAccount(failed.account);
+        }
+        ToastService.show(message, opts);
+    }
+
+    // Keeps a cut-paste's clipboard honest: only the cut items whose copy does
+    // not exist yet stay on it (so a second Ctrl+V doesn't re-copy moved items),
+    // and once every original is gone the copies replace it, as after a plain
+    // cut-paste. Skipped when the user copied something else meanwhile.
+    function syncClipboard(state, originalsGone) {
+        if (Object.keys(state.entries).length === 0 || Quickshell.clipboardText !== state.clip)
+            return;
+        const pending = Object.keys(state.entries).filter(uid => !state.created[uid]).map(uid => state.entries[uid]);
+        const text = EventUtils.clipboardTextFromFields(pending.length === 0 && originalsGone ? state.fields : pending);
+        Quickshell.clipboardText = text;
+        state.clip = text;
+    }
+
+    // Reports a paste's creates. state = {fields, sources, entries, created,
+    // unremoved, clip}: sources maps a copy's client uid to the cut original it
+    // replaces and entries to its clipboard entry. An original is deleted only
+    // once its own copy exists, whichever round created it, so a copy that never
+    // succeeds keeps its original; originals whose delete failed wait in
+    // unremoved for the next round, and are reported if that round fails too.
+    function finishPasteCreate(state, response, done) {
+        const created = response.succeeded || [];
+        created.forEach(item => state.created[item.uid] = true);
+        const originals = state.unremoved.concat(created.map(item => state.sources[item.uid]).filter(source => source));
+        state.unremoved = [];
+        const fields = state.fields;
+        const settle = deleteResponse => {
+            if (response.error) {
+                let note = "";
+                if (deleteResponse && deleteResponse.error) {
+                    DankCalService.batchFailure(deleteResponse, "delete");
+                    note = I18n.tr("Some original events couldn't be deleted and still exist next to their copies.", "toast note when a cut-paste could not delete originals whose copies were created");
+                }
+                root.syncClipboard(state, false);
+                root.finishOperation("paste", fields.length, response, {
+                    "method": "events.create",
+                    "done": done,
+                    "note": note,
+                    "resume": (next, nextDone) => root.finishPasteCreate(state, next, nextDone)
+                });
+                root.clear();
+                return;
+            }
+            if (originals.length === 0 || Object.keys(state.sources).length === 0) {
+                root.finishOperation("paste", fields.length, response, {
+                    "method": "events.create",
+                    "done": done
+                });
+                root.clear();
+                return;
+            }
+            root.finishCutDelete(state, deleteResponse, fields.length - originals.length);
+            root.clear();
+        };
+        if (originals.length === 0) {
+            settle(null);
+            return;
+        }
+        DankCalService.deleteEvents(originals, deleteResponse => {
+            state.unremoved = deleteResponse.failures.map(failure => originals[failure.index]);
+            settle(deleteResponse);
+        });
+    }
+
+    // Reports the delete half of a cut-paste, including a retry of it.
+    function finishCutDelete(state, deleteResponse, done) {
+        root.finishOperation("move", state.fields.length, deleteResponse, {
+            "method": "events.delete",
+            "done": done,
+            "writeAction": "delete",
+            "resume": (next, nextDone) => root.finishCutDelete(state, next, nextDone)
+        });
+        root.syncClipboard(state, !deleteResponse.error);
     }
 
     function copy(fallback) {
@@ -185,27 +324,25 @@ Item {
             return;
         }
         const fields = EventUtils.pasteFields(copied, targetDay, fallbackId);
-        const cutSources = [];
+        const state = {
+            "fields": fields,
+            "sources": {},
+            "entries": {},
+            "created": {},
+            "unremoved": [],
+            "clip": Quickshell.clipboardText
+        };
         for (let i = 0; i < fields.length; i++) {
-            if (fields[i]._dankCut)
-                cutSources.push(fields[i]._dankCut);
+            fields[i].uid = DankCalService.newEventUid();
+            if (fields[i]._dankCut) {
+                state.sources[fields[i].uid] = fields[i]._dankCut;
+                state.entries[fields[i].uid] = copied.find(entry => entry._dankCut === fields[i]._dankCut);
+            }
             delete fields[i]._dankCut;
             fields[i].calendarId = writableCalendarId(fields[i].calendarId);
         }
         busy = true;
-        DankCalService.createEvents(fields, response => {
-            if (response.error || cutSources.length !== fields.length) {
-                root.finishOperation("paste", fields.length, response);
-                root.clear();
-                return;
-            }
-            DankCalService.deleteEvents(cutSources, deleteResponse => {
-                root.finishOperation("move", fields.length, deleteResponse);
-                if (!deleteResponse.error)
-                    Quickshell.clipboardText = EventUtils.clipboardTextFromFields(fields);
-                root.clear();
-            });
-        });
+        DankCalService.createEvents(fields, response => root.finishPasteCreate(state, response, 0));
     }
 
     function duplicate(dayOffset, fallback) {
@@ -225,7 +362,10 @@ Item {
             return;
         }
         busy = true;
-        DankCalService.createEvents(fields, response => root.finishOperation("create", fields.length, response));
+        DankCalService.createEvents(fields, response => root.finishOperation("create", fields.length, response, {
+                "method": "events.create",
+                "done": 0
+            }));
     }
 
     function moveTo(anchorEvent, targetDay) {
@@ -245,7 +385,10 @@ Item {
             return;
         busy = true;
         DankCalService.moveEvents(selected, dayOffset, minuteOffset, response => {
-            root.finishOperation("move", selected.length, response);
+            root.finishOperation("move", selected.length, response, {
+                "method": "events.update",
+                "done": 0
+            });
             root.clear();
         });
     }
@@ -264,7 +407,10 @@ Item {
         }
         busy = true;
         DankCalService.deleteEvents(selected, response => {
-            root.finishOperation("delete", selected.length, response);
+            root.finishOperation("delete", selected.length, response, {
+                "method": "events.delete",
+                "done": 0
+            });
             root.clear();
         });
     }
