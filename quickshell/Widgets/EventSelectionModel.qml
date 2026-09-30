@@ -162,9 +162,11 @@ Item {
     // items are still not done and why (the raw error only goes to the log) and
     // offers Try again for the retryable ones only; failures that can't be
     // retried are carried into the retry's reply so they are reported again once
-    // it settles, never dropped. retry = {method, done, resume}: the IPC method
-    // to resend with, how many items succeeded before this reply, and what to
-    // call with the merged reply of a retry (default: report it here again).
+    // it settles, never dropped. retry = {method, done, resume, writeAction,
+    // note}: the IPC method to resend with, how many items succeeded before this
+    // reply, what to call with the merged reply of a retry (default: report it
+    // here again), the wording class of an unclassified failure (default from
+    // action) and a sentence to append to the toast.
     function finishOperation(action, total, response, retry) {
         busy = false;
         const completed = retry.done + (response.results || []).length;
@@ -177,8 +179,10 @@ Item {
                     "done": nextDone
                 }));
         const resend = (failures, carried) => {
-            if (root.busy)
+            if (root.busy) {
+                ToastService.info(I18n.tr("Another change is still in progress. Try again in a moment.", "toast when Try again is pressed while an event batch is still running"));
                 return;
+            }
             root.busy = true;
             DankCalService.retryBatch(retry.method, failures, next => {
                 const merged = Object.assign({}, next, {
@@ -189,7 +193,7 @@ Item {
                 resume(merged, completed);
             });
         };
-        const writeAction = action === "delete" ? "delete" : "save";
+        const writeAction = retry.writeAction || (action === "delete" ? "delete" : "save");
         if (total === 1) {
             const only = response.failures[0];
             DankCalService.showWriteFailure(only, only.calendarId, writeAction, () => resend([only], []));
@@ -199,6 +203,8 @@ Item {
         let message = failureSummary(action, total - completed, total);
         if (failed.reason !== "")
             message += " " + failed.reason;
+        if (retry.note)
+            message += " " + retry.note;
         const opts = {};
         if (failed.retry.length > 0) {
             opts.actionLabel = I18n.tr("Try again", "toast action to resend a failed event change");
@@ -210,20 +216,43 @@ Item {
         ToastService.show(message, opts);
     }
 
-    // Reports a paste's creates. state = {fields, sources, unremoved}: sources
-    // maps a copy's client uid to the cut original it replaces. An original is
-    // deleted only once its own copy exists, whichever round created it, so a
-    // copy that never succeeds keeps its original; originals whose delete failed
-    // wait in unremoved for the next round.
+    // Keeps a cut-paste's clipboard honest: only the cut items whose copy does
+    // not exist yet stay on it (so a second Ctrl+V doesn't re-copy moved items),
+    // and once every original is gone the copies replace it, as after a plain
+    // cut-paste. Skipped when the user copied something else meanwhile.
+    function syncClipboard(state, originalsGone) {
+        if (Object.keys(state.entries).length === 0 || Quickshell.clipboardText !== state.clip)
+            return;
+        const pending = Object.keys(state.entries).filter(uid => !state.created[uid]).map(uid => state.entries[uid]);
+        const text = EventUtils.clipboardTextFromFields(pending.length === 0 && originalsGone ? state.fields : pending);
+        Quickshell.clipboardText = text;
+        state.clip = text;
+    }
+
+    // Reports a paste's creates. state = {fields, sources, entries, created,
+    // unremoved, clip}: sources maps a copy's client uid to the cut original it
+    // replaces and entries to its clipboard entry. An original is deleted only
+    // once its own copy exists, whichever round created it, so a copy that never
+    // succeeds keeps its original; originals whose delete failed wait in
+    // unremoved for the next round, and are reported if that round fails too.
     function finishPasteCreate(state, response, done) {
-        const originals = state.unremoved.concat((response.succeeded || []).map(item => state.sources[item.uid]).filter(source => source));
+        const created = response.succeeded || [];
+        created.forEach(item => state.created[item.uid] = true);
+        const originals = state.unremoved.concat(created.map(item => state.sources[item.uid]).filter(source => source));
         state.unremoved = [];
         const fields = state.fields;
         const settle = deleteResponse => {
             if (response.error) {
+                let note = "";
+                if (deleteResponse && deleteResponse.error) {
+                    DankCalService.batchFailure(deleteResponse, "delete");
+                    note = I18n.tr("Some original events couldn't be deleted and still exist next to their copies.", "toast note when a cut-paste could not delete originals whose copies were created");
+                }
+                root.syncClipboard(state, false);
                 root.finishOperation("paste", fields.length, response, {
                     "method": "events.create",
                     "done": done,
+                    "note": note,
                     "resume": (next, nextDone) => root.finishPasteCreate(state, next, nextDone)
                 });
                 root.clear();
@@ -250,19 +279,15 @@ Item {
         });
     }
 
-    // Reports the delete half of a cut-paste; the clipboard is restored once
-    // every original is gone, on the first reply or after a retry.
+    // Reports the delete half of a cut-paste, including a retry of it.
     function finishCutDelete(state, deleteResponse, done) {
         root.finishOperation("move", state.fields.length, deleteResponse, {
             "method": "events.delete",
             "done": done,
-            "resume": (next, nextDone) => {
-                state.unremoved = [];
-                root.finishCutDelete(state, next, nextDone);
-            }
+            "writeAction": "delete",
+            "resume": (next, nextDone) => root.finishCutDelete(state, next, nextDone)
         });
-        if (!deleteResponse.error)
-            Quickshell.clipboardText = EventUtils.clipboardTextFromFields(state.fields);
+        root.syncClipboard(state, !deleteResponse.error);
     }
 
     function copy(fallback) {
@@ -302,12 +327,17 @@ Item {
         const state = {
             "fields": fields,
             "sources": {},
-            "unremoved": []
+            "entries": {},
+            "created": {},
+            "unremoved": [],
+            "clip": Quickshell.clipboardText
         };
         for (let i = 0; i < fields.length; i++) {
             fields[i].uid = DankCalService.newEventUid();
-            if (fields[i]._dankCut)
+            if (fields[i]._dankCut) {
                 state.sources[fields[i].uid] = fields[i]._dankCut;
+                state.entries[fields[i].uid] = copied.find(entry => entry._dankCut === fields[i]._dankCut);
+            }
             delete fields[i]._dankCut;
             fields[i].calendarId = writableCalendarId(fields[i].calendarId);
         }

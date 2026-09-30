@@ -595,6 +595,13 @@
     "comment": ""
   },
   {
+    "term": "Another change is still in progress. Try again in a moment.",
+    "translation": "",
+    "context": "toast when Try again is pressed while an event batch is still running",
+    "reference": "",
+    "comment": ""
+  },
+  {
     "term": "App",
     "translation": "",
     "context": "general settings section label",
@@ -3426,6 +3433,13 @@
     "term": "Some calendars couldn't be synced; their events may be missing or out of date.",
     "translation": "",
     "context": "account notice when at least one calendar failed to sync",
+    "reference": "",
+    "comment": ""
+  },
+  {
+    "term": "Some original events couldn't be deleted and still exist next to their copies.",
+    "translation": "",
+    "context": "toast note when a cut-paste could not delete originals whose copies were created",
     "reference": "",
     "comment": ""
   },

@@ -26,7 +26,7 @@
   {
     "term": "%1 is busy right now. Try again in a moment.",
     "context": "%1 is busy right now. Try again in a moment.",
-    "reference": "Services/DankCalService.qml:844",
+    "reference": "Services/DankCalService.qml:845",
     "comment": "event change error when the provider is rate limiting or down"
   },
   {
@@ -62,7 +62,7 @@
   {
     "term": "%1 times",
     "context": "%1 times",
-    "reference": "Services/DankCalService.qml:1229",
+    "reference": "Services/DankCalService.qml:1232",
     "comment": "recurrence label suffix for a fixed number of occurrences"
   },
   {
@@ -380,7 +380,7 @@
   {
     "term": "Add account",
     "context": "Add account",
-    "reference": "Modules/CalendarSidebar.qml:983, Modals/SettingsContent.qml:1247, Modals/AccountAddModal.qml:220, Modals/AccountAddModal.qml:302, Services/DankCalService.qml:1631",
+    "reference": "Modules/CalendarSidebar.qml:983, Modals/SettingsContent.qml:1247, Modals/AccountAddModal.qml:220, Modals/AccountAddModal.qml:302, Services/DankCalService.qml:1634",
     "comment": "account add modal header title | account add modal window title | add account button on accounts page | sidebar button to add a provider account | toast action to re-add an account that failed to reconnect"
   },
   {
@@ -508,6 +508,12 @@
     "context": "Always use the light theme.",
     "reference": "Modals/SettingsContent.qml:600",
     "comment": "theme mode setting description"
+  },
+  {
+    "term": "Another change is still in progress. Try again in a moment.",
+    "context": "Another change is still in progress. Try again in a moment.",
+    "reference": "Widgets/EventSelectionModel.qml:183",
+    "comment": "toast when Try again is pressed while an event batch is still running"
   },
   {
     "term": "App",
@@ -860,13 +866,13 @@
   {
     "term": "Copied %1 events",
     "context": "Copied %1 events",
-    "reference": "Widgets/EventSelectionModel.qml:275",
+    "reference": "Widgets/EventSelectionModel.qml:300",
     "comment": "clipboard confirmation for multiple events; %1 is event count"
   },
   {
     "term": "Copied 1 event",
     "context": "Copied 1 event",
-    "reference": "Widgets/EventSelectionModel.qml:275",
+    "reference": "Widgets/EventSelectionModel.qml:300",
     "comment": "clipboard confirmation for one event"
   },
   {
@@ -926,37 +932,37 @@
   {
     "term": "Couldn't delete the event.",
     "context": "Couldn't delete the event.",
-    "reference": "Services/DankCalService.qml:857",
+    "reference": "Services/DankCalService.qml:858",
     "comment": "event delete error for an unclassified failure"
   },
   {
     "term": "Couldn't reach %1. Check your connection and try again.",
     "context": "Couldn't reach %1. Check your connection and try again.",
-    "reference": "Services/DankCalService.qml:838",
+    "reference": "Services/DankCalService.qml:839",
     "comment": "event change error when the provider can't be reached"
   },
   {
     "term": "Couldn't reconnect. Add the account again to sign in.",
     "context": "Couldn't reconnect. Add the account again to sign in.",
-    "reference": "Services/DankCalService.qml:1661",
+    "reference": "Services/DankCalService.qml:1664",
     "comment": "toast when reconnecting an account fails"
   },
   {
     "term": "Couldn't save the event.",
     "context": "Couldn't save the event.",
-    "reference": "Services/DankCalService.qml:855",
+    "reference": "Services/DankCalService.qml:856",
     "comment": "event save error for an unclassified failure"
   },
   {
     "term": "Couldn't send your response.",
     "context": "Couldn't send your response.",
-    "reference": "Services/DankCalService.qml:859",
+    "reference": "Services/DankCalService.qml:860",
     "comment": "event RSVP error for an unclassified failure"
   },
   {
     "term": "Couldn't update task",
     "context": "Couldn't update task",
-    "reference": "Services/DankCalService.qml:1388",
+    "reference": "Services/DankCalService.qml:1391",
     "comment": "toast when a task update fails"
   },
   {
@@ -1010,13 +1016,13 @@
   {
     "term": "Cut %1 events",
     "context": "Cut %1 events",
-    "reference": "Widgets/EventSelectionModel.qml:289, Widgets/EventContextMenu.qml:116",
+    "reference": "Widgets/EventSelectionModel.qml:314, Widgets/EventContextMenu.qml:116",
     "comment": "clipboard confirmation for multiple events; %1 is event count | event context menu cut action; %1 is event count"
   },
   {
     "term": "Cut 1 event",
     "context": "Cut 1 event",
-    "reference": "Widgets/EventSelectionModel.qml:289",
+    "reference": "Widgets/EventSelectionModel.qml:314",
     "comment": "clipboard confirmation for one event"
   },
   {
@@ -1214,7 +1220,7 @@
   {
     "term": "Deleted 1 event",
     "context": "Deleted 1 event",
-    "reference": "Services/DankCalService.qml:939, Widgets/EventSelectionModel.qml:144",
+    "reference": "Services/DankCalService.qml:940, Widgets/EventSelectionModel.qml:144",
     "comment": "toast after deleting one event"
   },
   {
@@ -1730,7 +1736,7 @@
   {
     "term": "Local",
     "context": "Local",
-    "reference": "Modals/SettingsContent.qml:1097, Modals/AccountAddModal.qml:126, Modals/AccountAddModal.qml:504, Services/DankCalService.qml:1867",
+    "reference": "Modals/SettingsContent.qml:1097, Modals/AccountAddModal.qml:126, Modals/AccountAddModal.qml:504, Services/DankCalService.qml:1870",
     "comment": "local provider name in account add modal | local provider name in account list | provider label for a local account"
   },
   {
@@ -1772,7 +1778,7 @@
   {
     "term": "Marked as not done",
     "context": "Marked as not done",
-    "reference": "Services/DankCalService.qml:1391",
+    "reference": "Services/DankCalService.qml:1394",
     "comment": "toast after un-completing a task"
   },
   {
@@ -2114,7 +2120,7 @@
   {
     "term": "No writable calendar available",
     "context": "No writable calendar available",
-    "reference": "Modals/EventDetailsModal.qml:357, Widgets/EventSelectionModel.qml:298, Widgets/EventSelectionModel.qml:331",
+    "reference": "Modals/EventDetailsModal.qml:357, Widgets/EventSelectionModel.qml:323, Widgets/EventSelectionModel.qml:361",
     "comment": "event duplicate error when no calendar allows creating events | event form error when no calendar allows creating events | event paste error when no calendar allows creating events"
   },
   {
@@ -2474,19 +2480,19 @@
   {
     "term": "Read-only events can't be cut",
     "context": "Read-only events can't be cut",
-    "reference": "Widgets/EventSelectionModel.qml:285",
+    "reference": "Widgets/EventSelectionModel.qml:310",
     "comment": "event cut error for a read-only calendar"
   },
   {
     "term": "Read-only events can't be deleted",
     "context": "Read-only events can't be deleted",
-    "reference": "Widgets/EventSelectionModel.qml:375",
+    "reference": "Widgets/EventSelectionModel.qml:405",
     "comment": "event delete error for a read-only calendar"
   },
   {
     "term": "Read-only events can't be moved",
     "context": "Read-only events can't be moved",
-    "reference": "Widgets/EventSelectionModel.qml:351",
+    "reference": "Widgets/EventSelectionModel.qml:381",
     "comment": "event move error for a read-only calendar"
   },
   {
@@ -2498,7 +2504,7 @@
   {
     "term": "Reconnect",
     "context": "Reconnect",
-    "reference": "Modules/CalendarSidebar.qml:678, Modules/CalendarSidebar.qml:1220, Modals/SettingsContent.qml:1216, Modals/EventDetailsModal.qml:682, Services/DankCalService.qml:875, Widgets/EventSelectionModel.qml:207",
+    "reference": "Modules/CalendarSidebar.qml:678, Modules/CalendarSidebar.qml:1220, Modals/SettingsContent.qml:1216, Modals/EventDetailsModal.qml:682, Services/DankCalService.qml:876, Widgets/EventSelectionModel.qml:213",
     "comment": "account context menu action to re-authorize the account | account row action tooltip | event form button to sign in to an account again | sidebar button that reconnects the account used for a colleague lookup | toast action to sign in to an account again"
   },
   {
@@ -2648,19 +2654,19 @@
   {
     "term": "Repeats",
     "context": "Repeats",
-    "reference": "Modals/EventDetailsModal.qml:299, Services/DankCalService.qml:1210",
+    "reference": "Modals/EventDetailsModal.qml:299, Services/DankCalService.qml:1213",
     "comment": "generic recurrence label for an unrecognized rule"
   },
   {
     "term": "Repeats every %1",
     "context": "Repeats every %1",
-    "reference": "Services/DankCalService.qml:1212",
+    "reference": "Services/DankCalService.qml:1215",
     "comment": "recurrence label, %1 is a unit like 'day'"
   },
   {
     "term": "Repeats every %1 %2",
     "context": "Repeats every %1 %2",
-    "reference": "Services/DankCalService.qml:1212",
+    "reference": "Services/DankCalService.qml:1215",
     "comment": "recurrence label, %1 is a count and %2 a unit like 'weeks'"
   },
   {
@@ -2672,7 +2678,7 @@
   {
     "term": "Response sent",
     "context": "Response sent",
-    "reference": "Services/DankCalService.qml:954",
+    "reference": "Services/DankCalService.qml:955",
     "comment": "toast after a retried RSVP succeeds"
   },
   {
@@ -2912,7 +2918,7 @@
   {
     "term": "Sign-in expired. Reconnect %1 and try again.",
     "context": "Sign-in expired. Reconnect %1 and try again.",
-    "reference": "Services/DankCalService.qml:850",
+    "reference": "Services/DankCalService.qml:851",
     "comment": "event change error when the account needs to sign in again"
   },
   {
@@ -2938,6 +2944,12 @@
     "context": "Some calendars couldn't be synced; their events may be missing or out of date.",
     "reference": "Modals/SettingsContent.qml:62",
     "comment": "account notice when at least one calendar failed to sync"
+  },
+  {
+    "term": "Some original events couldn't be deleted and still exist next to their copies.",
+    "context": "Some original events couldn't be deleted and still exist next to their copies.",
+    "reference": "Widgets/EventSelectionModel.qml:249",
+    "comment": "toast note when a cut-paste could not delete originals whose copies were created"
   },
   {
     "term": "Spring",
@@ -3062,7 +3074,7 @@
   {
     "term": "Task completed",
     "context": "Task completed",
-    "reference": "Services/DankCalService.qml:1391",
+    "reference": "Services/DankCalService.qml:1394",
     "comment": "toast after completing a task"
   },
   {
@@ -3140,7 +3152,7 @@
   {
     "term": "This account cannot be reconnected — remove it and add it again.",
     "context": "This account cannot be reconnected — remove it and add it again.",
-    "reference": "Services/DankCalService.qml:1652",
+    "reference": "Services/DankCalService.qml:1655",
     "comment": "error when reconnect is unavailable for a provider"
   },
   {
@@ -3212,7 +3224,7 @@
   {
     "term": "Try again",
     "context": "Try again",
-    "reference": "Modals/EventDetailsModal.qml:682, Modals/AccountAddModal.qml:1091, Services/DankCalService.qml:872, Widgets/EventSelectionModel.qml:204",
+    "reference": "Modals/EventDetailsModal.qml:682, Modals/AccountAddModal.qml:1091, Services/DankCalService.qml:873, Widgets/EventSelectionModel.qml:210",
     "comment": "button to retry oauth after failure | event form button to resend a failed save | toast action to resend a failed event change"
   },
   {
@@ -3236,7 +3248,7 @@
   {
     "term": "Undo",
     "context": "Undo",
-    "reference": "Services/DankCalService.qml:1392",
+    "reference": "Services/DankCalService.qml:1395",
     "comment": "toast undo action"
   },
   {
@@ -3428,13 +3440,13 @@
   {
     "term": "day",
     "context": "day",
-    "reference": "Services/DankCalService.qml:1204",
+    "reference": "Services/DankCalService.qml:1207",
     "comment": "recurrence unit singular"
   },
   {
     "term": "days",
     "context": "days",
-    "reference": "Services/DankCalService.qml:1204, Widgets/DankRecurrencePicker.qml:63",
+    "reference": "Services/DankCalService.qml:1207, Widgets/DankRecurrencePicker.qml:63",
     "comment": "recurrence unit plural"
   },
   {
@@ -3458,19 +3470,19 @@
   {
     "term": "month",
     "context": "month",
-    "reference": "Services/DankCalService.qml:1206",
+    "reference": "Services/DankCalService.qml:1209",
     "comment": "recurrence unit singular"
   },
   {
     "term": "months",
     "context": "months",
-    "reference": "Services/DankCalService.qml:1206, Widgets/DankRecurrencePicker.qml:71",
+    "reference": "Services/DankCalService.qml:1209, Widgets/DankRecurrencePicker.qml:71",
     "comment": "recurrence unit plural"
   },
   {
     "term": "on %1",
     "context": "on %1",
-    "reference": "Services/DankCalService.qml:1226",
+    "reference": "Services/DankCalService.qml:1229",
     "comment": "recurrence label suffix listing weekdays, %1 like 'Mon, Wed'"
   },
   {
@@ -3506,7 +3518,7 @@
   {
     "term": "the server",
     "context": "the server",
-    "reference": "Services/DankCalService.qml:833",
+    "reference": "Services/DankCalService.qml:834",
     "comment": "fallback name for a calendar provider or account in an event change error"
   },
   {
@@ -3524,7 +3536,7 @@
   {
     "term": "until %1",
     "context": "until %1",
-    "reference": "Services/DankCalService.qml:1231",
+    "reference": "Services/DankCalService.qml:1234",
     "comment": "recurrence label suffix with an end date"
   },
   {
@@ -3536,25 +3548,25 @@
   {
     "term": "week",
     "context": "week",
-    "reference": "Services/DankCalService.qml:1205",
+    "reference": "Services/DankCalService.qml:1208",
     "comment": "recurrence unit singular"
   },
   {
     "term": "weeks",
     "context": "weeks",
-    "reference": "Services/DankCalService.qml:1205, Widgets/DankRecurrencePicker.qml:67",
+    "reference": "Services/DankCalService.qml:1208, Widgets/DankRecurrencePicker.qml:67",
     "comment": "recurrence unit plural"
   },
   {
     "term": "year",
     "context": "year",
-    "reference": "Services/DankCalService.qml:1207",
+    "reference": "Services/DankCalService.qml:1210",
     "comment": "recurrence unit singular"
   },
   {
     "term": "years",
     "context": "years",
-    "reference": "Services/DankCalService.qml:1207, Widgets/DankRecurrencePicker.qml:75",
+    "reference": "Services/DankCalService.qml:1210, Widgets/DankRecurrencePicker.qml:75",
     "comment": "recurrence unit plural"
   },
   {
