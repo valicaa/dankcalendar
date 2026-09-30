@@ -28,6 +28,13 @@
     "comment": ""
   },
   {
+    "term": "%1 is busy right now. Try again in a moment.",
+    "translation": "",
+    "context": "event change error when the provider is rate limiting or down",
+    "reference": "",
+    "comment": ""
+  },
+  {
     "term": "%1 selected",
     "translation": "",
     "context": "multi-event action shelf selection count; %1 is event count",
@@ -1043,9 +1050,37 @@
     "comment": ""
   },
   {
+    "term": "Couldn't delete the event.",
+    "translation": "",
+    "context": "event delete error for an unclassified failure",
+    "reference": "",
+    "comment": ""
+  },
+  {
+    "term": "Couldn't reach %1. Check your connection and try again.",
+    "translation": "",
+    "context": "event change error when the provider can't be reached",
+    "reference": "",
+    "comment": ""
+  },
+  {
     "term": "Couldn't reconnect. Add the account again to sign in.",
     "translation": "",
     "context": "toast when reconnecting an account fails",
+    "reference": "",
+    "comment": ""
+  },
+  {
+    "term": "Couldn't save the event.",
+    "translation": "",
+    "context": "event save error for an unclassified failure",
+    "reference": "",
+    "comment": ""
+  },
+  {
+    "term": "Couldn't send your response.",
+    "translation": "",
+    "context": "event RSVP error for an unclassified failure",
     "reference": "",
     "comment": ""
   },
@@ -2851,7 +2886,7 @@
   {
     "term": "Reconnect",
     "translation": "",
-    "context": "account context menu action to re-authorize the account | account row action tooltip | sidebar button that reconnects the account used for a colleague lookup",
+    "context": "account context menu action to re-authorize the account | account row action tooltip | event form button to sign in to an account again | sidebar button that reconnects the account used for a colleague lookup | toast action to sign in to an account again",
     "reference": "",
     "comment": ""
   },
@@ -3048,6 +3083,13 @@
     "term": "Reset to global",
     "translation": "",
     "context": "per-calendar reminders dialog button to clear overrides",
+    "reference": "",
+    "comment": ""
+  },
+  {
+    "term": "Response sent",
+    "translation": "",
+    "context": "toast after a retried RSVP succeeds",
     "reference": "",
     "comment": ""
   },
@@ -3321,6 +3363,13 @@
     "term": "Sign-in expired — reconnect to keep syncing",
     "translation": "",
     "context": "account status when oauth needs re-auth",
+    "reference": "",
+    "comment": ""
+  },
+  {
+    "term": "Sign-in expired. Reconnect %1 and try again.",
+    "translation": "",
+    "context": "event change error when the account needs to sign in again",
     "reference": "",
     "comment": ""
   },
@@ -3670,7 +3719,7 @@
   {
     "term": "Try again",
     "translation": "",
-    "context": "button to retry oauth after failure",
+    "context": "button to retry oauth after failure | event form button to resend a failed save | toast action to resend a failed event change",
     "reference": "",
     "comment": ""
   },
@@ -4007,6 +4056,13 @@
     "term": "synced as \"%1\"",
     "translation": "",
     "context": "renamed calendar provider name suffix in calendar list",
+    "reference": "",
+    "comment": ""
+  },
+  {
+    "term": "the server",
+    "translation": "",
+    "context": "fallback name for a calendar provider or account in an event change error",
     "reference": "",
     "comment": ""
   },

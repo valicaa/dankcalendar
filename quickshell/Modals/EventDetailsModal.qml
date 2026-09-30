@@ -17,6 +17,10 @@ FloatingWindow {
     property bool saving: false
     property string pendingResponse: ""
     property string formError: ""
+    // Set by DankCalService.writeFailure when a save fails; formError is then its message.
+    property var formFailure: null
+    // Sent with every attempt to create this event so a retry can't add a copy.
+    property string createUid: ""
 
     readonly property bool noWritableCalendars: DankCalService.writableCalendars().length === 0
 
@@ -94,8 +98,16 @@ FloatingWindow {
         saving = false;
         pendingResponse = "";
         formError = "";
+        formFailure = null;
         event = eventData || {};
         visible = true;
+    }
+
+    function _newUid() {
+        let uid = "";
+        for (let i = 0; i < 32; i++)
+            uid += Math.floor(Math.random() * 16).toString(16);
+        return uid;
     }
 
     function _nextHalfHour() {
@@ -154,6 +166,8 @@ FloatingWindow {
         saving = false;
         pendingResponse = "";
         formError = "";
+        formFailure = null;
+        createUid = _newUid();
         _loadForm();
         editMode = true;
         visible = true;
@@ -173,6 +187,7 @@ FloatingWindow {
     function beginEdit() {
         _loadForm();
         formError = "";
+        formFailure = null;
         editMode = true;
     }
 
@@ -338,6 +353,7 @@ FloatingWindow {
     }
 
     function save() {
+        formFailure = null;
         if (formTitle.trim() === "") {
             formError = I18n.tr("Title is required", "event form validation error for missing title");
             return;
@@ -379,10 +395,12 @@ FloatingWindow {
 
         saving = true;
         formError = "";
+        formFailure = null;
         const done = response => {
             saving = false;
             if (response.error) {
-                formError = response.error;
+                formFailure = DankCalService.writeFailure(response, createMode ? cal.id : event.calendarId, "save");
+                formError = formFailure.message;
                 return;
             }
             hide();
@@ -390,6 +408,7 @@ FloatingWindow {
 
         if (createMode) {
             fields.calendarId = cal.id;
+            fields.uid = createUid;
             DankCalService.createEvent(fields, done);
         } else {
             DankCalService.updateEvent(event.id, fields, done);
@@ -401,16 +420,50 @@ FloatingWindow {
             confirmDelete = true;
             return;
         }
+        confirmDelete = false;
+        submitDelete(occurrenceOnly);
+    }
+
+    // True while the modal shows the event (and occurrence) a toast retry was
+    // captured for; a retry for anything else must not touch the modal.
+    function _showsRetried(id, occurrenceStart) {
+        if (!visible || event.id !== id)
+            return false;
+        return !occurrenceStart || EventUtils.wireTime(event.start, event.allDay) === occurrenceStart;
+    }
+
+    // Follows a toast retry: blocks other writes while it runs and applies its
+    // success, only when the modal still shows the retried event.
+    function _retryWatch(id, occurrenceStart, onSuccess) {
+        return {
+            "started": () => {
+                if (_showsRetried(id, occurrenceStart))
+                    saving = true;
+            },
+            "finished": response => {
+                if (!_showsRetried(id, occurrenceStart))
+                    return;
+                saving = false;
+                if (!response.error)
+                    onSuccess(response);
+            }
+        };
+    }
+
+    function submitDelete(occurrenceOnly) {
+        // Captured now: the toast's retry outlives the modal's current event.
+        const id = event.id;
+        const calendarId = event.calendarId;
+        const occurrenceStart = occurrenceOnly ? EventUtils.wireTime(event.start, event.allDay) : undefined;
         saving = true;
-        DankCalService.deleteEvent(event.id, response => {
+        DankCalService.deleteEvent(id, response => {
             saving = false;
-            confirmDelete = false;
             if (response.error) {
-                formError = response.error;
+                DankCalService.showWriteFailure(response, calendarId, "delete", () => DankCalService.retryDelete(id, occurrenceStart, calendarId, _retryWatch(id, occurrenceStart, () => hide())));
                 return;
             }
             hide();
-        }, occurrenceOnly ? EventUtils.wireTime(event.start, event.allDay) : undefined);
+        }, occurrenceStart);
     }
 
     function respond(action) {
@@ -425,17 +478,24 @@ FloatingWindow {
 
     function submitResponse(action, occurrenceOnly) {
         pendingResponse = "";
+        const id = event.id;
+        const calendarId = event.calendarId;
+        const occurrenceStart = occurrenceOnly ? EventUtils.wireTime(event.start, event.allDay) : undefined;
         saving = true;
         formError = "";
-        DankCalService.rsvpEvent(event.id, action, response => {
+        formFailure = null;
+        DankCalService.rsvpEvent(id, action, response => {
             saving = false;
             if (response.error) {
-                formError = response.error;
+                DankCalService.showWriteFailure(response, calendarId, "respond", () => DankCalService.retryRsvp(id, action, occurrenceStart, calendarId, _retryWatch(id, occurrenceStart, response => {
+                    if (response.result)
+                        eventModal.event = DankCalService.eventFromResult(response.result);
+                })));
                 return;
             }
             if (response.result)
                 eventModal.event = DankCalService.eventFromResult(response.result);
-        }, occurrenceOnly ? EventUtils.wireTime(event.start, event.allDay) : undefined);
+        }, occurrenceStart);
     }
 
     function _styleAnchors(html) {
@@ -603,16 +663,46 @@ FloatingWindow {
             height: Theme.buttonHeightS + Theme.spacingM * 2
             visible: eventModal.editMode
 
-            StyledText {
+            Row {
                 anchors.left: parent.left
                 anchors.leftMargin: Theme.spacingL
                 anchors.verticalCenter: parent.verticalCenter
-                text: eventModal.formError
-                color: Theme.error
-                font.pixelSize: Theme.fontSizeSmall
+                spacing: Theme.spacingS
                 visible: eventModal.formError !== ""
-                elide: Text.ElideRight
-                width: parent.width / 2
+
+                StyledText {
+                    id: errorText
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: eventModal.formError
+                    color: Theme.error
+                    font.pixelSize: Theme.fontSizeSmall
+                    wrapMode: Text.WordWrap
+                    maximumLineCount: 2
+                    elide: Text.ElideRight
+                    width: Math.min(implicitWidth, footer.width * 0.4)
+                }
+
+                DankButton {
+                    anchors.verticalCenter: parent.verticalCenter
+                    readonly property bool reconnect: !!eventModal.formFailure && !!eventModal.formFailure.account
+                    visible: !!eventModal.formFailure && (eventModal.formFailure.retryable || reconnect)
+                    text: reconnect ? I18n.tr("Reconnect", "event form button to sign in to an account again") : I18n.tr("Try again", "event form button to resend a failed save")
+                    backgroundColor: "transparent"
+                    textColor: Theme.primary
+                    enabled: !eventModal.saving
+                    onClicked: {
+                        if (!reconnect) {
+                            eventModal.save();
+                            return;
+                        }
+                        DankCalService.reconnectAccount(eventModal.formFailure.account, response => {
+                            if (response.error)
+                                return;
+                            eventModal.formError = "";
+                            eventModal.formFailure = null;
+                        });
+                    }
+                }
             }
 
             Row {

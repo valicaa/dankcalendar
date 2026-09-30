@@ -23,7 +23,9 @@ Worked example: `system.autostart.get/set`.
    `tasks.go`, `accounts.go`, `ui.go`, `reminders.go` or `people.go`. Read params with `ParamString`,
    `ParamInt`, `ParamBool` or `ParamStringSlice` (from `models.go`). Reply with
    `Respond(w, req.ID, map[string]any{…})` or `RespondError(w, req.ID, msg)` and `return`
-   early. Validate required params explicitly, the way `system.openUri` checks `uri`.
+   early. Validate required params explicitly, the way `system.openUri` checks `uri`. A failed
+   provider write replies with `respondWriteError(w, req.ID, err)` instead, which adds an
+   `errorCode` (`write_errors.go`) the UI turns into a friendly message.
 3. **New prefix group:** add a `strings.HasPrefix` case in `router.go`.
 4. **New dependency:** add a field to `Deps` (`deps.go`), wire it in `cmd/dcal/daemon.go`
    (`bootDaemonServices`), and nil-check it in the handler (see `deps.ColorScheme`).
@@ -35,6 +37,10 @@ Worked example: `system.autostart.get/set`.
 7. **QML client.** Add a function to `quickshell/Services/DankCalService.qml` shaped like
    `setAutostart`: `sendRequest("…", {params}, response => { if (response.error) lastError = response.error; else …; if (callback) callback(response); })`.
    If it's state, add a `property` and a `refreshX()` called on connect (~line 118).
+   Callers of a write that replies with `errorCode` pass the failed reply to `DankCalService.writeFailure`
+   (message + retry) or `showWriteFailure` (toast), never showing `response.error`, with the action
+   (`"save"|"delete"|"respond"`). A toast retry must resend values captured before the request
+   (see `retryDelete`), not the modal's live state.
 8. Try it on a dev instance (`verify-change` section 4): after `dev-instance.sh start`, run
    `/home/nozomi/Documents/code/calendar/.claude/tools/dev-instance.sh ipc group.thing.do id=…`.
    Plain `dcal ipc` reaches the live daemon and the real data.

@@ -255,12 +255,40 @@ func (p *Provider) ListEvents(ctx context.Context, c cal.Calendar, opts cal.List
 	return out, nil
 }
 
+// isDuplicateID reports a 409 with reason "duplicate", the only answer taken to
+// mean an earlier attempt created the event. Any other 409 is returned to the
+// caller rather than turned into an update.
+func isDuplicateID(err error) bool {
+	var apiErr *googleapi.Error
+	if !errors.As(err, &apiErr) || apiErr.Code != http.StatusConflict {
+		return false
+	}
+	for _, e := range apiErr.Errors {
+		if e.Reason == "duplicate" {
+			return true
+		}
+	}
+	return false
+}
+
+// CreateEvent uses a UID in Google's id alphabet as the event id, so a retry
+// after a lost reply cannot duplicate the event: Google answers 409 for the
+// id the first attempt already created, and that event is updated instead.
 func (p *Provider) CreateEvent(ctx context.Context, c cal.Calendar, ev *cal.Event) (*cal.Event, error) {
+	item := toGoogleEvent(ev)
+	if cal.ValidClientEventID(ev.UID) {
+		item.Id = ev.UID
+	}
 	created, err := googleCall(ctx, p, false, func() (*calendar.Event, error) {
-		return p.svc.Events.Insert(c.RemoteID, toGoogleEvent(ev)).Context(ctx).Do()
+		return p.svc.Events.Insert(c.RemoteID, item).Context(ctx).Do()
 	})
+	if item.Id != "" && isDuplicateID(err) {
+		created, err = googleCall(ctx, p, false, func() (*calendar.Event, error) {
+			return p.svc.Events.Update(c.RemoteID, item.Id, item).Context(ctx).Do()
+		})
+	}
 	if err != nil {
-		return nil, fmt.Errorf("create google event: %w", err)
+		return nil, fmt.Errorf("create google event: %w", classifyAuthErr(err))
 	}
 	return fromGoogleEvent(c, created), nil
 }
@@ -287,7 +315,7 @@ func (p *Provider) UpdateEvent(ctx context.Context, c cal.Calendar, ev *cal.Even
 		return p.svc.Events.Update(c.RemoteID, ev.RemoteID, toGoogleEvent(ev)).Context(ctx).Do()
 	})
 	if err != nil {
-		return nil, fmt.Errorf("update google event: %w", err)
+		return nil, fmt.Errorf("update google event: %w", classifyAuthErr(err))
 	}
 	return fromGoogleEvent(c, updated), nil
 }
@@ -325,7 +353,7 @@ func (p *Provider) RespondToEvent(ctx context.Context, c cal.Calendar, ev *cal.E
 		return p.svc.Events.Patch(c.RemoteID, remoteID, &calendar.Event{Attendees: attendees}).Context(ctx).Do()
 	})
 	if err != nil {
-		return nil, fmt.Errorf("respond google event: %w", err)
+		return nil, fmt.Errorf("respond google event: %w", classifyAuthErr(err))
 	}
 	return fromGoogleEvent(c, updated), nil
 }
@@ -368,7 +396,7 @@ func (p *Provider) DeleteEvent(ctx context.Context, c cal.Calendar, ev cal.Event
 	if errors.As(err, &apiErr) && (apiErr.Code == http.StatusNotFound || apiErr.Code == http.StatusGone) {
 		return nil
 	}
-	return fmt.Errorf("delete google event: %w", err)
+	return fmt.Errorf("delete google event: %w", classifyAuthErr(err))
 }
 
 // fromGoogleEvent uses item.Id (not ICalUID) for both UID and RemoteID:
