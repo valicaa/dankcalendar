@@ -255,10 +255,29 @@ func (p *Provider) ListEvents(ctx context.Context, c cal.Calendar, opts cal.List
 	return out, nil
 }
 
+// validGoogleEventID reports whether id fits Google's rule for client-chosen
+// event ids: 5 to 1024 characters of base32hex (0-9, a-v).
+func validGoogleEventID(id string) bool {
+	return len(id) >= 5 && len(id) <= 1024 && strings.Trim(id, "0123456789abcdefghijklmnopqrstuv") == ""
+}
+
+// CreateEvent uses a UID in Google's id alphabet as the event id, so a retry
+// after a lost reply cannot duplicate the event: Google answers 409 for the
+// id the first attempt already created, and that event is updated instead.
 func (p *Provider) CreateEvent(ctx context.Context, c cal.Calendar, ev *cal.Event) (*cal.Event, error) {
+	item := toGoogleEvent(ev)
+	if validGoogleEventID(ev.UID) {
+		item.Id = ev.UID
+	}
 	created, err := googleCall(ctx, p, false, func() (*calendar.Event, error) {
-		return p.svc.Events.Insert(c.RemoteID, toGoogleEvent(ev)).Context(ctx).Do()
+		return p.svc.Events.Insert(c.RemoteID, item).Context(ctx).Do()
 	})
+	var apiErr *googleapi.Error
+	if item.Id != "" && errors.As(err, &apiErr) && apiErr.Code == http.StatusConflict {
+		created, err = googleCall(ctx, p, false, func() (*calendar.Event, error) {
+			return p.svc.Events.Update(c.RemoteID, item.Id, item).Context(ctx).Do()
+		})
+	}
 	if err != nil {
 		return nil, fmt.Errorf("create google event: %w", classifyAuthErr(err))
 	}
