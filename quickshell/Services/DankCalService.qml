@@ -955,17 +955,33 @@ Singleton {
         }, occurrenceStart);
     }
 
-    function mutateEvents(method, paramsList, callback) {
+    // newEventUid makes a client uid for events.create (32 lowercase hex). A
+    // create sent with the same uid twice yields one event, so a retry reuses it.
+    function newEventUid() {
+        let uid = "";
+        for (let i = 0; i < 32; i++)
+            uid += Math.floor(Math.random() * 16).toString(16);
+        return uid;
+    }
+
+    // mutateEvents sends one request per params entry, in order. The reply
+    // carries results, errors (raw text, for the log) and failures: one
+    // {params, calendarId, error, errorCode} per failed item, so a caller can
+    // resend just those. calendarIds is parallel to paramsList and only names
+    // the provider in the failure message.
+    function mutateEvents(method, paramsList, callback, calendarIds) {
         const queue = paramsList || [];
         const results = [];
         const errors = [];
+        const failures = [];
         let index = 0;
 
         const finish = () => {
             reloadEvents();
             const response = {
                 "results": results,
-                "errors": errors
+                "errors": errors,
+                "failures": failures
             };
             if (errors.length > 0) {
                 response.error = errors[0];
@@ -981,10 +997,17 @@ Singleton {
                 return;
             }
             sendRequest(method, queue[index], response => {
-                if (response.error)
+                if (response.error) {
                     errors.push(response.error);
-                else
+                    failures.push({
+                        "params": queue[index],
+                        "calendarId": (calendarIds || [])[index] || "",
+                        "error": response.error,
+                        "errorCode": response.errorCode || ""
+                    });
+                } else {
                     results.push(response.result);
+                }
                 index++;
                 sendNext();
             });
@@ -994,22 +1017,58 @@ Singleton {
             if (callback)
                 callback({
                     "results": [],
-                    "errors": []
+                    "errors": [],
+                    "failures": []
                 });
             return;
         }
         sendNext();
     }
 
+    // batchFailure summarises the failures of a mutateEvents reply through
+    // writeFailure (which logs each raw error). reason is the plain-language
+    // cause, taken from the first retryable failure, else the first one with an
+    // account to reconnect; empty when every failure is unclassified. retry
+    // holds the retryable failures, the only ones worth resending.
+    function batchFailure(response, action) {
+        const retry = [];
+        let lead = null;
+        const failures = response.failures || [];
+        for (let i = 0; i < failures.length; i++) {
+            const failure = writeFailure(failures[i], failures[i].calendarId, action);
+            const classified = failure.retryable || failure.account;
+            if (failure.retryable)
+                retry.push(failures[i]);
+            if (classified && (!lead || (failure.retryable && !lead.retryable)))
+                lead = failure;
+        }
+        return {
+            "count": failures.length,
+            "reason": lead ? lead.message : "",
+            "retry": retry,
+            "account": lead ? lead.account : null
+        };
+    }
+
+    // retryBatch resends only the failed items of an earlier mutateEvents, with
+    // their original params (so a create keeps its uid).
+    function retryBatch(method, failures, callback) {
+        log.info("retry " + method + " count=" + failures.length + " " + failures.map(f => "uid=" + (f.params.uid || f.params.id)).join(" "));
+        mutateEvents(method, failures.map(f => f.params), callback, failures.map(f => f.calendarId));
+    }
+
     function createEvents(fields, callback) {
-        mutateEvents("events.create", fields, callback);
+        const params = fields.map(f => Object.assign({
+                "uid": newEventUid()
+            }, f));
+        mutateEvents("events.create", params, callback, params.map(f => f.calendarId));
     }
 
     function moveEvents(eventsToMove, dayOffset, minuteOffset, callback) {
         const params = eventsToMove.map(event => Object.assign({
                 "id": event.id
             }, EventUtils.moveFields(event, dayOffset, minuteOffset)));
-        mutateEvents("events.update", params, callback);
+        mutateEvents("events.update", params, callback, eventsToMove.map(event => event.calendarId));
     }
 
     function deleteEvents(eventsToDelete, callback) {
@@ -1021,7 +1080,7 @@ Singleton {
                 fields.occurrenceStart = EventUtils.wireTime(event.start, event.allDay);
             return fields;
         });
-        mutateEvents("events.delete", params, callback);
+        mutateEvents("events.delete", params, callback, eventsToDelete.map(event => event.calendarId));
     }
 
     function reloadTasks() {
