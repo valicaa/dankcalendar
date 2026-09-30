@@ -101,6 +101,15 @@ func getExpectingFailure(t *testing.T, client *http.Client, rawURL string) error
 	return err
 }
 
+func tokenStatusServer(t *testing.T, status int) *httptest.Server {
+	t.Helper()
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(status)
+	}))
+	t.Cleanup(srv.Close)
+	return srv
+}
+
 func TestWriteErrorCode(t *testing.T) {
 	cases := []struct {
 		name string
@@ -141,6 +150,12 @@ func TestWriteErrorCode(t *testing.T) {
 			t.Cleanup(srv.Close)
 			return apiCallThroughRefresh(t, srv.URL, &http.Transport{})
 		}, errCodeReconnect},
+		{"token refresh 503", func(t *testing.T) error {
+			return apiCallThroughRefresh(t, tokenStatusServer(t, http.StatusServiceUnavailable).URL, &http.Transport{})
+		}, errCodeUnavailable},
+		{"token refresh 429", func(t *testing.T) error {
+			return apiCallThroughRefresh(t, tokenStatusServer(t, http.StatusTooManyRequests).URL, &http.Transport{})
+		}, errCodeUnavailable},
 		{"provider-tagged reauth", func(*testing.T) error {
 			return fmt.Errorf("update google event: %w", fmt.Errorf("%w: 401", calendar.ErrReauthRequired))
 		}, errCodeReconnect},
