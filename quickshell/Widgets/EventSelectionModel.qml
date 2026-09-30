@@ -146,9 +146,77 @@ Item {
         return "";
     }
 
-    function finishOperation(action, total, response) {
+    function failureSummary(action, count, total) {
+        switch (action) {
+        case "paste":
+            return I18n.tr("%1 of %2 events couldn't be pasted.", "toast when some events failed to paste; %1 is failed count, %2 is total count").arg(count).arg(total);
+        case "move":
+            return I18n.tr("%1 of %2 events couldn't be moved.", "toast when some events failed to move; %1 is failed count, %2 is total count").arg(count).arg(total);
+        case "create":
+            return I18n.tr("%1 of %2 events couldn't be created.", "toast when some events failed to create; %1 is failed count, %2 is total count").arg(count).arg(total);
+        }
+        return I18n.tr("%1 of %2 events couldn't be deleted.", "toast when some events failed to delete; %1 is failed count, %2 is total count").arg(count).arg(total);
+    }
+
+    // finishOperation reports a batch that ended. A failure toast states how many
+    // items failed and why (the raw error only goes to the log) and offers Try
+    // again for the retryable ones only. retry = {method, done, resume}: the IPC
+    // method to resend with, how many items succeeded before this reply, and what
+    // to call with the retry's reply (default: report it here again).
+    function finishOperation(action, total, response, retry) {
         busy = false;
-        ToastService.info(operationToast(action, (response.results || []).length, total));
+        const done = (retry && retry.done) || 0;
+        const completed = done + (response.results || []).length;
+        if (!response.error) {
+            ToastService.info(operationToast(action, completed, total));
+            return;
+        }
+        const method = retry.method;
+        const resume = retry.resume || ((next, nextDone) => root.finishOperation(action, total, next, {
+                    "method": method,
+                    "done": nextDone
+                }));
+        const failed = DankCalService.batchFailure(response, action === "delete" ? "delete" : "save");
+        let message = failed.reason;
+        if (total > 1 || message === "") {
+            message = total > 1 ? failureSummary(action, failed.count, total) : (action === "delete" ? I18n.tr("Couldn't delete the event.", "event delete error for an unclassified failure") : I18n.tr("Couldn't save the event.", "event save error for an unclassified failure"));
+            if (total > 1 && failed.reason !== "")
+                message += " " + failed.reason;
+        }
+        const opts = {};
+        if (failed.retry.length > 0) {
+            opts.actionLabel = I18n.tr("Try again", "toast action to resend a failed event change");
+            opts.action = () => {
+                root.busy = true;
+                DankCalService.retryBatch(method, failed.retry, next => resume(next, completed));
+            };
+        } else if (failed.account) {
+            opts.actionLabel = I18n.tr("Reconnect", "toast action to sign in to an account again");
+            opts.action = () => DankCalService.reconnectAccount(failed.account);
+        }
+        ToastService.show(message, opts);
+    }
+
+    // Reports the create half of a paste. A cut only deletes its sources once
+    // every copy exists, so a partly failed paste (or its retry) never loses one.
+    function finishPasteCreate(fields, cutSources, response, done) {
+        if (response.error || cutSources.length !== fields.length) {
+            root.finishOperation("paste", fields.length, response, {
+                "method": "events.create",
+                "done": done,
+                "resume": (next, nextDone) => root.finishPasteCreate(fields, cutSources, next, nextDone)
+            });
+            root.clear();
+            return;
+        }
+        DankCalService.deleteEvents(cutSources, deleteResponse => {
+            root.finishOperation("move", fields.length, deleteResponse, {
+                "method": "events.delete"
+            });
+            if (!deleteResponse.error)
+                Quickshell.clipboardText = EventUtils.clipboardTextFromFields(fields);
+            root.clear();
+        });
     }
 
     function copy(fallback) {
@@ -193,19 +261,7 @@ Item {
             fields[i].calendarId = writableCalendarId(fields[i].calendarId);
         }
         busy = true;
-        DankCalService.createEvents(fields, response => {
-            if (response.error || cutSources.length !== fields.length) {
-                root.finishOperation("paste", fields.length, response);
-                root.clear();
-                return;
-            }
-            DankCalService.deleteEvents(cutSources, deleteResponse => {
-                root.finishOperation("move", fields.length, deleteResponse);
-                if (!deleteResponse.error)
-                    Quickshell.clipboardText = EventUtils.clipboardTextFromFields(fields);
-                root.clear();
-            });
-        });
+        DankCalService.createEvents(fields, response => root.finishPasteCreate(fields, cutSources, response, 0));
     }
 
     function duplicate(dayOffset, fallback) {
@@ -225,7 +281,9 @@ Item {
             return;
         }
         busy = true;
-        DankCalService.createEvents(fields, response => root.finishOperation("create", fields.length, response));
+        DankCalService.createEvents(fields, response => root.finishOperation("create", fields.length, response, {
+                "method": "events.create"
+            }));
     }
 
     function moveTo(anchorEvent, targetDay) {
@@ -245,7 +303,9 @@ Item {
             return;
         busy = true;
         DankCalService.moveEvents(selected, dayOffset, minuteOffset, response => {
-            root.finishOperation("move", selected.length, response);
+            root.finishOperation("move", selected.length, response, {
+                "method": "events.update"
+            });
             root.clear();
         });
     }
@@ -264,7 +324,9 @@ Item {
         }
         busy = true;
         DankCalService.deleteEvents(selected, response => {
-            root.finishOperation("delete", selected.length, response);
+            root.finishOperation("delete", selected.length, response, {
+                "method": "events.delete"
+            });
             root.clear();
         });
     }

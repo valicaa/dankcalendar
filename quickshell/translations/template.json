@@ -35,6 +35,34 @@
     "comment": ""
   },
   {
+    "term": "%1 of %2 events couldn't be created.",
+    "translation": "",
+    "context": "toast when some events failed to create; %1 is failed count, %2 is total count",
+    "reference": "",
+    "comment": ""
+  },
+  {
+    "term": "%1 of %2 events couldn't be deleted.",
+    "translation": "",
+    "context": "toast when some events failed to delete; %1 is failed count, %2 is total count",
+    "reference": "",
+    "comment": ""
+  },
+  {
+    "term": "%1 of %2 events couldn't be moved.",
+    "translation": "",
+    "context": "toast when some events failed to move; %1 is failed count, %2 is total count",
+    "reference": "",
+    "comment": ""
+  },
+  {
+    "term": "%1 of %2 events couldn't be pasted.",
+    "translation": "",
+    "context": "toast when some events failed to paste; %1 is failed count, %2 is total count",
+    "reference": "",
+    "comment": ""
+  },
+  {
     "term": "%1 selected",
     "translation": "",
     "context": "multi-event action shelf selection count; %1 is event count",
