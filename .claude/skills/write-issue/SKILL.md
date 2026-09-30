@@ -147,8 +147,9 @@ gh issue create -R valicaa/dankcalendar --title "<area>: <summary>" \
   --body-file <path-to-body.md> --label <enhancement|bug|chore> --label <size:S|size:M|size:L>
 ```
 
-`N` is the number at the end of the URL this command prints (after the user's yes —
-`project-manager` step 2).
+`N` is the number at the end of the URL this command prints. Send the owner that link to review;
+requested changes go in with `gh issue edit N -R valicaa/dankcalendar --body-file <path>`, and the
+branch waits for their OK (`project-manager` step 2).
 
 ## Forms
 
