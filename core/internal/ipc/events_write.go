@@ -25,7 +25,7 @@ func handleEventCreate(ctx context.Context, w *ConnWriter, req Request, deps Dep
 
 	ev, err := eventFromParams(calendar.Event{Status: calendar.EventConfirmed}, req.Params)
 	if err != nil {
-		RespondError(w, req.ID, err.Error())
+		respondWriteError(w, req.ID, err)
 		return
 	}
 	switch {
@@ -50,20 +50,20 @@ func handleEventCreate(ctx context.Context, w *ConnWriter, req Request, deps Dep
 
 	provider, domCal, err := providerForCalendar(ctx, deps, calendarID)
 	if err != nil {
-		RespondError(w, req.ID, err.Error())
+		respondWriteError(w, req.ID, err)
 		return
 	}
 	defer provider.Close()
 
 	created, err := provider.CreateEvent(ctx, domCal, &ev)
 	if err != nil {
-		RespondError(w, req.ID, fmt.Sprintf("create event: %v", err))
+		respondWriteError(w, req.ID, fmt.Errorf("create event: %w", err))
 		return
 	}
 
 	stored, err := persistEvent(ctx, deps, domCal.ID, created)
 	if err != nil {
-		RespondError(w, req.ID, err.Error())
+		respondWriteError(w, req.ID, err)
 		return
 	}
 
@@ -80,7 +80,7 @@ func handleEventUpdate(ctx context.Context, w *ConnWriter, req Request, deps Dep
 
 	entEv, err := deps.Repo.GetEvent(ctx, id)
 	if err != nil {
-		RespondError(w, req.ID, err.Error())
+		respondWriteError(w, req.ID, err)
 		return
 	}
 	if entEv.Edges.Calendar == nil {
@@ -91,7 +91,7 @@ func handleEventUpdate(ctx context.Context, w *ConnWriter, req Request, deps Dep
 
 	ev, err := eventFromParams(domainEventFromEnt(entEv), req.Params)
 	if err != nil {
-		RespondError(w, req.ID, err.Error())
+		respondWriteError(w, req.ID, err)
 		return
 	}
 
@@ -106,20 +106,20 @@ func handleEventUpdate(ctx context.Context, w *ConnWriter, req Request, deps Dep
 
 	provider, domCal, err := providerForCalendar(ctx, deps, calendarID)
 	if err != nil {
-		RespondError(w, req.ID, err.Error())
+		respondWriteError(w, req.ID, err)
 		return
 	}
 	defer provider.Close()
 
 	updated, err := provider.UpdateEvent(ctx, domCal, &ev)
 	if err != nil {
-		RespondError(w, req.ID, fmt.Sprintf("update event: %v", err))
+		respondWriteError(w, req.ID, fmt.Errorf("update event: %w", err))
 		return
 	}
 
 	stored, err := persistEvent(ctx, deps, domCal.ID, updated)
 	if err != nil {
-		RespondError(w, req.ID, err.Error())
+		respondWriteError(w, req.ID, err)
 		return
 	}
 
@@ -136,7 +136,7 @@ func handleEventDelete(ctx context.Context, w *ConnWriter, req Request, deps Dep
 
 	entEv, err := deps.Repo.GetEvent(ctx, id)
 	if err != nil {
-		RespondError(w, req.ID, err.Error())
+		respondWriteError(w, req.ID, err)
 		return
 	}
 	if entEv.Edges.Calendar == nil {
@@ -157,17 +157,17 @@ func handleEventDelete(ctx context.Context, w *ConnWriter, req Request, deps Dep
 
 	provider, domCal, err := providerForCalendar(ctx, deps, calendarID)
 	if err != nil {
-		RespondError(w, req.ID, err.Error())
+		respondWriteError(w, req.ID, err)
 		return
 	}
 	defer provider.Close()
 
 	if err := provider.DeleteEvent(ctx, domCal, domainEventFromEnt(entEv)); err != nil {
-		RespondError(w, req.ID, fmt.Sprintf("delete event: %v", err))
+		respondWriteError(w, req.ID, fmt.Errorf("delete event: %w", err))
 		return
 	}
 	if err := deps.Repo.DeleteEvent(ctx, id); err != nil {
-		RespondError(w, req.ID, err.Error())
+		respondWriteError(w, req.ID, err)
 		return
 	}
 
@@ -188,18 +188,18 @@ func deleteEventOccurrence(ctx context.Context, w *ConnWriter, req Request, deps
 
 	provider, domCal, err := providerForCalendar(ctx, deps, calendarID)
 	if err != nil {
-		RespondError(w, req.ID, err.Error())
+		respondWriteError(w, req.ID, err)
 		return
 	}
 	defer provider.Close()
 
 	updated, err := provider.UpdateEvent(ctx, domCal, &ev)
 	if err != nil {
-		RespondError(w, req.ID, fmt.Sprintf("delete occurrence: %v", err))
+		respondWriteError(w, req.ID, fmt.Errorf("delete occurrence: %w", err))
 		return
 	}
 	if _, err := persistEvent(ctx, deps, domCal.ID, updated); err != nil {
-		RespondError(w, req.ID, err.Error())
+		respondWriteError(w, req.ID, err)
 		return
 	}
 
@@ -234,7 +234,7 @@ func handleEventRSVP(ctx context.Context, w *ConnWriter, req Request, deps Deps)
 		Secrets:  deps.Secrets,
 	}, id, response, occurrenceStart)
 	if err != nil {
-		RespondError(w, req.ID, err.Error())
+		respondWriteError(w, req.ID, err)
 		return
 	}
 
