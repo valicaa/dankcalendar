@@ -5,12 +5,15 @@ import (
 	"errors"
 	"io"
 	"net"
+	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/AvengeMedia/dankcalendar/core/internal/calendar"
 	"github.com/AvengeMedia/dankcalendar/core/internal/oauth"
 	"github.com/AvengeMedia/dankgo/log"
+	"golang.org/x/oauth2"
 )
 
 // Error codes for failed event writes. The UI shows a plain-language message
@@ -47,10 +50,28 @@ func writeErrorCode(err error) string {
 		return errCodeReconnect
 	case isNetworkError(err):
 		return errCodeNetwork
-	case errors.As(err, &retryLater):
+	case errors.As(err, &retryLater), tokenEndpointBackedOff(err):
 		return errCodeUnavailable
 	}
 	return errCodeGeneric
+}
+
+// tokenEndpointBackedOff reports a token refresh the OAuth server answered
+// with 429 or 5xx: transient, unlike the 400 of a revoked grant.
+func tokenEndpointBackedOff(err error) bool {
+	var retrieveErr *oauth2.RetrieveError
+	if !errors.As(err, &retrieveErr) || retrieveErr.Response == nil {
+		return false
+	}
+	code := retrieveErr.Response.StatusCode
+	return code == http.StatusTooManyRequests || code >= http.StatusInternalServerError
+}
+
+// connectionLost reports HTTP/2 transport failures, whose errors are
+// unexported and carry no net.Error or io.EOF to match on.
+func connectionLost(err error) bool {
+	msg := err.Error()
+	return strings.Contains(msg, "http2: client connection lost") || strings.Contains(msg, "http2: server sent GOAWAY")
 }
 
 // isNetworkError reports a request that got no answer. *url.Error is itself a
@@ -68,7 +89,7 @@ func isNetworkError(err error) bool {
 		return true
 	case transport:
 		// The connection dropped mid-exchange.
-		return errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF)
+		return errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF) || connectionLost(err)
 	}
 	return false
 }

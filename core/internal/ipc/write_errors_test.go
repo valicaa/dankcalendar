@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"sync"
 	"testing"
 	"time"
 
@@ -22,6 +23,10 @@ import (
 	"github.com/AvengeMedia/dankcalendar/core/internal/mocks"
 	"github.com/AvengeMedia/dankcalendar/core/repo"
 )
+
+func tokenEndpointError(status int) error {
+	return fmt.Errorf("oauth2: cannot fetch token: %w", &oauth2.RetrieveError{Response: &http.Response{StatusCode: status}})
+}
 
 type retryLaterError struct{}
 
@@ -43,16 +48,29 @@ func silentAddr(t *testing.T) string {
 	t.Helper()
 	l, err := net.Listen("tcp", "127.0.0.1:0")
 	require.NoError(t, err)
-	t.Cleanup(func() { _ = l.Close() })
+
+	var mu sync.Mutex
+	var conns []net.Conn
+	accepting := make(chan struct{})
 	go func() {
+		defer close(accepting)
 		for {
 			conn, err := l.Accept()
 			if err != nil {
 				return
 			}
-			t.Cleanup(func() { _ = conn.Close() })
+			mu.Lock()
+			conns = append(conns, conn)
+			mu.Unlock()
 		}
 	}()
+	t.Cleanup(func() {
+		_ = l.Close()
+		<-accepting
+		for _, conn := range conns {
+			_ = conn.Close()
+		}
+	})
 	return l.Addr().String()
 }
 
@@ -73,7 +91,7 @@ func apiCallThroughRefresh(t *testing.T, tokenURL string, base *http.Transport) 
 	return err
 }
 
-func get(t *testing.T, client *http.Client, rawURL string) error {
+func getExpectingFailure(t *testing.T, client *http.Client, rawURL string) error {
 	t.Helper()
 	resp, err := client.Get(rawURL)
 	if resp != nil {
@@ -98,10 +116,10 @@ func TestWriteErrorCode(t *testing.T) {
 			return apiCallThroughRefresh(t, "http://"+closedAddr(t)+"/token", &http.Transport{})
 		}, errCodeNetwork},
 		{"connection refused", func(t *testing.T) error {
-			return get(t, http.DefaultClient, "http://"+closedAddr(t))
+			return getExpectingFailure(t, http.DefaultClient, "http://"+closedAddr(t))
 		}, errCodeNetwork},
 		{"client timeout", func(t *testing.T) error {
-			return get(t, &http.Client{Timeout: 50 * time.Millisecond}, "http://"+silentAddr(t))
+			return getExpectingFailure(t, &http.Client{Timeout: 50 * time.Millisecond}, "http://"+silentAddr(t))
 		}, errCodeNetwork},
 		{"connection dropped mid-response", func(t *testing.T) error {
 			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
@@ -111,7 +129,7 @@ func TestWriteErrorCode(t *testing.T) {
 				}
 			}))
 			t.Cleanup(srv.Close)
-			return get(t, srv.Client(), srv.URL)
+			return getExpectingFailure(t, srv.Client(), srv.URL)
 		}, errCodeNetwork},
 		{"context deadline", func(*testing.T) error { return fmt.Errorf("put: %w", context.DeadlineExceeded) }, errCodeNetwork},
 		{"token refresh invalid_grant", func(t *testing.T) error {
@@ -129,6 +147,17 @@ func TestWriteErrorCode(t *testing.T) {
 		{"server asked to back off", func(*testing.T) error {
 			return fmt.Errorf("create google event: %w", retryLaterError{})
 		}, errCodeUnavailable},
+		{"token endpoint 503", func(*testing.T) error { return tokenEndpointError(http.StatusServiceUnavailable) }, errCodeUnavailable},
+		{"token endpoint 429", func(*testing.T) error { return tokenEndpointError(http.StatusTooManyRequests) }, errCodeUnavailable},
+		{"token endpoint 400", func(*testing.T) error { return tokenEndpointError(http.StatusBadRequest) }, errCodeGeneric},
+		{"token endpoint without response", func(*testing.T) error { return &oauth2.RetrieveError{} }, errCodeGeneric},
+		{"http2 connection lost", func(*testing.T) error {
+			return &url.Error{Op: "Put", URL: "https://example.invalid", Err: errors.New("http2: client connection lost")}
+		}, errCodeNetwork},
+		{"http2 GOAWAY", func(*testing.T) error {
+			return fmt.Errorf("update google event: %w", &url.Error{Op: "Put", URL: "https://example.invalid", Err: errors.New("http2: server sent GOAWAY and closed the connection; LastStreamID=1, ErrCode=NO_ERROR, debug=\"\"")})
+		}, errCodeNetwork},
+		{"http2 text outside a request", func(*testing.T) error { return errors.New("http2: client connection lost") }, errCodeGeneric},
 		{"canceled request", func(*testing.T) error {
 			return &url.Error{Op: "Put", URL: "https://example.invalid", Err: context.Canceled}
 		}, errCodeGeneric},
