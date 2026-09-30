@@ -373,7 +373,7 @@
   {
     "term": "Accounts",
     "translation": "",
-    "context": "accounts settings section header | settings sidebar tab label | sidebar section header for the account list",
+    "context": "accounts settings section header | settings sidebar tab label",
     "reference": "",
     "comment": ""
   },
@@ -2334,6 +2334,13 @@
     "term": "No accounts yet. Click \"Add account\" to connect one.",
     "translation": "",
     "context": "accounts page empty state",
+    "reference": "",
+    "comment": ""
+  },
+  {
+    "term": "No calendars",
+    "translation": "",
+    "context": "sidebar placeholder under an account with no event calendars",
     "reference": "",
     "comment": ""
   },
