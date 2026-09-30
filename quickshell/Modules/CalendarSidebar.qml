@@ -123,9 +123,39 @@ Item {
 
     readonly property string navSelectedKey: keyboardActive && navIndex >= 0 && navIndex < navItems.length ? navItems[navIndex].key : ""
 
+    // Rows can reorder under the selection (a hidden calendar sorts after the
+    // shown ones), so the selection follows its key rather than its index.
+    property string lastNavKey: ""
+
     onKeyboardActiveChanged: {
         if (keyboardActive && (navIndex < 0 || navIndex >= navItems.length))
             navIndex = 0;
+    }
+
+    onNavIndexChanged: {
+        if (navIndex >= 0 && navIndex < navItems.length)
+            lastNavKey = navItems[navIndex].key;
+    }
+
+    onNavItemsChanged: {
+        const idx = lastNavKey === "" ? -1 : navItems.findIndex(i => i.key === lastNavKey);
+        if (idx >= 0) {
+            if (idx !== navIndex)
+                navIndex = idx;
+            return;
+        }
+        if (navIndex >= navItems.length)
+            navIndex = navItems.length - 1;
+        if (navIndex >= 0)
+            lastNavKey = navItems[navIndex].key;
+    }
+
+    Connections {
+        target: DankCalService
+
+        function onAccountRemoved(accountId) {
+            SettingsData.setAccountCollapsed(accountId, false);
+        }
     }
 
     function currentNav() {
@@ -190,6 +220,13 @@ Item {
             navIndex = navItems.findIndex(i => i.key === "section:" + name);
     }
 
+    function collapseAccountOf(accountId) {
+        SettingsData.setAccountCollapsed(accountId, true);
+        const idx = navItems.findIndex(i => i.key === "acc:" + accountId);
+        if (idx >= 0)
+            navIndex = idx;
+    }
+
     function activateNav() {
         const item = currentNav();
         if (!item)
@@ -250,6 +287,8 @@ Item {
                 const item = currentNav();
                 if (item && item.type === "account")
                     SettingsData.setAccountCollapsed(item.data.id, true);
+                else if (item && item.type === "calendar")
+                    collapseAccountOf(item.data.accountId);
                 else if (item)
                     setSectionExpanded(sectionOf(item), false);
                 break;
@@ -865,75 +904,75 @@ Item {
                                         calendarMenu.show(calRow, x, y);
                                     }
 
-                                Row {
-                                    anchors.left: parent.left
-                                    anchors.right: moreButton.left
-                                    anchors.leftMargin: Theme.spacingM
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    spacing: Theme.spacingM
-
-                                    Rectangle {
-                                        width: Theme.iconSizeSmall
-                                        height: Theme.iconSizeSmall
-                                        radius: Theme.cornerRadiusXS
-                                        color: calRow.modelData.hidden ? "transparent" : calRow.modelData.color
-                                        border.color: calRow.modelData.color
-                                        border.width: Theme.outlineWidthFocused
+                                    Row {
+                                        anchors.left: parent.left
+                                        anchors.right: moreButton.left
+                                        anchors.leftMargin: Theme.spacingM
                                         anchors.verticalCenter: parent.verticalCenter
-                                    }
+                                        spacing: Theme.spacingM
 
-                                    StyledText {
-                                        text: calRow.modelData.name
-                                        font.pixelSize: Theme.fontSizeMedium
-                                        color: Theme.surfaceText
-                                        opacity: calRow.modelData.hidden ? Theme.pendingOpacity : 1.0
-                                        width: parent.width - Theme.iconSizeSmall - Theme.spacingM
-                                        wrapMode: Text.NoWrap
-                                        maximumLineCount: 1
-                                        elide: Text.ElideRight
-                                        anchors.verticalCenter: parent.verticalCenter
-                                    }
-                                }
-
-                                StateLayer {
-                                    id: calRowState
-                                    stateColor: Theme.surfaceText
-                                    acceptedButtons: Qt.LeftButton | Qt.RightButton
-                                    onEntered: calTooltip.show(calRow.rowTooltip, calRow)
-                                    onExited: calTooltip.hide()
-                                    onClicked: mouse => {
-                                        calTooltip.hide();
-                                        if (mouse.button === Qt.RightButton) {
-                                            calRow.openMenu(mouse.x, mouse.y);
-                                            return;
+                                        Rectangle {
+                                            width: Theme.iconSizeSmall
+                                            height: Theme.iconSizeSmall
+                                            radius: Theme.cornerRadiusXS
+                                            color: calRow.modelData.hidden ? "transparent" : calRow.modelData.color
+                                            border.color: calRow.modelData.color
+                                            border.width: Theme.outlineWidthFocused
+                                            anchors.verticalCenter: parent.verticalCenter
                                         }
-                                        calendarMenu.close();
-                                        DankCalService.setCalendarHidden(calRow.modelData.id, !calRow.modelData.hidden);
-                                    }
-                                }
 
-                                DankActionButton {
-                                    id: moreButton
-                                    readonly property bool menuOpenHere: calendarMenu.opened && (root.actionCalendar ? root.actionCalendar.id : "") === calRow.modelData.id
-                                    anchors.right: parent.right
-                                    anchors.rightMargin: Theme.spacingXS
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    buttonSize: Theme.buttonHeightXS
-                                    iconName: "more_horiz"
-                                    iconSize: Theme.iconSizeSmall
-                                    iconColor: Theme.surfaceVariantText
-                                    focusPolicy: Qt.NoFocus
-                                    Accessible.name: I18n.tr("Calendar options", "sidebar calendar row overflow menu button")
-                                    opacity: calRowState.containsMouse || hovered || menuOpenHere ? 1 : 0
-                                    visible: opacity > 0
-                                    onClicked: {
-                                        if (menuOpenHere) {
+                                        StyledText {
+                                            text: calRow.modelData.name
+                                            font.pixelSize: Theme.fontSizeMedium
+                                            color: Theme.surfaceText
+                                            opacity: calRow.modelData.hidden ? Theme.pendingOpacity : 1.0
+                                            width: parent.width - Theme.iconSizeSmall - Theme.spacingM
+                                            wrapMode: Text.NoWrap
+                                            maximumLineCount: 1
+                                            elide: Text.ElideRight
+                                            anchors.verticalCenter: parent.verticalCenter
+                                        }
+                                    }
+
+                                    StateLayer {
+                                        id: calRowState
+                                        stateColor: Theme.surfaceText
+                                        acceptedButtons: Qt.LeftButton | Qt.RightButton
+                                        onEntered: calTooltip.show(calRow.rowTooltip, calRow)
+                                        onExited: calTooltip.hide()
+                                        onClicked: mouse => {
+                                            calTooltip.hide();
+                                            if (mouse.button === Qt.RightButton) {
+                                                calRow.openMenu(mouse.x, mouse.y);
+                                                return;
+                                            }
                                             calendarMenu.close();
-                                            return;
+                                            DankCalService.setCalendarHidden(calRow.modelData.id, !calRow.modelData.hidden);
                                         }
-                                        calRow.openMenu(calRow.width - calendarMenu.width, calRow.height);
                                     }
-                                }
+
+                                    DankActionButton {
+                                        id: moreButton
+                                        readonly property bool menuOpenHere: calendarMenu.opened && (root.actionCalendar ? root.actionCalendar.id : "") === calRow.modelData.id
+                                        anchors.right: parent.right
+                                        anchors.rightMargin: Theme.spacingXS
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        buttonSize: Theme.buttonHeightXS
+                                        iconName: "more_horiz"
+                                        iconSize: Theme.iconSizeSmall
+                                        iconColor: Theme.surfaceVariantText
+                                        focusPolicy: Qt.NoFocus
+                                        Accessible.name: I18n.tr("Calendar options", "sidebar calendar row overflow menu button")
+                                        opacity: calRowState.containsMouse || hovered || menuOpenHere ? 1 : 0
+                                        visible: opacity > 0
+                                        onClicked: {
+                                            if (menuOpenHere) {
+                                                calendarMenu.close();
+                                                return;
+                                            }
+                                            calRow.openMenu(calRow.width - calendarMenu.width, calRow.height);
+                                        }
+                                    }
                                 }
                             }
                         }
