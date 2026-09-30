@@ -1053,7 +1053,7 @@ Singleton {
     // retryBatch resends only the failed items of an earlier mutateEvents, with
     // their original params (so a create keeps its uid).
     function retryBatch(method, failures, callback) {
-        log.info("retry " + method + " count=" + failures.length + " " + failures.map(f => "uid=" + (f.params.uid || f.params.id)).join(" "));
+        log.info("retry " + method + " count=" + failures.length + " " + failures.map(f => f.params.uid ? "uid=" + f.params.uid : "id=" + f.params.id).join(" "));
         mutateEvents(method, failures.map(f => f.params), callback, failures.map(f => f.calendarId));
     }
 
