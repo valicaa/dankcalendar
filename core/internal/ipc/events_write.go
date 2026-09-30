@@ -36,7 +36,7 @@ func handleEventCreate(ctx context.Context, w *ConnWriter, req Request, deps Dep
 	case ev.Start.IsZero() || ev.End.IsZero():
 		RespondError(w, req.ID, "start and end are required (RFC3339)")
 		return
-	case ev.UID != "" && !validClientUID(ev.UID):
+	case ev.UID != "" && !calendar.ValidClientEventID(ev.UID):
 		RespondError(w, req.ID, "uid must be 5-1024 characters of 0-9 and a-v")
 		return
 	}
@@ -73,14 +73,6 @@ func handleEventCreate(ctx context.Context, w *ConnWriter, req Request, deps Dep
 
 	publishEventsChanged(deps, domCal.ID)
 	Respond(w, req.ID, mapEvent(stored))
-}
-
-// validClientUID accepts Google's event-id alphabet (base32hex), the
-// strictest of the providers that honour a client UID. Resending the same uid
-// when retrying a create lets Google and CalDAV settle on the event a lost
-// first attempt made instead of adding a duplicate.
-func validClientUID(uid string) bool {
-	return len(uid) >= 5 && len(uid) <= 1024 && strings.Trim(uid, "0123456789abcdefghijklmnopqrstuv") == ""
 }
 
 func handleEventUpdate(ctx context.Context, w *ConnWriter, req Request, deps Deps) {
