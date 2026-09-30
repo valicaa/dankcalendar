@@ -232,3 +232,42 @@ func TestEventWriteValidationHasNoErrorCode(t *testing.T) {
 	assert.Equal(t, "id is required", out["error"])
 	assert.NotContains(t, out, "errorCode")
 }
+
+func TestEventCreatePassesClientUID(t *testing.T) {
+	const uid = "0f3a9c2e7b1d4e6f8a0b1c2d3e4f5a6b"
+	cases := []struct {
+		name    string
+		uid     any
+		wantUID string
+		wantErr string
+	}{
+		{"client uid", uid, uid, ""},
+		{"no uid", nil, "", ""},
+		{"uid outside the id alphabet", "Event@Example.com", "", "uid must be 5-1024 characters of 0-9 and a-v"},
+	}
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			params := map[string]any{"calendarId": "cal", "summary": "Lunch", "start": "2026-09-30T12:00:00Z", "end": "2026-09-30T13:00:00Z"}
+			if tt.uid != nil {
+				params["uid"] = tt.uid
+			}
+			if tt.wantErr != "" {
+				out := routeAndRead(t, Request{ID: 1, Method: "events.create", Params: params}, Deps{})
+				assert.Equal(t, tt.wantErr, out["error"])
+				assert.NotContains(t, out, "errorCode")
+				return
+			}
+
+			f := newWriteFixture(t)
+			f.provider.EXPECT().CreateEvent(mock.Anything, mock.Anything, mock.MatchedBy(func(ev *calendar.Event) bool { return ev.UID == tt.wantUID })).
+				RunAndReturn(func(_ context.Context, _ calendar.Calendar, ev *calendar.Event) (*calendar.Event, error) {
+					out := *ev
+					out.UID, out.RemoteID = "remote-uid", "remote-uid"
+					return &out, nil
+				})
+
+			out := routeAndRead(t, Request{ID: 1, Method: "events.create", Params: params}, f.deps)
+			assert.Equal(t, "Lunch", resultOf(t, out)["summary"])
+		})
+	}
+}

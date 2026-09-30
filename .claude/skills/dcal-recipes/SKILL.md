@@ -23,7 +23,9 @@ Worked example: `system.autostart.get/set`.
    `tasks.go`, `accounts.go`, `ui.go`, `reminders.go` or `people.go`. Read params with `ParamString`,
    `ParamInt`, `ParamBool` or `ParamStringSlice` (from `models.go`). Reply with
    `Respond(w, req.ID, map[string]any{…})` or `RespondError(w, req.ID, msg)` and `return`
-   early. Validate required params explicitly, the way `system.openUri` checks `uri`.
+   early. Validate required params explicitly, the way `system.openUri` checks `uri`. A failed
+   provider write replies with `respondWriteError(w, req.ID, err)` instead, which adds an
+   `errorCode` (`write_errors.go`) the UI turns into a friendly message.
 3. **New prefix group:** add a `strings.HasPrefix` case in `router.go`.
 4. **New dependency:** add a field to `Deps` (`deps.go`), wire it in `cmd/dcal/daemon.go`
    (`bootDaemonServices`), and nil-check it in the handler (see `deps.ColorScheme`).
