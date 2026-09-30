@@ -818,28 +818,17 @@ Singleton {
         });
     }
 
-    function _providerName(acc) {
-        if (!acc)
-            return I18n.tr("the server", "fallback name for a calendar provider in a save error");
-        switch (acc.kind) {
-        case "google":
-            return I18n.tr("Google", "provider name in a save error");
-        case "microsoft":
-            return I18n.tr("Microsoft", "provider name in a save error");
-        }
-        return accountLabel(acc) || I18n.tr("the server", "fallback name for a calendar provider in a save error");
-    }
-
     // writeFailure turns a failed events.create/update/delete/rsvp reply into
     // what the UI shows. The raw error only goes to the log; errorCode picks the
     // message. retryable failures can be resent as they were; a reconnect
-    // failure carries the account to sign in again.
-    function writeFailure(response, calendarId) {
+    // failure carries the account to sign in again. action ("save", "delete" or
+    // "respond") picks the wording of an unclassified failure.
+    function writeFailure(response, calendarId, action) {
         const code = response.errorCode || "generic";
         log.warn("event write failed (" + code + "): " + response.error);
         const cal = calendarById(calendarId);
         const acc = cal ? accountById(cal.accountId) : null;
-        const name = _providerName(acc);
+        const name = acc ? providerLabel(accountFlavor(acc)) : I18n.tr("the server", "fallback name for a calendar provider in a save error");
         switch (code) {
         case "network":
             return {
@@ -855,24 +844,29 @@ Singleton {
             };
         case "reconnect":
             return {
-                "message": I18n.tr("Sign-in expired. Reconnect %1 to save this change.", "event save error when the account needs to sign in again").arg(name),
+                "message": I18n.tr("Sign-in expired. Reconnect %1 to save this change.", "event save error when the account needs to sign in again").arg(accountLabel(acc)),
                 "retryable": false,
                 "account": acc
             };
         }
+        let message = I18n.tr("Couldn't save the event.", "event save error for an unclassified failure");
+        if (action === "delete")
+            message = I18n.tr("Couldn't delete the event.", "event delete error for an unclassified failure");
+        else if (action === "respond")
+            message = I18n.tr("Couldn't send your response.", "event RSVP error for an unclassified failure");
         return {
-            "message": I18n.tr("Couldn't save the event.", "event save error for an unclassified failure"),
+            "message": message,
             "retryable": false,
             "account": null
         };
     }
 
     // Toast for a write that has no form to show the error in (delete, RSVP).
-    function showWriteFailure(response, calendarId, retry) {
-        const failure = writeFailure(response, calendarId);
+    function showWriteFailure(response, calendarId, action, retry) {
+        const failure = writeFailure(response, calendarId, action);
         const opts = {};
         if (failure.retryable && retry) {
-            opts.actionLabel = I18n.tr("Retry", "toast action to resend a failed event change");
+            opts.actionLabel = I18n.tr("Try again", "toast action to resend a failed event change");
             opts.action = retry;
         } else if (failure.account) {
             opts.actionLabel = I18n.tr("Reconnect", "toast action to sign in to an account again");
@@ -920,6 +914,32 @@ Singleton {
             if (callback)
                 callback(response);
         });
+    }
+
+    // retryDelete and retryRsvp resend a failed delete/RSVP from the values
+    // captured when it was first sent, so the toast action works after the
+    // details modal closed or moved to another occurrence. They toast the
+    // outcome, and a new failure offers another retry.
+    function retryDelete(id, occurrenceStart, calendarId) {
+        log.info("retry delete id=" + id + " occurrenceStart=" + occurrenceStart);
+        deleteEvent(id, response => {
+            if (response.error) {
+                showWriteFailure(response, calendarId, "delete", () => retryDelete(id, occurrenceStart, calendarId));
+                return;
+            }
+            ToastService.show(I18n.tr("Deleted 1 event", "toast after deleting one event"), {});
+        }, occurrenceStart);
+    }
+
+    function retryRsvp(id, answer, occurrenceStart, calendarId) {
+        log.info("retry rsvp id=" + id + " occurrenceStart=" + occurrenceStart + " response=" + answer);
+        rsvpEvent(id, answer, response => {
+            if (response.error) {
+                showWriteFailure(response, calendarId, "respond", () => retryRsvp(id, answer, occurrenceStart, calendarId));
+                return;
+            }
+            ToastService.show(I18n.tr("Response sent", "toast after a retried RSVP succeeds"), {});
+        }, occurrenceStart);
     }
 
     function mutateEvents(method, paramsList, callback) {

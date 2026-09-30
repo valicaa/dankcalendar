@@ -1050,6 +1050,13 @@
     "comment": ""
   },
   {
+    "term": "Couldn't delete the event.",
+    "translation": "",
+    "context": "event delete error for an unclassified failure",
+    "reference": "",
+    "comment": ""
+  },
+  {
     "term": "Couldn't reach %1. Check your connection and try again.",
     "translation": "",
     "context": "event save error when the provider can't be reached",
@@ -1067,6 +1074,13 @@
     "term": "Couldn't save the event.",
     "translation": "",
     "context": "event save error for an unclassified failure",
+    "reference": "",
+    "comment": ""
+  },
+  {
+    "term": "Couldn't send your response.",
+    "translation": "",
+    "context": "event RSVP error for an unclassified failure",
     "reference": "",
     "comment": ""
   },
@@ -1764,13 +1778,6 @@
     "comment": ""
   },
   {
-    "term": "Google",
-    "translation": "",
-    "context": "provider name in a save error",
-    "reference": "",
-    "comment": ""
-  },
-  {
     "term": "Google Tasks is unavailable. <a href=\"https://console.cloud.google.com/apis/library/tasks.googleapis.com\" style=\"text-decoration:none; color:%1;\">Enable its API</a> or reconnect this account, then refresh, to sync tasks.",
     "translation": "",
     "context": "account notice when google tasks is disabled or its permission is missing",
@@ -2096,13 +2103,6 @@
     "term": "Menu",
     "translation": "",
     "context": "settings header button that shows the section list on narrow windows",
-    "reference": "",
-    "comment": ""
-  },
-  {
-    "term": "Microsoft",
-    "translation": "",
-    "context": "provider name in a save error",
     "reference": "",
     "comment": ""
   },
@@ -3087,9 +3087,9 @@
     "comment": ""
   },
   {
-    "term": "Retry",
+    "term": "Response sent",
     "translation": "",
-    "context": "toast action to resend a failed event change",
+    "context": "toast after a retried RSVP succeeds",
     "reference": "",
     "comment": ""
   },
@@ -3719,7 +3719,7 @@
   {
     "term": "Try again",
     "translation": "",
-    "context": "button to retry oauth after failure",
+    "context": "button to retry oauth after failure | event form button to resend a failed save | toast action to resend a failed event change",
     "reference": "",
     "comment": ""
   },

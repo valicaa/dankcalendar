@@ -187,6 +187,7 @@ FloatingWindow {
     function beginEdit() {
         _loadForm();
         formError = "";
+        formFailure = null;
         editMode = true;
     }
 
@@ -352,6 +353,7 @@ FloatingWindow {
     }
 
     function save() {
+        formFailure = null;
         if (formTitle.trim() === "") {
             formError = I18n.tr("Title is required", "event form validation error for missing title");
             return;
@@ -397,7 +399,7 @@ FloatingWindow {
         const done = response => {
             saving = false;
             if (response.error) {
-                formFailure = DankCalService.writeFailure(response, createMode ? cal.id : event.calendarId);
+                formFailure = DankCalService.writeFailure(response, createMode ? cal.id : event.calendarId, "save");
                 formError = formFailure.message;
                 return;
             }
@@ -423,19 +425,19 @@ FloatingWindow {
     }
 
     function submitDelete(occurrenceOnly) {
+        // Captured now: the toast's retry outlives the modal's current event.
         const id = event.id;
+        const calendarId = event.calendarId;
+        const occurrenceStart = occurrenceOnly ? EventUtils.wireTime(event.start, event.allDay) : undefined;
         saving = true;
         DankCalService.deleteEvent(id, response => {
             saving = false;
             if (response.error) {
-                DankCalService.showWriteFailure(response, event.calendarId, () => {
-                    if (eventModal.visible && eventModal.event.id === id)
-                        eventModal.submitDelete(occurrenceOnly);
-                });
+                DankCalService.showWriteFailure(response, calendarId, "delete", () => DankCalService.retryDelete(id, occurrenceStart, calendarId));
                 return;
             }
             hide();
-        }, occurrenceOnly ? EventUtils.wireTime(event.start, event.allDay) : undefined);
+        }, occurrenceStart);
     }
 
     function respond(action) {
@@ -451,21 +453,20 @@ FloatingWindow {
     function submitResponse(action, occurrenceOnly) {
         pendingResponse = "";
         const id = event.id;
+        const calendarId = event.calendarId;
+        const occurrenceStart = occurrenceOnly ? EventUtils.wireTime(event.start, event.allDay) : undefined;
         saving = true;
         formError = "";
         formFailure = null;
         DankCalService.rsvpEvent(id, action, response => {
             saving = false;
             if (response.error) {
-                DankCalService.showWriteFailure(response, event.calendarId, () => {
-                    if (eventModal.visible && eventModal.event.id === id)
-                        eventModal.submitResponse(action, occurrenceOnly);
-                });
+                DankCalService.showWriteFailure(response, calendarId, "respond", () => DankCalService.retryRsvp(id, action, occurrenceStart, calendarId));
                 return;
             }
             if (response.result)
                 eventModal.event = DankCalService.eventFromResult(response.result);
-        }, occurrenceOnly ? EventUtils.wireTime(event.start, event.allDay) : undefined);
+        }, occurrenceStart);
     }
 
     function _styleAnchors(html) {
@@ -656,7 +657,7 @@ FloatingWindow {
                     anchors.verticalCenter: parent.verticalCenter
                     readonly property bool reconnect: !!eventModal.formFailure && !!eventModal.formFailure.account
                     visible: !!eventModal.formFailure && (eventModal.formFailure.retryable || reconnect)
-                    text: reconnect ? I18n.tr("Reconnect", "toast action to sign in to an account again") : I18n.tr("Retry", "toast action to resend a failed event change")
+                    text: reconnect ? I18n.tr("Reconnect", "toast action to sign in to an account again") : I18n.tr("Try again", "event form button to resend a failed save")
                     backgroundColor: "transparent"
                     textColor: Theme.primary
                     enabled: !eventModal.saving

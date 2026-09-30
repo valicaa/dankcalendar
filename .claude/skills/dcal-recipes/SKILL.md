@@ -38,7 +38,9 @@ Worked example: `system.autostart.get/set`.
    `setAutostart`: `sendRequest("…", {params}, response => { if (response.error) lastError = response.error; else …; if (callback) callback(response); })`.
    If it's state, add a `property` and a `refreshX()` called on connect (~line 118).
    Callers of a write that replies with `errorCode` pass the failed reply to `DankCalService.writeFailure`
-   (message + retry) or `showWriteFailure` (toast), never showing `response.error`.
+   (message + retry) or `showWriteFailure` (toast), never showing `response.error`, with the action
+   (`"save"|"delete"|"respond"`). A toast retry must resend values captured before the request
+   (see `retryDelete`), not the modal's live state.
 8. Try it on a dev instance (`verify-change` section 4): after `dev-instance.sh start`, run
    `/home/nozomi/Documents/code/calendar/.claude/tools/dev-instance.sh ipc group.thing.do id=…`.
    Plain `dcal ipc` reaches the live daemon and the real data.
