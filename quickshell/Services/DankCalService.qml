@@ -828,23 +828,26 @@ Singleton {
         log.warn("event write failed (" + code + "): " + response.error);
         const cal = calendarById(calendarId);
         const acc = cal ? accountById(cal.accountId) : null;
-        const name = acc ? providerLabel(accountFlavor(acc)) : I18n.tr("the server", "fallback name for a calendar provider in a save error");
+        const flavor = accountFlavor(acc);
+        const knownProvider = flavor === "google" || flavor === "microsoft" || flavor === "icloud";
+        const accountName = accountLabel(acc) || I18n.tr("the server", "fallback name for a calendar provider or account in an event change error");
+        const name = knownProvider ? providerLabel(flavor) : accountName;
         switch (code) {
         case "network":
             return {
-                "message": I18n.tr("Couldn't reach %1. Check your connection and try again.", "event save error when the provider can't be reached").arg(name),
+                "message": I18n.tr("Couldn't reach %1. Check your connection and try again.", "event change error when the provider can't be reached").arg(name),
                 "retryable": true,
                 "account": null
             };
         case "unavailable":
             return {
-                "message": I18n.tr("%1 is busy right now. Try again in a moment.", "event save error when the provider is rate limiting or down").arg(name),
+                "message": I18n.tr("%1 is busy right now. Try again in a moment.", "event change error when the provider is rate limiting or down").arg(name),
                 "retryable": true,
                 "account": null
             };
         case "reconnect":
             return {
-                "message": I18n.tr("Sign-in expired. Reconnect %1 to save this change.", "event save error when the account needs to sign in again").arg(accountLabel(acc)),
+                "message": I18n.tr("Sign-in expired. Reconnect %1 and try again.", "event change error when the account needs to sign in again").arg(accountName),
                 "retryable": false,
                 "account": acc
             };
@@ -919,23 +922,33 @@ Singleton {
     // retryDelete and retryRsvp resend a failed delete/RSVP from the values
     // captured when it was first sent, so the toast action works after the
     // details modal closed or moved to another occurrence. They toast the
-    // outcome, and a new failure offers another retry.
-    function retryDelete(id, occurrenceStart, calendarId) {
+    // outcome, and a new failure offers another retry. The optional watch
+    // ({started(), finished(response)}) lets the details modal follow the
+    // retry; it is passed on to any further retry.
+    function retryDelete(id, occurrenceStart, calendarId, watch) {
         log.info("retry delete id=" + id + " occurrenceStart=" + occurrenceStart);
+        if (watch)
+            watch.started();
         deleteEvent(id, response => {
+            if (watch)
+                watch.finished(response);
             if (response.error) {
-                showWriteFailure(response, calendarId, "delete", () => retryDelete(id, occurrenceStart, calendarId));
+                showWriteFailure(response, calendarId, "delete", () => retryDelete(id, occurrenceStart, calendarId, watch));
                 return;
             }
             ToastService.show(I18n.tr("Deleted 1 event", "toast after deleting one event"), {});
         }, occurrenceStart);
     }
 
-    function retryRsvp(id, answer, occurrenceStart, calendarId) {
+    function retryRsvp(id, answer, occurrenceStart, calendarId, watch) {
         log.info("retry rsvp id=" + id + " occurrenceStart=" + occurrenceStart + " response=" + answer);
+        if (watch)
+            watch.started();
         rsvpEvent(id, answer, response => {
+            if (watch)
+                watch.finished(response);
             if (response.error) {
-                showWriteFailure(response, calendarId, "respond", () => retryRsvp(id, answer, occurrenceStart, calendarId));
+                showWriteFailure(response, calendarId, "respond", () => retryRsvp(id, answer, occurrenceStart, calendarId, watch));
                 return;
             }
             ToastService.show(I18n.tr("Response sent", "toast after a retried RSVP succeeds"), {});

@@ -424,6 +424,32 @@ FloatingWindow {
         submitDelete(occurrenceOnly);
     }
 
+    // True while the modal shows the event (and occurrence) a toast retry was
+    // captured for; a retry for anything else must not touch the modal.
+    function _showsRetried(id, occurrenceStart) {
+        if (!visible || event.id !== id)
+            return false;
+        return !occurrenceStart || EventUtils.wireTime(event.start, event.allDay) === occurrenceStart;
+    }
+
+    // Follows a toast retry: blocks other writes while it runs and applies its
+    // success, only when the modal still shows the retried event.
+    function _retryWatch(id, occurrenceStart, onSuccess) {
+        return {
+            "started": () => {
+                if (_showsRetried(id, occurrenceStart))
+                    saving = true;
+            },
+            "finished": response => {
+                if (!_showsRetried(id, occurrenceStart))
+                    return;
+                saving = false;
+                if (!response.error)
+                    onSuccess(response);
+            }
+        };
+    }
+
     function submitDelete(occurrenceOnly) {
         // Captured now: the toast's retry outlives the modal's current event.
         const id = event.id;
@@ -433,7 +459,7 @@ FloatingWindow {
         DankCalService.deleteEvent(id, response => {
             saving = false;
             if (response.error) {
-                DankCalService.showWriteFailure(response, calendarId, "delete", () => DankCalService.retryDelete(id, occurrenceStart, calendarId));
+                DankCalService.showWriteFailure(response, calendarId, "delete", () => DankCalService.retryDelete(id, occurrenceStart, calendarId, _retryWatch(id, occurrenceStart, () => hide())));
                 return;
             }
             hide();
@@ -461,7 +487,10 @@ FloatingWindow {
         DankCalService.rsvpEvent(id, action, response => {
             saving = false;
             if (response.error) {
-                DankCalService.showWriteFailure(response, calendarId, "respond", () => DankCalService.retryRsvp(id, action, occurrenceStart, calendarId));
+                DankCalService.showWriteFailure(response, calendarId, "respond", () => DankCalService.retryRsvp(id, action, occurrenceStart, calendarId, _retryWatch(id, occurrenceStart, response => {
+                    if (response.result)
+                        eventModal.event = DankCalService.eventFromResult(response.result);
+                })));
                 return;
             }
             if (response.result)
@@ -657,7 +686,7 @@ FloatingWindow {
                     anchors.verticalCenter: parent.verticalCenter
                     readonly property bool reconnect: !!eventModal.formFailure && !!eventModal.formFailure.account
                     visible: !!eventModal.formFailure && (eventModal.formFailure.retryable || reconnect)
-                    text: reconnect ? I18n.tr("Reconnect", "toast action to sign in to an account again") : I18n.tr("Try again", "event form button to resend a failed save")
+                    text: reconnect ? I18n.tr("Reconnect", "event form button to sign in to an account again") : I18n.tr("Try again", "event form button to resend a failed save")
                     backgroundColor: "transparent"
                     textColor: Theme.primary
                     enabled: !eventModal.saving
