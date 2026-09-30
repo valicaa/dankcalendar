@@ -28,6 +28,13 @@
     "comment": ""
   },
   {
+    "term": "%1 is busy right now. Try again in a moment.",
+    "translation": "",
+    "context": "event save error when the provider is rate limiting or down",
+    "reference": "",
+    "comment": ""
+  },
+  {
     "term": "%1 selected",
     "translation": "",
     "context": "multi-event action shelf selection count; %1 is event count",
@@ -1043,9 +1050,23 @@
     "comment": ""
   },
   {
+    "term": "Couldn't reach %1. Check your connection and try again.",
+    "translation": "",
+    "context": "event save error when the provider can't be reached",
+    "reference": "",
+    "comment": ""
+  },
+  {
     "term": "Couldn't reconnect. Add the account again to sign in.",
     "translation": "",
     "context": "toast when reconnecting an account fails",
+    "reference": "",
+    "comment": ""
+  },
+  {
+    "term": "Couldn't save the event.",
+    "translation": "",
+    "context": "event save error for an unclassified failure",
     "reference": "",
     "comment": ""
   },
@@ -1743,6 +1764,13 @@
     "comment": ""
   },
   {
+    "term": "Google",
+    "translation": "",
+    "context": "provider name in a save error",
+    "reference": "",
+    "comment": ""
+  },
+  {
     "term": "Google Tasks is unavailable. <a href=\"https://console.cloud.google.com/apis/library/tasks.googleapis.com\" style=\"text-decoration:none; color:%1;\">Enable its API</a> or reconnect this account, then refresh, to sync tasks.",
     "translation": "",
     "context": "account notice when google tasks is disabled or its permission is missing",
@@ -2068,6 +2096,13 @@
     "term": "Menu",
     "translation": "",
     "context": "settings header button that shows the section list on narrow windows",
+    "reference": "",
+    "comment": ""
+  },
+  {
+    "term": "Microsoft",
+    "translation": "",
+    "context": "provider name in a save error",
     "reference": "",
     "comment": ""
   },
@@ -2851,7 +2886,7 @@
   {
     "term": "Reconnect",
     "translation": "",
-    "context": "account context menu action to re-authorize the account | account row action tooltip | sidebar button that reconnects the account used for a colleague lookup",
+    "context": "account context menu action to re-authorize the account | account row action tooltip | sidebar button that reconnects the account used for a colleague lookup | toast action to sign in to an account again",
     "reference": "",
     "comment": ""
   },
@@ -3048,6 +3083,13 @@
     "term": "Reset to global",
     "translation": "",
     "context": "per-calendar reminders dialog button to clear overrides",
+    "reference": "",
+    "comment": ""
+  },
+  {
+    "term": "Retry",
+    "translation": "",
+    "context": "toast action to resend a failed event change",
     "reference": "",
     "comment": ""
   },
@@ -3321,6 +3363,13 @@
     "term": "Sign-in expired — reconnect to keep syncing",
     "translation": "",
     "context": "account status when oauth needs re-auth",
+    "reference": "",
+    "comment": ""
+  },
+  {
+    "term": "Sign-in expired. Reconnect %1 to save this change.",
+    "translation": "",
+    "context": "event save error when the account needs to sign in again",
     "reference": "",
     "comment": ""
   },
@@ -4007,6 +4056,13 @@
     "term": "synced as \"%1\"",
     "translation": "",
     "context": "renamed calendar provider name suffix in calendar list",
+    "reference": "",
+    "comment": ""
+  },
+  {
+    "term": "the server",
+    "translation": "",
+    "context": "fallback name for a calendar provider in a save error",
     "reference": "",
     "comment": ""
   },

@@ -17,6 +17,10 @@ FloatingWindow {
     property bool saving: false
     property string pendingResponse: ""
     property string formError: ""
+    // Set by DankCalService.writeFailure when a save fails; formError is then its message.
+    property var formFailure: null
+    // Sent with every attempt to create this event so a retry can't add a copy.
+    property string createUid: ""
 
     readonly property bool noWritableCalendars: DankCalService.writableCalendars().length === 0
 
@@ -94,8 +98,16 @@ FloatingWindow {
         saving = false;
         pendingResponse = "";
         formError = "";
+        formFailure = null;
         event = eventData || {};
         visible = true;
+    }
+
+    function _newUid() {
+        let uid = "";
+        for (let i = 0; i < 32; i++)
+            uid += Math.floor(Math.random() * 16).toString(16);
+        return uid;
     }
 
     function _nextHalfHour() {
@@ -154,6 +166,8 @@ FloatingWindow {
         saving = false;
         pendingResponse = "";
         formError = "";
+        formFailure = null;
+        createUid = _newUid();
         _loadForm();
         editMode = true;
         visible = true;
@@ -379,10 +393,12 @@ FloatingWindow {
 
         saving = true;
         formError = "";
+        formFailure = null;
         const done = response => {
             saving = false;
             if (response.error) {
-                formError = response.error;
+                formFailure = DankCalService.writeFailure(response, createMode ? cal.id : event.calendarId);
+                formError = formFailure.message;
                 return;
             }
             hide();
@@ -390,6 +406,7 @@ FloatingWindow {
 
         if (createMode) {
             fields.calendarId = cal.id;
+            fields.uid = createUid;
             DankCalService.createEvent(fields, done);
         } else {
             DankCalService.updateEvent(event.id, fields, done);
@@ -401,12 +418,20 @@ FloatingWindow {
             confirmDelete = true;
             return;
         }
+        confirmDelete = false;
+        submitDelete(occurrenceOnly);
+    }
+
+    function submitDelete(occurrenceOnly) {
+        const id = event.id;
         saving = true;
-        DankCalService.deleteEvent(event.id, response => {
+        DankCalService.deleteEvent(id, response => {
             saving = false;
-            confirmDelete = false;
             if (response.error) {
-                formError = response.error;
+                DankCalService.showWriteFailure(response, event.calendarId, () => {
+                    if (eventModal.visible && eventModal.event.id === id)
+                        eventModal.submitDelete(occurrenceOnly);
+                });
                 return;
             }
             hide();
@@ -425,12 +450,17 @@ FloatingWindow {
 
     function submitResponse(action, occurrenceOnly) {
         pendingResponse = "";
+        const id = event.id;
         saving = true;
         formError = "";
-        DankCalService.rsvpEvent(event.id, action, response => {
+        formFailure = null;
+        DankCalService.rsvpEvent(id, action, response => {
             saving = false;
             if (response.error) {
-                formError = response.error;
+                DankCalService.showWriteFailure(response, event.calendarId, () => {
+                    if (eventModal.visible && eventModal.event.id === id)
+                        eventModal.submitResponse(action, occurrenceOnly);
+                });
                 return;
             }
             if (response.result)
@@ -603,16 +633,46 @@ FloatingWindow {
             height: Theme.buttonHeightS + Theme.spacingM * 2
             visible: eventModal.editMode
 
-            StyledText {
+            Row {
                 anchors.left: parent.left
                 anchors.leftMargin: Theme.spacingL
                 anchors.verticalCenter: parent.verticalCenter
-                text: eventModal.formError
-                color: Theme.error
-                font.pixelSize: Theme.fontSizeSmall
+                spacing: Theme.spacingS
                 visible: eventModal.formError !== ""
-                elide: Text.ElideRight
-                width: parent.width / 2
+
+                StyledText {
+                    id: errorText
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: eventModal.formError
+                    color: Theme.error
+                    font.pixelSize: Theme.fontSizeSmall
+                    wrapMode: Text.WordWrap
+                    maximumLineCount: 2
+                    elide: Text.ElideRight
+                    width: Math.min(implicitWidth, footer.width * 0.4)
+                }
+
+                DankButton {
+                    anchors.verticalCenter: parent.verticalCenter
+                    readonly property bool reconnect: !!eventModal.formFailure && !!eventModal.formFailure.account
+                    visible: !!eventModal.formFailure && (eventModal.formFailure.retryable || reconnect)
+                    text: reconnect ? I18n.tr("Reconnect", "toast action to sign in to an account again") : I18n.tr("Retry", "toast action to resend a failed event change")
+                    backgroundColor: "transparent"
+                    textColor: Theme.primary
+                    enabled: !eventModal.saving
+                    onClicked: {
+                        if (!reconnect) {
+                            eventModal.save();
+                            return;
+                        }
+                        DankCalService.reconnectAccount(eventModal.formFailure.account, response => {
+                            if (response.error)
+                                return;
+                            eventModal.formError = "";
+                            eventModal.formFailure = null;
+                        });
+                    }
+                }
             }
 
             Row {

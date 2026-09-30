@@ -818,6 +818,69 @@ Singleton {
         });
     }
 
+    function _providerName(acc) {
+        if (!acc)
+            return I18n.tr("the server", "fallback name for a calendar provider in a save error");
+        switch (acc.kind) {
+        case "google":
+            return I18n.tr("Google", "provider name in a save error");
+        case "microsoft":
+            return I18n.tr("Microsoft", "provider name in a save error");
+        }
+        return accountLabel(acc) || I18n.tr("the server", "fallback name for a calendar provider in a save error");
+    }
+
+    // writeFailure turns a failed events.create/update/delete/rsvp reply into
+    // what the UI shows. The raw error only goes to the log; errorCode picks the
+    // message. retryable failures can be resent as they were; a reconnect
+    // failure carries the account to sign in again.
+    function writeFailure(response, calendarId) {
+        const code = response.errorCode || "generic";
+        log.warn("event write failed (" + code + "): " + response.error);
+        const cal = calendarById(calendarId);
+        const acc = cal ? accountById(cal.accountId) : null;
+        const name = _providerName(acc);
+        switch (code) {
+        case "network":
+            return {
+                "message": I18n.tr("Couldn't reach %1. Check your connection and try again.", "event save error when the provider can't be reached").arg(name),
+                "retryable": true,
+                "account": null
+            };
+        case "unavailable":
+            return {
+                "message": I18n.tr("%1 is busy right now. Try again in a moment.", "event save error when the provider is rate limiting or down").arg(name),
+                "retryable": true,
+                "account": null
+            };
+        case "reconnect":
+            return {
+                "message": I18n.tr("Sign-in expired. Reconnect %1 to save this change.", "event save error when the account needs to sign in again").arg(name),
+                "retryable": false,
+                "account": acc
+            };
+        }
+        return {
+            "message": I18n.tr("Couldn't save the event.", "event save error for an unclassified failure"),
+            "retryable": false,
+            "account": null
+        };
+    }
+
+    // Toast for a write that has no form to show the error in (delete, RSVP).
+    function showWriteFailure(response, calendarId, retry) {
+        const failure = writeFailure(response, calendarId);
+        const opts = {};
+        if (failure.retryable && retry) {
+            opts.actionLabel = I18n.tr("Retry", "toast action to resend a failed event change");
+            opts.action = retry;
+        } else if (failure.account) {
+            opts.actionLabel = I18n.tr("Reconnect", "toast action to sign in to an account again");
+            opts.action = () => reconnectAccount(failure.account);
+        }
+        ToastService.show(failure.message, opts);
+    }
+
     function createEvent(fields, callback) {
         sendRequest("events.create", fields, response => {
             if (response.error)
