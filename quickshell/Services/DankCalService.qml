@@ -965,15 +965,17 @@ Singleton {
     }
 
     // mutateEvents sends one request per params entry, in order. The reply
-    // carries results, errors (raw text, for the log) and failures: one
-    // {params, calendarId, error, errorCode} per failed item, so a caller can
-    // resend just those. calendarIds is parallel to paramsList and only names
-    // the provider in the failure message.
+    // carries results, errors (raw text, for the log), succeeded (the params of
+    // the items that went through) and failures: one {index, params, calendarId,
+    // error, errorCode} per failed item, so a caller can resend just those.
+    // calendarIds is parallel to paramsList and only names the provider in the
+    // failure message.
     function mutateEvents(method, paramsList, callback, calendarIds) {
         const queue = paramsList || [];
         const results = [];
         const errors = [];
         const failures = [];
+        const succeeded = [];
         let index = 0;
 
         const finish = () => {
@@ -981,6 +983,7 @@ Singleton {
             const response = {
                 "results": results,
                 "errors": errors,
+                "succeeded": succeeded,
                 "failures": failures
             };
             if (errors.length > 0) {
@@ -1000,6 +1003,7 @@ Singleton {
                 if (response.error) {
                     errors.push(response.error);
                     failures.push({
+                        "index": index,
                         "params": queue[index],
                         "calendarId": (calendarIds || [])[index] || "",
                         "error": response.error,
@@ -1007,6 +1011,7 @@ Singleton {
                     });
                 } else {
                     results.push(response.result);
+                    succeeded.push(queue[index]);
                 }
                 index++;
                 sendNext();
@@ -1018,6 +1023,7 @@ Singleton {
                 callback({
                     "results": [],
                     "errors": [],
+                    "succeeded": [],
                     "failures": []
                 });
             return;
@@ -1029,9 +1035,11 @@ Singleton {
     // writeFailure (which logs each raw error). reason is the plain-language
     // cause, taken from the first retryable failure, else the first one with an
     // account to reconnect; empty when every failure is unclassified. retry
-    // holds the retryable failures, the only ones worth resending.
+    // holds the retryable failures, the only ones worth resending; other the
+    // failures that stay failed (a retry must carry them along, not drop them).
     function batchFailure(response, action) {
         const retry = [];
+        const other = [];
         let lead = null;
         const failures = response.failures || [];
         for (let i = 0; i < failures.length; i++) {
@@ -1039,6 +1047,8 @@ Singleton {
             const classified = failure.retryable || failure.account;
             if (failure.retryable)
                 retry.push(failures[i]);
+            else
+                other.push(failures[i]);
             if (classified && (!lead || (failure.retryable && !lead.retryable)))
                 lead = failure;
         }
@@ -1046,6 +1056,7 @@ Singleton {
             "count": failures.length,
             "reason": lead ? lead.message : "",
             "retry": retry,
+            "other": other,
             "account": lead ? lead.account : null
         };
     }
