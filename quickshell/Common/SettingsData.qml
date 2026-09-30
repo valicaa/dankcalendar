@@ -114,6 +114,8 @@ Singleton {
     property alias lastView: adapter.lastView
     // "accountId:noticeCode" entries the user closed in the accounts list
     property alias dismissedAccountNotices: adapter.dismissedAccountNotices
+    // account ids whose calendar group is folded in the sidebar; ids of removed accounts are ignored
+    property alias collapsedAccounts: adapter.collapsedAccounts
 
     function isNoticeDismissed(accountId, code) {
         return dismissedAccountNotices.indexOf(accountId + ":" + code) !== -1;
@@ -123,6 +125,16 @@ Singleton {
         if (isNoticeDismissed(accountId, code))
             return;
         dismissedAccountNotices = dismissedAccountNotices.concat([accountId + ":" + code]);
+    }
+
+    function isAccountCollapsed(accountId) {
+        return collapsedAccounts.indexOf(accountId) !== -1;
+    }
+
+    function setAccountCollapsed(accountId, collapsed) {
+        if (isAccountCollapsed(accountId) === collapsed)
+            return;
+        collapsedAccounts = collapsed ? collapsedAccounts.concat([accountId]) : collapsedAccounts.filter(id => id !== accountId);
     }
 
     readonly property var locale: {
@@ -263,6 +275,7 @@ Singleton {
             property bool sidebarCollapsed: false
             property string lastView: "month"
             property var dismissedAccountNotices: []
+            property var collapsedAccounts: []
         }
     }
 }

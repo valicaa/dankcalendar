@@ -16,7 +16,6 @@ Item {
     property var actionAccount: null
     property bool peopleExpanded: true
     property bool calendarsExpanded: true
-    property bool accountsExpanded: true
     property bool tasksExpanded: true
     property bool keyboardActive: false
     property int navIndex: -1
@@ -85,13 +84,23 @@ Item {
             section: "calendars"
         });
         if (calendarsExpanded) {
-            const cals = DankCalService.eventCalendars();
-            for (let i = 0; i < cals.length; i++)
+            const accs = DankCalService.accounts;
+            for (let i = 0; i < accs.length; i++) {
                 items.push({
-                    type: "calendar",
-                    key: "cal:" + cals[i].id,
-                    data: cals[i]
+                    type: "account",
+                    key: "acc:" + accs[i].id,
+                    data: accs[i]
                 });
+                if (SettingsData.isAccountCollapsed(accs[i].id))
+                    continue;
+                const cals = accountCalendars(accs[i].id);
+                for (let j = 0; j < cals.length; j++)
+                    items.push({
+                        type: "calendar",
+                        key: "cal:" + cals[j].id,
+                        data: cals[j]
+                    });
+            }
         }
         if (SettingsData.showTasks && DankCalService.hasTaskLists()) {
             items.push({
@@ -108,20 +117,6 @@ Item {
                         data: tasks[i]
                     });
             }
-        }
-        items.push({
-            type: "section",
-            key: "section:accounts",
-            section: "accounts"
-        });
-        if (accountsExpanded) {
-            const accs = DankCalService.accounts;
-            for (let i = 0; i < accs.length; i++)
-                items.push({
-                    type: "account",
-                    key: "acc:" + accs[i].id,
-                    data: accs[i]
-                });
         }
         return items;
     }
@@ -158,7 +153,7 @@ Item {
         case "task":
             return "tasks";
         case "account":
-            return "accounts";
+            return "calendars";
         default:
             return "";
         }
@@ -172,8 +167,6 @@ Item {
             return calendarsExpanded;
         case "tasks":
             return tasksExpanded;
-        case "accounts":
-            return accountsExpanded;
         default:
             return false;
         }
@@ -189,9 +182,6 @@ Item {
             break;
         case "tasks":
             tasksExpanded = expanded;
-            break;
-        case "accounts":
-            accountsExpanded = expanded;
             break;
         default:
             return;
@@ -218,7 +208,7 @@ Item {
             taskClicked(item.data);
             return;
         case "account":
-            DankCalService.refreshAccount(item.data.id);
+            SettingsData.setAccountCollapsed(item.data.id, !SettingsData.isAccountCollapsed(item.data.id));
             return;
         }
     }
@@ -258,7 +248,9 @@ Item {
         case Qt.Key_Left:
             {
                 const item = currentNav();
-                if (item)
+                if (item && item.type === "account")
+                    SettingsData.setAccountCollapsed(item.data.id, true);
+                else if (item)
                     setSectionExpanded(sectionOf(item), false);
                 break;
             }
@@ -266,7 +258,9 @@ Item {
         case Qt.Key_Right:
             {
                 const item = currentNav();
-                if (item)
+                if (item && item.type === "account")
+                    SettingsData.setAccountCollapsed(item.data.id, false);
+                else if (item)
                     setSectionExpanded(sectionOf(item), true);
                 break;
             }
@@ -326,6 +320,12 @@ Item {
             confirmText: I18n.tr("Remove", "confirm button for removing an account"),
             danger: true
         });
+    }
+
+    // One account's event calendars, shown ones before hidden ones, each part in service order.
+    function accountCalendars(accountId) {
+        const cals = DankCalService.eventCalendars().filter(c => c.accountId === accountId);
+        return cals.filter(c => !c.hidden).concat(cals.filter(c => c.hidden));
     }
 
     function providerIcon(flavor) {
@@ -661,119 +661,293 @@ Item {
 
                 Column {
                     width: parent.width
-                    spacing: Theme.groupedListGap
+                    spacing: Theme.spacingS
                     visible: root.calendarsExpanded
 
                     PlaceholderRow {
-                        visible: DankCalService.eventCalendars().length === 0
+                        visible: DankCalService.accounts.length === 0
                         text: DankCalService.connected ? I18n.tr("No calendars yet", "sidebar placeholder when the calendar list is empty") : I18n.tr("Daemon offline", "sidebar placeholder when the daemon is not connected")
                     }
 
                     Repeater {
-                        id: calendarRepeater
                         model: ScriptModel {
-                            values: DankCalService.eventCalendars()
+                            values: DankCalService.accounts
                         }
 
-                        GroupRow {
-                            id: calRow
-                            required property int index
+                        Column {
+                            id: group
                             required property var modelData
-                            readonly property string accountTooltip: {
-                                const acc = DankCalService.accountById(modelData.accountId);
-                                if (!acc)
-                                    return modelData.accountName || I18n.tr("Local calendar", "fallback tooltip for a calendar without an account");
-                                const provider = root.providerLabel(DankCalService.accountFlavor(acc));
-                                const label = DankCalService.accountLabel(acc);
-                                if (!label || label === provider)
-                                    return provider;
-                                return provider + " · " + label;
-                            }
-                            readonly property string rowTooltip: modelData.name + "  —  " + accountTooltip
-                            onNavSelectedChanged: {
-                                if (navSelected)
-                                    root.revealNav(calRow);
-                            }
-                            height: Theme.buttonHeightS
-                            firstInGroup: index === 0
-                            lastInGroup: index === calendarRepeater.count - 1
-                            navSelected: root.navSelectedKey === "cal:" + modelData.id
-
-                            function openMenu(x, y) {
-                                root.actionCalendar = modelData;
-                                calendarMenu.show(calRow, x, y);
+                            readonly property var calendars: root.accountCalendars(modelData.id)
+                            readonly property bool collapsed: SettingsData.isAccountCollapsed(modelData.id)
+                            readonly property bool authorized: modelData.authorized !== false && modelData.needsReauth !== true && modelData.keyringLocked !== true
+                            readonly property string flavor: DankCalService.accountFlavor(modelData)
+                            readonly property bool reconnectable: modelData.kind === "google" || modelData.kind === "microsoft"
+                            readonly property string authReason: {
+                                const detail = (modelData.authError || "").trim();
+                                if (modelData.keyringLocked === true)
+                                    return I18n.tr("Keyring locked — unlock it to sync", "tooltip on the account warning icon when the system keyring holding the credentials is locked");
+                                if (modelData.needsReauth === true) {
+                                    const head = I18n.tr("Sign-in expired — click to reconnect", "tooltip on the account warning icon when re-authentication is required");
+                                    return detail === "" ? head : head + " · " + detail;
+                                }
+                                if (modelData.authorized === false)
+                                    return I18n.tr("Not signed in — click to reconnect or re-add this account", "tooltip on the account warning icon when credentials are missing");
+                                return I18n.tr("Account problem — click for options", "tooltip on the account warning icon for an unspecified problem");
                             }
 
-                            Row {
-                                anchors.left: parent.left
-                                anchors.right: moreButton.left
-                                anchors.leftMargin: Theme.spacingM
-                                anchors.verticalCenter: parent.verticalCenter
-                                spacing: Theme.spacingM
+                            width: parent.width
+                            spacing: Theme.groupedListGap
 
-                                Rectangle {
-                                    width: Theme.iconSizeSmall
-                                    height: Theme.iconSizeSmall
-                                    radius: Theme.cornerRadiusXS
-                                    color: calRow.modelData.hidden ? "transparent" : calRow.modelData.color
-                                    border.color: calRow.modelData.color
-                                    border.width: Theme.outlineWidthFocused
-                                    anchors.verticalCenter: parent.verticalCenter
+                            GroupRow {
+                                id: accRow
+                                onNavSelectedChanged: {
+                                    if (navSelected)
+                                        root.revealNav(accRow);
+                                }
+                                height: Theme.buttonHeightS
+                                firstInGroup: true
+                                lastInGroup: group.collapsed
+                                navSelected: root.navSelectedKey === "acc:" + group.modelData.id
+
+                                function openMenu(x, y) {
+                                    root.actionAccount = group.modelData;
+                                    accountMenu.show(accRow, x, y);
                                 }
 
-                                StyledText {
-                                    text: calRow.modelData.name
-                                    font.pixelSize: Theme.fontSizeMedium
-                                    color: Theme.surfaceText
-                                    opacity: calRow.modelData.hidden ? Theme.pendingOpacity : 1.0
-                                    width: parent.width - Theme.iconSizeSmall - Theme.spacingM
-                                    wrapMode: Text.NoWrap
-                                    maximumLineCount: 1
-                                    elide: Text.ElideRight
-                                    anchors.verticalCenter: parent.verticalCenter
-                                }
-                            }
-
-                            StateLayer {
-                                id: calRowState
-                                stateColor: Theme.surfaceText
-                                acceptedButtons: Qt.LeftButton | Qt.RightButton
-                                onEntered: calTooltip.show(calRow.rowTooltip, calRow)
-                                onExited: calTooltip.hide()
-                                onClicked: mouse => {
-                                    calTooltip.hide();
-                                    if (mouse.button === Qt.RightButton) {
-                                        calRow.openMenu(mouse.x, mouse.y);
-                                        return;
+                                StateLayer {
+                                    id: accRowState
+                                    stateColor: Theme.surfaceText
+                                    acceptedButtons: Qt.LeftButton | Qt.RightButton
+                                    onClicked: mouse => {
+                                        if (mouse.button === Qt.RightButton) {
+                                            accRow.openMenu(mouse.x, mouse.y);
+                                            return;
+                                        }
+                                        accountMenu.close();
+                                        SettingsData.setAccountCollapsed(group.modelData.id, !group.collapsed);
                                     }
-                                    calendarMenu.close();
-                                    DankCalService.setCalendarHidden(calRow.modelData.id, !calRow.modelData.hidden);
+                                }
+
+                                DankIcon {
+                                    id: authWarning
+                                    visible: !group.authorized
+                                    anchors.right: accMoreButton.left
+                                    anchors.rightMargin: Theme.spacingXS
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    name: "warning"
+                                    size: Theme.iconSizeSmall
+                                    color: Theme.error
+
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        anchors.margins: -Theme.spacingXS
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onEntered: authTooltip.show(group.authReason, authWarning)
+                                        onExited: authTooltip.hide()
+                                        onClicked: {
+                                            authTooltip.hide();
+                                            if (group.reconnectable) {
+                                                DankCalService.reconnectAccount(group.modelData);
+                                                return;
+                                            }
+                                            accRow.openMenu(accRow.width - accountMenu.width, accRow.height);
+                                        }
+                                    }
+                                }
+
+                                DankActionButton {
+                                    id: accMoreButton
+                                    readonly property bool menuOpenHere: accountMenu.opened && (root.actionAccount ? root.actionAccount.id : "") === group.modelData.id
+                                    anchors.right: parent.right
+                                    anchors.rightMargin: Theme.spacingXS
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    buttonSize: Theme.buttonHeightXS
+                                    iconName: "more_horiz"
+                                    iconSize: Theme.iconSizeSmall
+                                    iconColor: Theme.surfaceVariantText
+                                    focusPolicy: Qt.NoFocus
+                                    Accessible.name: I18n.tr("Account options", "sidebar account row overflow menu button")
+                                    opacity: accRowState.containsMouse || hovered || menuOpenHere || !group.authorized ? 1 : 0
+                                    visible: opacity > 0
+                                    onClicked: {
+                                        if (menuOpenHere) {
+                                            accountMenu.close();
+                                            return;
+                                        }
+                                        accRow.openMenu(accRow.width - accountMenu.width, accRow.height);
+                                    }
+                                }
+
+                                Row {
+                                    anchors.left: parent.left
+                                    anchors.right: group.authorized ? accMoreButton.left : authWarning.left
+                                    anchors.leftMargin: Theme.spacingXS
+                                    anchors.rightMargin: Theme.spacingXS
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    spacing: Theme.spacingXS
+
+                                    DankIcon {
+                                        name: "expand_more"
+                                        size: Theme.iconSizeSmall
+                                        color: Theme.surfaceVariantText
+                                        rotation: group.collapsed ? -90 : 0
+                                        anchors.verticalCenter: parent.verticalCenter
+
+                                        Behavior on rotation {
+                                            NumberAnimation {
+                                                duration: Theme.shortDuration
+                                                easing.type: Theme.standardEasing
+                                            }
+                                        }
+                                    }
+
+                                    DankIcon {
+                                        name: root.providerIcon(group.flavor)
+                                        size: Theme.iconSizeSmall
+                                        color: group.authorized ? Theme.surfaceVariantText : Theme.error
+                                        anchors.verticalCenter: parent.verticalCenter
+                                    }
+
+                                    StyledText {
+                                        text: DankCalService.accountLabel(group.modelData) || root.providerLabel(group.flavor)
+                                        font.pixelSize: Theme.fontSizeMedium
+                                        font.weight: Theme.fontWeightMedium
+                                        color: Theme.surfaceText
+                                        width: parent.width - 2 * (Theme.iconSizeSmall + Theme.spacingXS)
+                                        wrapMode: Text.NoWrap
+                                        maximumLineCount: 1
+                                        elide: Text.ElideRight
+                                        horizontalAlignment: Text.AlignLeft
+                                        anchors.verticalCenter: parent.verticalCenter
+                                    }
                                 }
                             }
 
-                            DankActionButton {
-                                id: moreButton
-                                readonly property bool menuOpenHere: calendarMenu.opened && (root.actionCalendar ? root.actionCalendar.id : "") === calRow.modelData.id
-                                anchors.right: parent.right
-                                anchors.rightMargin: Theme.spacingXS
-                                anchors.verticalCenter: parent.verticalCenter
-                                buttonSize: Theme.buttonHeightXS
-                                iconName: "more_horiz"
-                                iconSize: Theme.iconSizeSmall
-                                iconColor: Theme.surfaceVariantText
-                                focusPolicy: Qt.NoFocus
-                                Accessible.name: I18n.tr("Calendar options", "sidebar calendar row overflow menu button")
-                                opacity: calRowState.containsMouse || hovered || menuOpenHere ? 1 : 0
-                                visible: opacity > 0
-                                onClicked: {
-                                    if (menuOpenHere) {
+                            PlaceholderRow {
+                                visible: !group.collapsed && group.calendars.length === 0
+                                firstInGroup: false
+                                text: I18n.tr("No calendars", "sidebar placeholder under an account with no event calendars")
+                            }
+
+                            Repeater {
+                                id: calendarRepeater
+                                model: ScriptModel {
+                                    values: group.collapsed ? [] : group.calendars
+                                }
+
+                                GroupRow {
+                                    id: calRow
+                                    required property int index
+                                    required property var modelData
+                                    readonly property string accountTooltip: {
+                                        const acc = DankCalService.accountById(modelData.accountId);
+                                        if (!acc)
+                                            return modelData.accountName || I18n.tr("Local calendar", "fallback tooltip for a calendar without an account");
+                                        const provider = root.providerLabel(DankCalService.accountFlavor(acc));
+                                        const label = DankCalService.accountLabel(acc);
+                                        if (!label || label === provider)
+                                            return provider;
+                                        return provider + " · " + label;
+                                    }
+                                    readonly property string rowTooltip: modelData.name + "  —  " + accountTooltip
+                                    onNavSelectedChanged: {
+                                        if (navSelected)
+                                            root.revealNav(calRow);
+                                    }
+                                    height: Theme.buttonHeightS
+                                    firstInGroup: false
+                                    lastInGroup: index === calendarRepeater.count - 1
+                                    navSelected: root.navSelectedKey === "cal:" + modelData.id
+
+                                    function openMenu(x, y) {
+                                        root.actionCalendar = modelData;
+                                        calendarMenu.show(calRow, x, y);
+                                    }
+
+                                Row {
+                                    anchors.left: parent.left
+                                    anchors.right: moreButton.left
+                                    anchors.leftMargin: Theme.spacingM
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    spacing: Theme.spacingM
+
+                                    Rectangle {
+                                        width: Theme.iconSizeSmall
+                                        height: Theme.iconSizeSmall
+                                        radius: Theme.cornerRadiusXS
+                                        color: calRow.modelData.hidden ? "transparent" : calRow.modelData.color
+                                        border.color: calRow.modelData.color
+                                        border.width: Theme.outlineWidthFocused
+                                        anchors.verticalCenter: parent.verticalCenter
+                                    }
+
+                                    StyledText {
+                                        text: calRow.modelData.name
+                                        font.pixelSize: Theme.fontSizeMedium
+                                        color: Theme.surfaceText
+                                        opacity: calRow.modelData.hidden ? Theme.pendingOpacity : 1.0
+                                        width: parent.width - Theme.iconSizeSmall - Theme.spacingM
+                                        wrapMode: Text.NoWrap
+                                        maximumLineCount: 1
+                                        elide: Text.ElideRight
+                                        anchors.verticalCenter: parent.verticalCenter
+                                    }
+                                }
+
+                                StateLayer {
+                                    id: calRowState
+                                    stateColor: Theme.surfaceText
+                                    acceptedButtons: Qt.LeftButton | Qt.RightButton
+                                    onEntered: calTooltip.show(calRow.rowTooltip, calRow)
+                                    onExited: calTooltip.hide()
+                                    onClicked: mouse => {
+                                        calTooltip.hide();
+                                        if (mouse.button === Qt.RightButton) {
+                                            calRow.openMenu(mouse.x, mouse.y);
+                                            return;
+                                        }
                                         calendarMenu.close();
-                                        return;
+                                        DankCalService.setCalendarHidden(calRow.modelData.id, !calRow.modelData.hidden);
                                     }
-                                    calRow.openMenu(calRow.width - calendarMenu.width, calRow.height);
+                                }
+
+                                DankActionButton {
+                                    id: moreButton
+                                    readonly property bool menuOpenHere: calendarMenu.opened && (root.actionCalendar ? root.actionCalendar.id : "") === calRow.modelData.id
+                                    anchors.right: parent.right
+                                    anchors.rightMargin: Theme.spacingXS
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    buttonSize: Theme.buttonHeightXS
+                                    iconName: "more_horiz"
+                                    iconSize: Theme.iconSizeSmall
+                                    iconColor: Theme.surfaceVariantText
+                                    focusPolicy: Qt.NoFocus
+                                    Accessible.name: I18n.tr("Calendar options", "sidebar calendar row overflow menu button")
+                                    opacity: calRowState.containsMouse || hovered || menuOpenHere ? 1 : 0
+                                    visible: opacity > 0
+                                    onClicked: {
+                                        if (menuOpenHere) {
+                                            calendarMenu.close();
+                                            return;
+                                        }
+                                        calRow.openMenu(calRow.width - calendarMenu.width, calRow.height);
+                                    }
+                                }
                                 }
                             }
                         }
+                    }
+
+                    DankButton {
+                        width: parent.width
+                        text: I18n.tr("Add account", "sidebar button to add a provider account")
+                        iconName: "add"
+                        buttonHeight: Theme.buttonHeightXS
+                        backgroundColor: "transparent"
+                        textColor: Theme.primary
+                        focusPolicy: Qt.NoFocus
+                        onClicked: root.addAccountRequested()
                     }
                 }
             }
@@ -910,181 +1084,6 @@ Item {
                     textColor: Theme.primary
                     focusPolicy: Qt.NoFocus
                     onClicked: root.createTaskRequested()
-                }
-            }
-
-            Column {
-                width: parent.width
-                spacing: Theme.spacingS
-
-                SectionHeader {
-                    title: I18n.tr("Accounts", "sidebar section header for the account list")
-                    expanded: root.accountsExpanded
-                    navKey: "section:accounts"
-                    onToggled: root.accountsExpanded = !root.accountsExpanded
-                }
-
-                Column {
-                    width: parent.width
-                    spacing: Theme.groupedListGap
-                    visible: root.accountsExpanded
-
-                    Repeater {
-                        id: accountRepeater
-                        model: ScriptModel {
-                            values: DankCalService.accounts
-                        }
-
-                        GroupRow {
-                            id: accRow
-                            required property int index
-                            required property var modelData
-                            readonly property bool authorized: modelData.authorized !== false && modelData.needsReauth !== true && modelData.keyringLocked !== true
-                            readonly property string flavor: DankCalService.accountFlavor(modelData)
-                            readonly property bool reconnectable: modelData.kind === "google" || modelData.kind === "microsoft"
-                            readonly property string authReason: {
-                                const detail = (modelData.authError || "").trim();
-                                if (modelData.keyringLocked === true)
-                                    return I18n.tr("Keyring locked — unlock it to sync", "tooltip on the account warning icon when the system keyring holding the credentials is locked");
-                                if (modelData.needsReauth === true) {
-                                    const head = I18n.tr("Sign-in expired — click to reconnect", "tooltip on the account warning icon when re-authentication is required");
-                                    return detail === "" ? head : head + " · " + detail;
-                                }
-                                if (modelData.authorized === false)
-                                    return I18n.tr("Not signed in — click to reconnect or re-add this account", "tooltip on the account warning icon when credentials are missing");
-                                return I18n.tr("Account problem — click for options", "tooltip on the account warning icon for an unspecified problem");
-                            }
-                            onNavSelectedChanged: {
-                                if (navSelected)
-                                    root.revealNav(accRow);
-                            }
-                            height: Theme.minimumTouchTargetSize
-                            firstInGroup: index === 0
-                            lastInGroup: index === accountRepeater.count - 1
-                            navSelected: root.navSelectedKey === "acc:" + modelData.id
-
-                            function openMenu(x, y) {
-                                root.actionAccount = modelData;
-                                accountMenu.show(accRow, x, y);
-                            }
-
-                            MouseArea {
-                                id: accRowArea
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                acceptedButtons: Qt.RightButton
-                                onClicked: mouse => accRow.openMenu(mouse.x, mouse.y)
-                            }
-
-                            DankIcon {
-                                id: authWarning
-                                visible: !accRow.authorized
-                                anchors.right: accMoreButton.left
-                                anchors.rightMargin: Theme.spacingXS
-                                anchors.verticalCenter: parent.verticalCenter
-                                name: "warning"
-                                size: Theme.iconSizeSmall
-                                color: Theme.error
-
-                                MouseArea {
-                                    anchors.fill: parent
-                                    anchors.margins: -Theme.spacingXS
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onEntered: authTooltip.show(accRow.authReason, authWarning)
-                                    onExited: authTooltip.hide()
-                                    onClicked: {
-                                        authTooltip.hide();
-                                        if (accRow.reconnectable) {
-                                            DankCalService.reconnectAccount(accRow.modelData);
-                                            return;
-                                        }
-                                        accRow.openMenu(accRow.width - accountMenu.width, accRow.height);
-                                    }
-                                }
-                            }
-
-                            DankActionButton {
-                                id: accMoreButton
-                                readonly property bool menuOpenHere: accountMenu.opened && (root.actionAccount ? root.actionAccount.id : "") === accRow.modelData.id
-                                anchors.right: parent.right
-                                anchors.rightMargin: Theme.spacingXS
-                                anchors.verticalCenter: parent.verticalCenter
-                                buttonSize: Theme.buttonHeightXS
-                                iconName: "more_horiz"
-                                iconSize: Theme.iconSizeSmall
-                                iconColor: Theme.surfaceVariantText
-                                focusPolicy: Qt.NoFocus
-                                Accessible.name: I18n.tr("Account options", "sidebar account row overflow menu button")
-                                opacity: accRowArea.containsMouse || hovered || menuOpenHere ? 1 : 0
-                                visible: opacity > 0
-                                onClicked: {
-                                    if (menuOpenHere) {
-                                        accountMenu.close();
-                                        return;
-                                    }
-                                    accRow.openMenu(accRow.width - accountMenu.width, accRow.height);
-                                }
-                            }
-
-                            Row {
-                                anchors.left: parent.left
-                                anchors.right: accRow.authorized ? accMoreButton.left : authWarning.left
-                                anchors.leftMargin: Theme.spacingM
-                                anchors.rightMargin: Theme.spacingXS
-                                anchors.verticalCenter: parent.verticalCenter
-                                spacing: Theme.spacingM
-
-                                DankIcon {
-                                    name: root.providerIcon(accRow.flavor)
-                                    size: Theme.iconSizeMedium
-                                    color: accRow.authorized ? Theme.surfaceVariantText : Theme.error
-                                    anchors.verticalCenter: parent.verticalCenter
-                                }
-
-                                Column {
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    spacing: 0
-                                    width: parent.width - Theme.iconSizeMedium - Theme.spacingM
-
-                                    StyledText {
-                                        text: root.providerLabel(accRow.flavor)
-                                        font.pixelSize: Theme.fontSizeSmall
-                                        font.weight: Theme.fontWeightMedium
-                                        color: Theme.surfaceText
-                                        width: parent.width
-                                        wrapMode: Text.NoWrap
-                                        maximumLineCount: 1
-                                        elide: Text.ElideRight
-                                        horizontalAlignment: Text.AlignLeft
-                                    }
-
-                                    StyledText {
-                                        text: DankCalService.accountLabel(accRow.modelData)
-                                        font.pixelSize: Theme.fontSizeSmall
-                                        color: Theme.surfaceVariantText
-                                        width: parent.width
-                                        wrapMode: Text.NoWrap
-                                        maximumLineCount: 1
-                                        elide: Text.ElideRight
-                                        horizontalAlignment: Text.AlignLeft
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                DankButton {
-                    visible: root.accountsExpanded
-                    width: parent.width
-                    text: I18n.tr("Add account", "sidebar button to add a provider account")
-                    iconName: "add"
-                    buttonHeight: Theme.buttonHeightXS
-                    backgroundColor: "transparent"
-                    textColor: Theme.primary
-                    focusPolicy: Qt.NoFocus
-                    onClicked: root.addAccountRequested()
                 }
             }
         }
