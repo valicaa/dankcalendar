@@ -99,9 +99,12 @@ and 2. A bug or small chore skips phase 1 steps 3–4 (reading the closest featu
 layers and callers); when they apply, `dcal-scout` does them for the PM.
 
 The template (8 headings), the feature/bug/chore variants, and the title/label/slug rules live
-in `write-issue`. Write the body with `write-issue`, show it to the user and get their yes, then
-create the issue with its `gh issue create` command. Ready = the user said yes AND the issue
-exists (an issue the owner filed through a form: Ready after `write-issue` triage).
+in `write-issue`. Write the body with `write-issue`, create the issue with its `gh issue create`
+command, and give the owner only the issue link to review on GitHub (never paste the body into
+chat). Requested changes: `gh issue edit N -R valicaa/dankcalendar --body-file <path>`, then
+re-send the link (no branch yet). Ready = the issue exists AND the owner OK'd it, in chat or on
+the issue, after reviewing it there (an issue the owner filed through a form: Ready after
+`write-issue` triage).
 
 Then create the branch — in the main checkout, which must be on `master` with a clean tree
 (one feature worked at a time — see Branches; with the user's OK a checked-out one can be parked:
