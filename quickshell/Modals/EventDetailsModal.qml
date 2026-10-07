@@ -103,13 +103,6 @@ FloatingWindow {
         visible = true;
     }
 
-    function _newUid() {
-        let uid = "";
-        for (let i = 0; i < 32; i++)
-            uid += Math.floor(Math.random() * 16).toString(16);
-        return uid;
-    }
-
     function _nextHalfHour() {
         const slot = 30 * 60000;
         return new Date(Math.ceil(Date.now() / slot) * slot);
@@ -167,7 +160,7 @@ FloatingWindow {
         pendingResponse = "";
         formError = "";
         formFailure = null;
-        createUid = _newUid();
+        createUid = DankCalService.newEventUid();
         _loadForm();
         editMode = true;
         visible = true;
