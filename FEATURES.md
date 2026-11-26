@@ -1,16 +1,21 @@
 # Fork features checklist
 
 What this fork adds on top of upstream, and how to prove each piece still works. A stock
-upstream build has none of it: replacing the installed binary with an upstream release once
-silently removed every custom feature. Fork-only file; upstream has no `FEATURES.md`.
+upstream build lacks the fork-only parts (upstream has partial overlaps for #22 and #27, noted
+below): replacing the installed binary with an upstream release once silently removed every custom
+feature. Fork-only file; upstream has no `FEATURES.md`.
 
 ## How to use this file
 
 - After every upstream sync (`sync-upstream` step 3) walk every checkbox below against the merged
   branch, using the offline dev instance (`.claude/tools/dev-instance.sh`, see `verify-change`
-  section 4) for the feature checks in part 1. List each entry with pass/fail in the PR body.
+  section 4) for the feature checks in part 1. List each entry in the PR body as pass, fail or
+  unverified (say why). Part 2 entries read `pending deploy` until the deploy.
 - After every `deploy-local` walk every checkbox again on the real desktop. Part 2 can only be
   checked there, not in the dev instance.
+- The dev instance is offline on a copy of the real data: local calendars still write, remote
+  ones fail with a network error, and nothing reaches Google. Checks that need a live provider or
+  a specific error (reconnect, generic) need a test account or a Go test, or stay `unverified`.
 - A feature that adds, changes or removes a custom behaviour adds or edits its entry in the same
   PR. A checkbox must say what to open and what you must see.
 - Use synthetic or test calendars for the checks. Looking up a real colleague needs the owner's
@@ -34,7 +39,8 @@ silently removed every custom feature. Fork-only file; upstream has no `FEATURES
   `quickshell/Modules/views/{MonthView,WeekView,DayView,AgendaView,MonthDayPopover}.qml`.
 - [ ] **Check:** with a test calendar holding an accepted, a tentative, an unanswered and a
   declined invitation, open Month, Week, Day, Agenda and the Month "+N more" popover. You must
-  see four distinct looks, accepted as a solid fill. Hover and select each one: the fill and
+  see four distinct looks, accepted as a solid fill, for timed and all-day chips in a light and
+  a dark theme. Hover and select each one: the fill and
   hatch stay and the selection ring stays visible. The declined event stays shown.
 
 ### People search / colleague schedules (#25)
@@ -52,9 +58,11 @@ silently removed every custom feature. Fork-only file; upstream has no `FEATURES
   `quickshell/Services/PeopleService.qml`, `quickshell/Modules/CalendarSidebar.qml`,
   `quickshell/Widgets/{PersonChip,PersonEventChip,BusyBand,AttendeeStripes}.qml`.
 - [ ] **Check:** `dev-instance.sh ipc people.schedule` answers with a validation error such as
-  "email must be a single address", not "unknown method".
-  In the UI add a colleague under People: Week and Month show their events or Busy bands and your
-  other events fade. Add a second person sharing a meeting: one chip with stripes. Day shows an
+  "email must be a single address", not "unknown method". `make test` covers the IPC and
+  provider side. The overlay itself needs a Google test account (unverified without one): add a colleague under People: Week and Month show their events or Busy bands and your
+  other events fade. Add a second person sharing a meeting: one chip with stripes (merged by
+  iCalUID plus original start; busy, private or UID-less items never merge). After a sync, repeat
+  with the `mergeDuplicateEvents` setting on and off: the stripes stay. Day shows an
   own lane plus one lane per person. Changing month refetches, × removes one person, Esc clears
   all. A bad, duplicate or own address shows a validation message. Overlay chips cannot be
   selected, edited, dragged or deleted.
@@ -76,7 +84,8 @@ silently removed every custom feature. Fork-only file; upstream has no `FEATURES
   no separate Accounts section. Hiding a calendar moves it below its shown siblings. Collapse an
   account, restart the dev instance, it is still folded (`collapsedAccounts` in
   `ui-settings.json` holds its ID). Expand it from the keyboard. The ⋯ menu offers Sync now and
-  Remove…, and Add account sits at the bottom. An account with no calendars still shows.
+  Remove…, plus Reconnect on an account with a warning and New calendar… on the local one; Add
+  account sits at the bottom. A task-only, sync-disabled or empty account still shows its header.
 
 ### Friendly save errors with retry (#29)
 
@@ -91,7 +100,9 @@ silently removed every custom feature. Fork-only file; upstream has no `FEATURES
 - **Main files:** `core/internal/calendar/event_id.go`, `core/internal/ipc/{events_write,write_errors}.go`,
   `core/internal/providers/google/provider.go`, `quickshell/Services/DankCalService.qml`,
   `quickshell/Modals/EventDetailsModal.qml`.
-- [ ] **Check:** in the dev instance (offline, so every write fails) edit an event and press Save.
+- [ ] **Check:** `make test` passes the write-error, event-ID and Google write tests (stable UID,
+  duplicate-only 409, `errorCode` next to the raw `error`). In the dev instance edit an event on a
+  remote (non-local) calendar, since offline only remote writes fail, and press Save.
   The dialog stays open with your edits, a plain message and Try again, and no URL dump. A failed
   delete or RSVP toast offers a retry that still targets the original event after you open
   another one. A reconnect-type failure offers Reconnect; an unknown one shows a generic message.
@@ -106,9 +117,10 @@ silently removed every custom feature. Fork-only file; upstream has no `FEATURES
 - **Different from upstream:** no upstream equivalent.
 - **Settings / IPC:** none. Uses the single-event write methods and the #29 error classes.
 - **Main files:** `quickshell/Services/DankCalService.qml`, `quickshell/Widgets/EventSelectionModel.qml`.
-- [ ] **Check:** select several events in the offline dev instance and press Delete: the toast
-  shows the failed count, a reason and Try again. Paste or duplicate several events with some
-  failing: Try again resends only the failed ones. Cut and paste with a failed copy leaves the
+- [ ] **Check:** select several events on a remote calendar in the offline dev instance and press
+  Delete: the toast
+  shows the failed count, a reason and Try again. Paste events into a remote and a local calendar
+  (the local ones succeed, the remote ones fail): Try again resends only the failed ones. Cut and paste with a failed copy leaves the
   original in place.
 
 ## 2. Desktop integration outside this repo
@@ -137,9 +149,9 @@ desktop, after `deploy-local`. Paths are on this machine.
   the window stays hidden until toggled. Never re-enable the in-app "Start at login".
 - [ ] **Bar widget:** the Caelestia shell fork's `services/CalendarEvents.qml` and
   `services/CalendarMath.js` (in `~/Documents/code/caelestia-shell`) run `dcal ipc calendars.list`
-  and `dcal ipc events.list`. They need `calendars[].id`, `name`, `color`, `hidden` and
-  `events[].id`, `uid`, `calendarId`, `start`, `end`, `allDay`, `status`, `summary`, `meetingUrl`,
-  `visibility`. Its duplicate merge (`mergeDuplicates`) mirrors the rule behind upstream's
+  and `dcal ipc events.list`. They need `calendars.list` items (a bare array) with `id`, `name`, `color`, `hidden`, and
+  `events.list` items with `id`, `uid`, `calendarId`, `start`, `end`, `allDay`, `status`,
+  `summary`, `meetingUrl`, plus `visibility` once upstream's #132 is synced (not at `master` today). Its duplicate merge (`mergeDuplicates`) mirrors the rule behind upstream's
   `mergeDuplicateEvents` setting (upstream #133, in `DankCalService.qml` once synced); re-check
   it on every upgrade. Check: `dcal ipc calendars.list`
   and `dcal ipc events.list` return those fields, and the bar shows today's events.
