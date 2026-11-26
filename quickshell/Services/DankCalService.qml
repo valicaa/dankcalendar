@@ -848,7 +848,8 @@ Singleton {
             primary.mergedFrom = ranked.slice(1).map(ev => ({
                         "calendarId": ev.calendarId,
                         "calendar": ev.calendar,
-                        "color": ev.color
+                        "color": ev.color,
+                        "key": eventKey(ev)
                     }));
             return primary;
         });

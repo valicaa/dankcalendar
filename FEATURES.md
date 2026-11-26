@@ -56,7 +56,10 @@ feature. Fork-only file; upstream has no `FEATURES.md`.
 - **Main files:** `core/internal/calendar/schedule.go`, `core/internal/ipc/people.go`,
   `core/internal/providers/google/schedule.go`, `core/internal/oauth/google.go`,
   `quickshell/Services/PeopleService.qml`, `quickshell/Modules/CalendarSidebar.qml`,
-  `quickshell/Widgets/{PersonChip,PersonEventChip,BusyBand,AttendeeStripes}.qml`.
+  `quickshell/Widgets/{PersonChip,PersonEventChip,BusyBand,AttendeeStripes}.qml`. With
+  `mergeDuplicateEvents` on, a merged copy carries `mergedFrom[].key` (`DankCalService.qml`) and
+  `PeopleService.sharedWith` counts every merged copy's key, so the stripes survive whichever copy
+  the merge picks as the representative.
 - [ ] **Check:** `dev-instance.sh ipc people.schedule` answers with a validation error such as
   "email must be a single address", not "unknown method". `make test` covers the IPC and
   provider side. The overlay itself needs a Google test account (unverified without one): add a colleague under People: Week and Month show their events or Busy bands and your
@@ -131,14 +134,16 @@ desktop, after `deploy-local`. Paths are on this machine.
 - [ ] **Installed binary:** `~/.local/bin/dcal` is built from this repo by `deploy-local`. Never
   replace it with an upstream release binary or a package. Check: `dcal version` shows a build
   from this repo's `master` (commit hash matches), and the five features above are present.
-- [ ] **Window class:** the window class is `com.danklinux.dankcalendar` (upstream v2.0.0 changed
-  it to `dev.duxlabs.calendar`). It is matched by `toggles.calendar` in
-  `~/.config/caelestia/cli.json`, by two window rules in `~/.config/caelestia/hypr-user.lua`
-  (workspace `special:calendar`; `opaque = true` and opacity `"1.0 override"`, so the window is
-  solid) and by `~/.local/share/applications/com.danklinux.dankcalendar.desktop`
-  (`StartupWMClass`). Check: `hyprctl clients` lists the calendar window with that class; the
-  window opens on `special:calendar` via Super+C and is fully opaque. If an update renames the
-  class, update all four places.
+- [ ] **Window class:** since the v2.1.2 sync the window class is `dev.duxlabs.calendar` (it was
+  `com.danklinux.dankcalendar` before; upstream v2.0.0 renamed it). The old class is still written
+  in `toggles.calendar` in `~/.config/caelestia/cli.json`, in two window rules in
+  `~/.config/caelestia/hypr-user.lua` (workspace `special:calendar`; `opaque = true` and opacity
+  `"1.0 override"`, so the window is solid) and in
+  `~/.local/share/applications/com.danklinux.dankcalendar.desktop` (`StartupWMClass`). **These
+  four places must be changed to `dev.duxlabs.calendar` at deploy time, or the window opens on
+  the wrong workspace and translucent.** Check: `hyprctl clients` lists the calendar window with
+  class `dev.duxlabs.calendar`; it opens on `special:calendar` via Super+C and is fully opaque.
+  If an update renames the class again, update all four places.
 - [ ] **Theme sync:** `~/.local/bin/dcal-theme-sync` maps the Caelestia scheme to 18 colour keys
   in `~/.config/dankcal/caelestia-theme.json`, triggered by `dcal-theme-sync.path`. It is
   deliberately 18 keys: mapping upstream v2's extra keys was tried and the owner preferred the old
@@ -151,9 +156,9 @@ desktop, after `deploy-local`. Paths are on this machine.
   `services/CalendarMath.js` (in `~/Documents/code/caelestia-shell`) run `dcal ipc calendars.list`
   and `dcal ipc events.list`. They need `calendars.list` items (a bare array) with `id`, `name`, `color`, `hidden`, and
   `events.list` items with `id`, `uid`, `calendarId`, `start`, `end`, `allDay`, `status`,
-  `summary`, `meetingUrl`, plus `visibility` once upstream's #132 is synced (not at `master` today). Its duplicate merge (`mergeDuplicates`) mirrors the rule behind upstream's
-  `mergeDuplicateEvents` setting (upstream #133, in `DankCalService.qml` once synced); re-check
-  it on every upgrade. Check: `dcal ipc calendars.list`
+  `summary`, `meetingUrl`, plus `visibility` (upstream's #132, synced with v2.1.2). Its duplicate
+  merge (`mergeDuplicates`) mirrors the rule behind upstream's `mergeDuplicateEvents` setting
+  (upstream #133, in `DankCalService.qml`, synced with v2.1.2); re-check it on every upgrade. Check: `dcal ipc calendars.list`
   and `dcal ipc events.list` return those fields, and the bar shows today's events.
 - [ ] **Session PATH:** `~/.config/uwsm/env` must keep `$HOME/.local/bin` on `PATH`, or the bar
   cannot find `dcal`. Check: `grep PATH ~/.config/uwsm/env` shows it, and `command -v dcal` in a

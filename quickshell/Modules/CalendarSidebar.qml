@@ -612,7 +612,7 @@ Item {
                     spacing: Theme.spacingS
                     visible: root.peopleExpanded
 
-                    DankSearchField {
+                    DSearchField {
                         id: peopleSearchField
                         width: parent.width
                         height: Theme.buttonHeightS
