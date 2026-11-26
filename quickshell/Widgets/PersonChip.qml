@@ -1,7 +1,7 @@
 import QtQuick
 import qs.Common
 import qs.Services
-import qs.DankCommon.Widgets
+import qs.DCommon.Widgets
 
 // One colleague-lookup chip in the sidebar People search (PeopleService).
 // Shows the lookup status; clicking an "error" chip retries it.
@@ -24,7 +24,7 @@ StyledRect {
     implicitWidth: chipRow.implicitWidth + Theme.spacingM * 2
     implicitHeight: Theme.buttonHeightXS
 
-    DankTooltipV2 {
+    DTooltipV2 {
         id: tooltip
     }
 
@@ -58,13 +58,13 @@ StyledRect {
             color: root.isUnavailable ? Theme.surfaceVariantText : Theme.toColor(root.person.color)
         }
 
-        DankSpinner {
+        DSpinner {
             visible: root.isLoading
             size: Theme.iconSizeSmall
             anchors.verticalCenter: parent.verticalCenter
         }
 
-        DankIcon {
+        DIcon {
             visible: root.isUnavailable && !root.isLoading
             name: "block"
             size: Theme.iconSizeSmall
@@ -72,7 +72,7 @@ StyledRect {
             anchors.verticalCenter: parent.verticalCenter
         }
 
-        DankIcon {
+        DIcon {
             visible: root.isError && !root.isLoading
             name: "warning"
             size: Theme.iconSizeSmall
@@ -80,7 +80,7 @@ StyledRect {
             anchors.verticalCenter: parent.verticalCenter
         }
 
-        DankIcon {
+        DIcon {
             visible: root.isReconnect && !root.isLoading
             name: "sync_problem"
             size: Theme.iconSizeSmall
@@ -98,7 +98,7 @@ StyledRect {
             width: Math.min(implicitWidth, 140)
         }
 
-        DankActionButton {
+        DActionButton {
             anchors.verticalCenter: parent.verticalCenter
             buttonSize: Theme.iconSizeMedium
             iconSize: Theme.iconSizeSmall

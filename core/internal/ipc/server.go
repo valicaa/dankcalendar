@@ -3,7 +3,7 @@ package ipc
 import (
 	"context"
 
-	dankipc "github.com/AvengeMedia/dankgo/ipc"
+	dankipc "github.com/duxlabs-dev/dux-go/ipc"
 )
 
 type Server = dankipc.Server
@@ -40,7 +40,7 @@ func publishPending(deps Deps, topics []string) {
 		if t != "ui" {
 			continue
 		}
-		if payload := deps.Pending.Take(); payload != nil {
+		for payload := deps.Pending.Take(); payload != nil; payload = deps.Pending.Take() {
 			deps.Bus.Publish("ui", payload)
 		}
 		return

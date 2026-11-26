@@ -2,10 +2,10 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import qs.Common
-import qs.DankCommon.FileBrowser
+import qs.DCommon.FileBrowser
 import qs.Services
 import qs.Widgets
-import qs.DankCommon.Widgets
+import qs.DCommon.Widgets
 
 FloatingWindow {
     id: accountModal
@@ -221,8 +221,16 @@ FloatingWindow {
     minimumSize: Qt.size(560, 540)
     implicitWidth: Math.max(minimumSize.width, Theme.modalWidth(parentWindow, screen, 640))
     implicitHeight: Math.max(minimumSize.height, Theme.modalHeight(parentWindow, screen, Math.max(620, headerRow.height + Theme.spacingL * 2 + contentNaturalHeight)))
-    color: Theme.surface
+    color: Theme.windowSurface
+    surfaceFormat.opaque: false
     visible: false
+
+    WindowBlur {
+        targetWindow: accountModal
+        blurEnabled: Theme.translucentWindows
+        blurWidth: accountModal.width
+        blurHeight: accountModal.height
+    }
 
     Connections {
         target: DankCalService
@@ -269,7 +277,7 @@ FloatingWindow {
             height: header.height
             z: 10
 
-            DankActionButton {
+            DActionButton {
                 id: backButton
                 z: 1
                 anchors.left: parent.left
@@ -294,22 +302,13 @@ FloatingWindow {
                 }
             }
 
-            DankWindowHeader {
+            DWindowHeader {
                 id: header
                 anchors.left: parent.left
                 anchors.right: parent.right
                 controls: windowControls
                 title: accountModal.selectedProvider === "" ? I18n.tr("Add account", "account add modal header title") : I18n.tr("Connect %1", "account add header when a provider is selected").arg(accountModal.providerName(accountModal.selectedProvider))
-                showDivider: false
                 onCloseRequested: accountModal.hide()
-            }
-
-            Rectangle {
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.bottom: parent.bottom
-                height: Theme.dividerWidth
-                color: Theme.outlineVariant
             }
         }
 
@@ -389,7 +388,7 @@ FloatingWindow {
             }
         }
 
-        DankActionButton {
+        DActionButton {
             anchors.top: parent.top
             anchors.right: parent.right
             anchors.margins: Theme.spacingM
@@ -435,7 +434,7 @@ FloatingWindow {
     Component {
         id: providerPicker
 
-        DankFlickable {
+        DFlickable {
             clip: true
             contentWidth: width
             contentHeight: pickerColumn.implicitHeight + Theme.spacingL * 2
@@ -461,6 +460,13 @@ FloatingWindow {
                 }
 
                 Grid {
+                    id: providerGrid
+                    readonly property real cardHeight: {
+                        let tallest = 0;
+                        for (let i = 0; i < children.length; i++)
+                            tallest = Math.max(tallest, children[i].naturalHeight || 0);
+                        return tallest;
+                    }
                     columns: 2
                     columnSpacing: Theme.spacingM
                     rowSpacing: Theme.spacingM
@@ -510,8 +516,9 @@ FloatingWindow {
 
                         StyledRect {
                             required property var modelData
+                            readonly property real naturalHeight: cardColumn.implicitHeight + Theme.spacingM * 2
                             width: (parent.width - Theme.spacingM) / 2
-                            height: cardColumn.implicitHeight + Theme.spacingM * 2
+                            height: providerGrid.cardHeight
                             color: Theme.surfaceContainerLow
                             radius: Theme.cornerRadiusL
                             opacity: modelData.implemented ? 1 : Theme.pendingOpacity
@@ -534,7 +541,7 @@ FloatingWindow {
                                         radius: Theme.fullRadius(width, height)
                                         color: Theme.primaryContainer
 
-                                        DankIcon {
+                                        DIcon {
                                             anchors.centerIn: parent
                                             name: accountModal.providerIcon(parent.parent.parent.parent.modelData.id)
                                             size: Theme.iconSizeMedium
@@ -597,7 +604,7 @@ FloatingWindow {
     Component {
         id: oauthWizard
 
-        DankFlickable {
+        DFlickable {
             clip: true
             contentWidth: width
             contentHeight: wizardColumn.implicitHeight + Theme.spacingL * 2
@@ -678,7 +685,7 @@ FloatingWindow {
             width: parent.width
 
             StyledText {
-                text: accountModal.isMicrosoft ? I18n.tr("Sign in with Microsoft in your browser and you're done — no setup needed. Dank Calendar syncs your Outlook calendars, events, and tasks.", "microsoft one-click sign-in intro text") : I18n.tr("Sign in with Google in your browser and you're done — no setup needed. Dank Calendar syncs your calendars, events, and tasks.", "google one-click sign-in intro text")
+                text: accountModal.isMicrosoft ? I18n.tr("Sign in with Microsoft in your browser and you're done — no setup needed. Dux Calendar syncs your Outlook calendars, events, and tasks.", "microsoft one-click sign-in intro text") : I18n.tr("Sign in with Google in your browser and you're done — no setup needed. Dux Calendar syncs your calendars, events, and tasks.", "google one-click sign-in intro text")
                 font.pixelSize: Theme.fontSizeMedium
                 color: Theme.surfaceText
                 width: parent.width
@@ -700,7 +707,7 @@ FloatingWindow {
 
                     Row {
                         spacing: Theme.spacingS
-                        DankIcon {
+                        DIcon {
                             name: "lock"
                             size: Theme.iconSizeMedium
                             color: Theme.onTertiaryContainer
@@ -737,20 +744,17 @@ FloatingWindow {
                 width: parent.width
                 spacing: Theme.spacingS
 
-                DankButton {
+                DButton {
                     text: accountModal.isMicrosoft ? I18n.tr("Connect Microsoft Account", "button to start the one-click microsoft sign-in") : I18n.tr("Connect Google Account", "button to start the one-click google sign-in")
                     iconName: "open_in_new"
                     busy: accountModal.flowInProgress
-                    backgroundColor: Theme.primary
-                    textColor: Theme.primaryText
                     enabled: !accountModal.flowInProgress
                     onClicked: accountModal.startOAuthFlow()
                 }
 
-                DankButton {
+                DButton {
                     text: I18n.tr("Use your own OAuth client", "button to open the advanced custom google client setup")
-                    backgroundColor: "transparent"
-                    textColor: Theme.primary
+                    variant: "text"
                     enabled: !accountModal.flowInProgress
                     onClicked: accountModal.wizardStep = 1
                 }
@@ -804,7 +808,7 @@ FloatingWindow {
                     anchors.rightMargin: Theme.spacingM
                     spacing: Theme.spacingS
 
-                    DankIcon {
+                    DIcon {
                         name: "info"
                         size: Theme.iconSizeMedium
                         color: Theme.onTertiaryContainer
@@ -852,7 +856,7 @@ FloatingWindow {
                         anchors.centerIn: parent
                         spacing: Theme.spacingXS
 
-                        DankIcon {
+                        DIcon {
                             name: "zoom_in"
                             size: Theme.iconSizeSmall
                             color: Theme.contrastLight
@@ -879,22 +883,19 @@ FloatingWindow {
                 visible: !!(guideColumn.step && guideColumn.step.url)
                 spacing: Theme.spacingS
 
-                DankButton {
+                DButton {
                     text: (guideColumn.step && guideColumn.step.urlLabel) || I18n.tr("Open", "fallback label for guide step link button")
                     iconName: "open_in_new"
-                    backgroundColor: Theme.primary
-                    textColor: Theme.primaryText
                     onClicked: {
                         if (guideColumn.step && guideColumn.step.url)
                             Qt.openUrlExternally(guideColumn.step.url);
                     }
                 }
 
-                DankButton {
+                DButton {
                     text: I18n.tr("Copy link", "button to copy a setup guide url to the clipboard")
                     iconName: "content_copy"
-                    backgroundColor: Theme.secondaryContainer
-                    textColor: Theme.onSecondaryContainer
+                    variant: "tonal"
                     onClicked: {
                         if (guideColumn.step && guideColumn.step.url) {
                             Quickshell.clipboardText = guideColumn.step.url;
@@ -909,18 +910,15 @@ FloatingWindow {
                 spacing: Theme.spacingS
                 layoutDirection: Qt.RightToLeft
 
-                DankButton {
+                DButton {
                     text: accountModal.wizardStep === accountModal.guideCount ? (accountModal.isMicrosoft ? I18n.tr("Enter client ID", "last guide step button to microsoft credentials") : I18n.tr("Paste credentials", "last guide step button to google credentials")) : I18n.tr("Continue", "guide step next button")
                     iconName: "arrow_forward"
-                    backgroundColor: Theme.primary
-                    textColor: Theme.primaryText
                     onClicked: accountModal.wizardStep += 1
                 }
 
-                DankButton {
+                DButton {
                     text: I18n.tr("Back", "back button in account setup wizard")
-                    backgroundColor: "transparent"
-                    textColor: Theme.primary
+                    variant: "text"
                     onClicked: accountModal.wizardStep -= 1
                 }
             }
@@ -942,19 +940,18 @@ FloatingWindow {
                 wrapMode: Text.WordWrap
             }
 
-            DankButton {
+            DButton {
                 visible: !accountModal.isMicrosoft
                 text: I18n.tr("Import client_secret.json", "button to import google oauth client json")
                 iconName: "upload_file"
-                backgroundColor: Theme.secondaryContainer
-                textColor: Theme.onSecondaryContainer
+                variant: "tonal"
                 onClicked: accountModal.openFilePicker({
                     "title": I18n.tr("Select client_secret.json", "file picker title for google client json"),
                     "extensions": ["*.json"]
                 }, path => accountModal.importCredentialsFile(path))
             }
 
-            DankTextField {
+            DTextField {
                 width: parent.width
                 outlined: true
                 labelText: I18n.tr("Client ID", "oauth client id field label")
@@ -968,7 +965,7 @@ FloatingWindow {
                 }
             }
 
-            DankTextField {
+            DTextField {
                 visible: !accountModal.isMicrosoft
                 width: parent.width
                 outlined: true
@@ -998,20 +995,17 @@ FloatingWindow {
                 spacing: Theme.spacingS
                 layoutDirection: Qt.RightToLeft
 
-                DankButton {
+                DButton {
                     text: accountModal.flowInProgress ? I18n.tr("Starting…", "connect button while oauth flow starts") : I18n.tr("Connect", "account setup button to start provider sign-in")
                     iconName: "check"
                     busy: accountModal.flowInProgress
-                    backgroundColor: Theme.primary
-                    textColor: Theme.primaryText
                     enabled: !accountModal.flowInProgress && accountModal.clientId.length > 0 && (accountModal.isMicrosoft || accountModal.clientSecret.length > 0)
                     onClicked: accountModal.startOAuthFlow()
                 }
 
-                DankButton {
+                DButton {
                     text: I18n.tr("Back", "back button in account setup wizard")
-                    backgroundColor: "transparent"
-                    textColor: Theme.primary
+                    variant: "text"
                     enabled: !accountModal.flowInProgress
                     onClicked: accountModal.wizardStep = accountModal.guideCount
                 }
@@ -1029,7 +1023,7 @@ FloatingWindow {
             Row {
                 spacing: Theme.spacingM
 
-                DankSpinner {
+                DSpinner {
                     size: Theme.iconSize
                     color: Theme.primary
                     running: accountModal.flowInProgress
@@ -1072,12 +1066,11 @@ FloatingWindow {
                 wrapMode: Text.WordWrap
             }
 
-            DankButton {
+            DButton {
                 visible: accountModal.flowError === "" && accountModal.pendingAuthUrl !== ""
                 text: I18n.tr("Open browser again", "button to reopen oauth url in browser")
                 iconName: "open_in_new"
-                backgroundColor: Theme.secondaryContainer
-                textColor: Theme.onSecondaryContainer
+                variant: "tonal"
                 onClicked: Qt.openUrlExternally(accountModal.pendingAuthUrl)
             }
 
@@ -1086,12 +1079,10 @@ FloatingWindow {
                 spacing: Theme.spacingS
                 layoutDirection: Qt.RightToLeft
 
-                DankButton {
+                DButton {
                     visible: accountModal.flowError !== ""
                     text: I18n.tr("Try again", "button to retry oauth after failure")
                     iconName: "refresh"
-                    backgroundColor: Theme.primary
-                    textColor: Theme.primaryText
                     onClicked: {
                         accountModal.cancelPendingFlow();
                         accountModal.flowError = "";
@@ -1099,10 +1090,9 @@ FloatingWindow {
                     }
                 }
 
-                DankButton {
+                DButton {
                     text: I18n.tr("Cancel", "button to cancel oauth browser step")
-                    backgroundColor: "transparent"
-                    textColor: Theme.primary
+                    variant: "text"
                     onClicked: {
                         accountModal.cancelPendingFlow();
                         accountModal.wizardStep = accountModal.flowReturnStep;
@@ -1128,7 +1118,7 @@ FloatingWindow {
                     radius: Theme.fullRadius(width, height)
                     color: Theme.withAlpha(Theme.success, Theme.tonalTintAlpha)
 
-                    DankIcon {
+                    DIcon {
                         anchors.centerIn: parent
                         name: "check"
                         size: Theme.iconSizeMedium
@@ -1168,11 +1158,9 @@ FloatingWindow {
                 spacing: Theme.spacingS
                 layoutDirection: Qt.RightToLeft
 
-                DankButton {
+                DButton {
                     text: I18n.tr("Done", "button to close modal after account added")
                     iconName: "check"
-                    backgroundColor: Theme.primary
-                    textColor: Theme.primaryText
                     onClicked: accountModal.hide()
                 }
             }
@@ -1182,7 +1170,7 @@ FloatingWindow {
     Component {
         id: caldavForm
 
-        DankFlickable {
+        DFlickable {
             id: caldavRoot
             clip: true
             contentWidth: width
@@ -1216,19 +1204,17 @@ FloatingWindow {
                     visible: caldavRoot.isICloud
                     spacing: Theme.spacingS
 
-                    DankButton {
+                    DButton {
                         text: I18n.tr("Generate app-specific password", "button to open apple app password page")
                         iconName: "open_in_new"
-                        backgroundColor: Theme.secondaryContainer
-                        textColor: Theme.onSecondaryContainer
+                        variant: "tonal"
                         onClicked: Qt.openUrlExternally("https://account.apple.com/account/manage")
                     }
 
-                    DankButton {
+                    DButton {
                         text: I18n.tr("Copy link", "button to copy a setup guide url to the clipboard")
                         iconName: "content_copy"
-                        backgroundColor: Theme.secondaryContainer
-                        textColor: Theme.onSecondaryContainer
+                        variant: "tonal"
                         onClicked: {
                             Quickshell.clipboardText = "https://account.apple.com/account/manage";
                             ToastService.info(I18n.tr("Copied to clipboard", "toast after copying text to the clipboard"));
@@ -1236,7 +1222,7 @@ FloatingWindow {
                     }
                 }
 
-                DankTextField {
+                DTextField {
                     visible: !caldavRoot.isICloud
                     width: parent.width
                     outlined: true
@@ -1251,7 +1237,7 @@ FloatingWindow {
                     }
                 }
 
-                DankTextField {
+                DTextField {
                     width: parent.width
                     outlined: true
                     labelText: caldavRoot.isICloud ? I18n.tr("Apple ID", "icloud username field label") : I18n.tr("Username", "caldav username field label")
@@ -1265,7 +1251,7 @@ FloatingWindow {
                     }
                 }
 
-                DankTextField {
+                DTextField {
                     width: parent.width
                     outlined: true
                     labelText: caldavRoot.isICloud ? I18n.tr("App-specific password", "icloud password field label") : I18n.tr("Password", "caldav password field label")
@@ -1277,7 +1263,7 @@ FloatingWindow {
                     onTextChanged: caldavRoot.password = text
                 }
 
-                DankTextField {
+                DTextField {
                     width: parent.width
                     outlined: true
                     labelText: I18n.tr("Display name (optional)", "optional account display name field label")
@@ -1292,7 +1278,7 @@ FloatingWindow {
                     width: parent.width
                     spacing: Theme.spacingM
 
-                    DankToggle {
+                    DToggle {
                         id: insecureToggle
                         checked: caldavRoot.insecureSkipVerify
                         onToggled: checked => caldavRoot.insecureSkipVerify = checked
@@ -1338,12 +1324,10 @@ FloatingWindow {
                     spacing: Theme.spacingS
                     layoutDirection: Qt.RightToLeft
 
-                    DankButton {
+                    DButton {
                         text: caldavRoot.busy ? I18n.tr("Connecting…", "connect button while caldav connection verifies") : I18n.tr("Connect", "account setup button to start provider sign-in")
                         iconName: "check"
                         busy: caldavRoot.busy
-                        backgroundColor: Theme.primary
-                        textColor: Theme.primaryText
                         enabled: !caldavRoot.busy && caldavRoot.serverUrl.length > 0 && caldavRoot.username.length > 0 && caldavRoot.password.length > 0
                         onClicked: {
                             caldavRoot.busy = true;
@@ -1375,7 +1359,7 @@ FloatingWindow {
     Component {
         id: localForm
 
-        DankFlickable {
+        DFlickable {
             id: localRoot
             clip: true
             contentWidth: width
@@ -1405,7 +1389,7 @@ FloatingWindow {
                     width: parent.width
                     spacing: Theme.spacingS
 
-                    DankTextField {
+                    DTextField {
                         id: localDirField
                         width: parent.width - Theme.iconButtonSize - Theme.spacingS
                         outlined: true
@@ -1417,7 +1401,7 @@ FloatingWindow {
                         Component.onCompleted: forceActiveFocus()
                     }
 
-                    DankActionButton {
+                    DActionButton {
                         iconName: "folder_open"
                         buttonSize: Theme.iconButtonSize
                         Accessible.name: I18n.tr("Choose calendar directory", "folder picker title for local calendar directory")
@@ -1429,7 +1413,7 @@ FloatingWindow {
                     }
                 }
 
-                DankTextField {
+                DTextField {
                     width: parent.width
                     outlined: true
                     labelText: I18n.tr("Display name (optional)", "optional account display name field label")
@@ -1453,12 +1437,10 @@ FloatingWindow {
                     spacing: Theme.spacingS
                     layoutDirection: Qt.RightToLeft
 
-                    DankButton {
+                    DButton {
                         text: localRoot.busy ? I18n.tr("Adding…", "add button while local account is created") : I18n.tr("Add", "button to add local calendar account")
                         iconName: "check"
                         busy: localRoot.busy
-                        backgroundColor: Theme.primary
-                        textColor: Theme.primaryText
                         enabled: !localRoot.busy && localRoot.rootPath.length > 0
                         onClicked: {
                             localRoot.busy = true;
@@ -1490,7 +1472,7 @@ FloatingWindow {
     Component {
         id: evolutionForm
 
-        DankFlickable {
+        DFlickable {
             id: evolutionRoot
             clip: true
             contentWidth: width
@@ -1515,7 +1497,7 @@ FloatingWindow {
                     wrapMode: Text.WordWrap
                 }
 
-                DankTextField {
+                DTextField {
                     width: parent.width
                     outlined: true
                     labelText: I18n.tr("Display name (optional)", "optional account display name field label")
@@ -1540,12 +1522,10 @@ FloatingWindow {
                     spacing: Theme.spacingS
                     layoutDirection: Qt.RightToLeft
 
-                    DankButton {
+                    DButton {
                         text: evolutionRoot.busy ? I18n.tr("Adding…", "add button while evolution account is created") : I18n.tr("Add", "button to add evolution account")
                         iconName: "check"
                         busy: evolutionRoot.busy
-                        backgroundColor: Theme.primary
-                        textColor: Theme.primaryText
                         enabled: !evolutionRoot.busy
                         onClicked: {
                             evolutionRoot.busy = true;
@@ -1577,7 +1557,7 @@ FloatingWindow {
     Component {
         id: icalForm
 
-        DankFlickable {
+        DFlickable {
             id: icalRoot
             clip: true
             contentWidth: width
@@ -1605,7 +1585,7 @@ FloatingWindow {
                     wrapMode: Text.WordWrap
                 }
 
-                DankTextField {
+                DTextField {
                     width: parent.width
                     outlined: true
                     labelText: I18n.tr("Feed URL", "ical feed url field label")
@@ -1616,7 +1596,7 @@ FloatingWindow {
                     Component.onCompleted: forceActiveFocus()
                 }
 
-                DankTextField {
+                DTextField {
                     width: parent.width
                     outlined: true
                     labelText: I18n.tr("Display name (optional)", "optional account display name field label")
@@ -1626,7 +1606,7 @@ FloatingWindow {
                     onTextChanged: icalRoot.displayName = text
                 }
 
-                DankTextField {
+                DTextField {
                     width: parent.width
                     outlined: true
                     labelText: I18n.tr("Username (optional)", "ical optional basic-auth username field label")
@@ -1636,7 +1616,7 @@ FloatingWindow {
                     onTextChanged: icalRoot.username = text
                 }
 
-                DankTextField {
+                DTextField {
                     width: parent.width
                     outlined: true
                     labelText: I18n.tr("Password (optional)", "ical optional basic-auth password field label")
@@ -1662,12 +1642,10 @@ FloatingWindow {
                     spacing: Theme.spacingS
                     layoutDirection: Qt.RightToLeft
 
-                    DankButton {
+                    DButton {
                         text: icalRoot.busy ? I18n.tr("Subscribing…", "subscribe button while ical feed is verified") : I18n.tr("Subscribe", "button to subscribe to an ical feed")
                         iconName: "check"
                         busy: icalRoot.busy
-                        backgroundColor: Theme.primary
-                        textColor: Theme.primaryText
                         enabled: !icalRoot.busy && icalRoot.feedUrl.length > 0
                         onClicked: {
                             icalRoot.busy = true;

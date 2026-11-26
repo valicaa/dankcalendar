@@ -7,12 +7,12 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 
-	"github.com/AvengeMedia/dankcalendar/core/ent"
-	"github.com/AvengeMedia/dankcalendar/core/ent/calendar"
-	"github.com/AvengeMedia/dankcalendar/core/ent/event"
-	"github.com/AvengeMedia/dankcalendar/core/ent/predicate"
-	"github.com/AvengeMedia/dankcalendar/core/internal/recurrence"
-	"github.com/AvengeMedia/dankgo/errdefs"
+	"github.com/duxlabs-dev/dux-calendar/core/ent"
+	"github.com/duxlabs-dev/dux-calendar/core/ent/calendar"
+	"github.com/duxlabs-dev/dux-calendar/core/ent/event"
+	"github.com/duxlabs-dev/dux-calendar/core/ent/predicate"
+	"github.com/duxlabs-dev/dux-calendar/core/internal/recurrence"
+	"github.com/duxlabs-dev/dux-go/errdefs"
 )
 
 type EventFilter struct {
@@ -134,7 +134,8 @@ func expandMaster(master *ent.Event, from, to time.Time, suppressed map[string]s
 		ExDate:   recurrenceStrings(master.Recurrence, "exdate"),
 	}
 
-	starts, err := recurrence.Expand(series, from, to)
+	duration := master.End.Sub(master.Start)
+	starts, err := recurrence.Expand(series, from.Add(-duration), to)
 	if err != nil {
 		// Unexpandable series: fall back to the stored row when it overlaps.
 		if master.End.After(from) && master.Start.Before(to) {
@@ -143,7 +144,6 @@ func expandMaster(master *ent.Event, from, to time.Time, suppressed map[string]s
 		return nil
 	}
 
-	duration := master.End.Sub(master.Start)
 	calID := ""
 	if master.Edges.Calendar != nil {
 		calID = master.Edges.Calendar.ID
@@ -151,6 +151,9 @@ func expandMaster(master *ent.Event, from, to time.Time, suppressed map[string]s
 
 	out := make([]*ent.Event, 0, len(starts))
 	for _, start := range starts {
+		if !start.Add(duration).After(from) || !start.Before(to) {
+			continue
+		}
 		if _, ok := suppressed[occurrenceKey(calID, master.UID, start)]; ok {
 			continue
 		}

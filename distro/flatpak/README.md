@@ -1,7 +1,9 @@
-# DankCalendar Flatpak
+# Dux Calendar Flatpak
 
 The build provides `dcal` and the Quickshell runtime.
 It installs the desktop file, metainfo, and icon as `com.danklinux.dankcalendar`.
+The exported desktop file registers ICS/VCS files and webcal/webcals links;
+Flatpak rewrites its `%U` launcher for document-portal file forwarding.
 
 ## Sandbox permissions
 
@@ -11,11 +13,11 @@ so no direct DBus talk permissions are needed. Credentials are kept in an
 encrypted file keyring keyed by the per-app master secret from the Secret
 portal.
 
-Dynamic theme colors from DankMaterialShell live in the host cache, outside
+Dynamic theme colors and fonts from Dux Shell live in the host cache, outside
 the sandbox. To enable theme sync, grant read-only access:
 
 ```bash
-flatpak override --user --filesystem=xdg-cache/DankMaterialShell:ro com.danklinux.dankcalendar
+flatpak override --user --filesystem=xdg-cache/dms:ro com.danklinux.dankcalendar
 ```
 
 Local ICS calendar directories and custom theme files also live outside the

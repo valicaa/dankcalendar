@@ -28,6 +28,7 @@ jobs:
         uses: actions/setup-go@v6
         with:
           go-version-file: ./core/go.mod
+          cache-dependency-path: core/go.sum
 
       - name: Run tests
         run: go test -v ./...
@@ -56,6 +57,7 @@ jobs:
         uses: actions/setup-go@v6
         with:
           go-version-file: ./core/go.mod
+          cache-dependency-path: core/go.sum
 
       - name: Build binary
         env:
@@ -71,7 +73,11 @@ jobs:
           go build -tags withshell -ldflags "-s -w -X main.Version=${VERSION#v} -X main.Commit=${{ github.sha }} -X main.BuildTime=${BUILD_TIME}" -o "../${BINARY_NAME}" ./cmd/dcal
           cd ..
           gzip -c "${BINARY_NAME}" > "${BINARY_NAME}.gz"
-          tar -czf "${BINARY_NAME}.tar.gz" "${BINARY_NAME}"
+          tar -czf "${BINARY_NAME}.tar.gz" "${BINARY_NAME}" \
+            assets/dev.duxlabs.calendar.desktop \
+            assets/dev.duxlabs.calendar.svg \
+            assets/dev.duxlabs.calendar.metainfo.xml \
+            scripts/install-assets.sh scripts/install-release.sh
           sha256sum "${BINARY_NAME}.gz" > "${BINARY_NAME}.gz.sha256"
           sha256sum "${BINARY_NAME}.tar.gz" > "${BINARY_NAME}.tar.gz.sha256"
 
@@ -98,6 +104,7 @@ jobs:
         uses: actions/setup-go@v6
         with:
           go-version-file: ./core/go.mod
+          cache-dependency-path: core/go.sum
 
       - name: Generate completions
         run: |
@@ -165,6 +172,7 @@ jobs:
         uses: actions/setup-go@v6
         with:
           go-version-file: ./core/go.mod
+          cache-dependency-path: core/go.sum
 
       - name: Generate vendored source tarball
         run: |
@@ -197,4 +205,4 @@ jobs:
           VERSION_NUM=${VERSION#v}
           gh release upload "$VERSION" "dankcalendar-${VERSION_NUM}.tar.gz" --clobber
 
-          gh release upload "$VERSION" "assets/com.danklinux.dankcalendar.svg" --clobber
+          gh release upload "$VERSION" "assets/dev.duxlabs.calendar.svg" --clobber

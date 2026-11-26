@@ -2,7 +2,7 @@ import QtQuick
 import qs.Common
 import qs.Services
 import qs.Widgets
-import qs.DankCommon.Widgets
+import qs.DCommon.Widgets
 import "views"
 
 Item {
@@ -73,7 +73,7 @@ Item {
                 y: (Theme.buttonHeightM - height) / 2
                 spacing: Theme.spacingS
 
-                DankActionButton {
+                DActionButton {
                     visible: root.menuButtonVisible
                     iconName: "menu"
                     iconColor: Theme.surfaceText
@@ -84,18 +84,17 @@ Item {
                     onClicked: root.menuRequested()
                 }
 
-                DankButton {
+                DButton {
                     text: I18n.tr("Today", "header button that jumps to the current date")
                     iconName: "today"
                     buttonHeight: Theme.buttonHeightS
-                    backgroundColor: Theme.secondaryContainer
-                    textColor: Theme.onSecondaryContainer
+                    variant: "tonal"
                     focusPolicy: Qt.NoFocus
                     anchors.verticalCenter: parent.verticalCenter
                     onClicked: root.todayRequested()
                 }
 
-                DankActionButton {
+                DActionButton {
                     iconName: I18n.isRtl ? "chevron_right" : "chevron_left"
                     iconColor: Theme.surfaceText
                     buttonSize: Theme.buttonHeightS
@@ -105,7 +104,7 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                 }
 
-                DankActionButton {
+                DActionButton {
                     iconName: I18n.isRtl ? "chevron_left" : "chevron_right"
                     iconColor: Theme.surfaceText
                     buttonSize: Theme.buttonHeightS
@@ -156,7 +155,7 @@ Item {
                 anchors.bottomMargin: (Theme.buttonHeightM - height) / 2
                 spacing: Theme.spacingXS
 
-                DankActionButton {
+                DActionButton {
                     id: refreshButton
 
                     property bool loading: DankCalService.eventsLoading
@@ -179,7 +178,7 @@ Item {
                         interval: 1200
                     }
 
-                    DankSpinner {
+                    DSpinner {
                         anchors.centerIn: parent
                         size: Theme.iconSizeMedium
                         color: Theme.primary
@@ -187,7 +186,7 @@ Item {
                     }
                 }
 
-                DankActionButton {
+                DActionButton {
                     iconName: "search"
                     iconColor: Theme.surfaceText
                     buttonSize: Theme.buttonHeightS
@@ -196,7 +195,7 @@ Item {
                     onClicked: root.searchRequested()
                 }
 
-                DankActionButton {
+                DActionButton {
                     iconName: "settings"
                     iconColor: Theme.surfaceText
                     buttonSize: Theme.buttonHeightS
@@ -207,16 +206,9 @@ Item {
             }
         }
 
-        Rectangle {
-            id: toolbarDivider
-            width: parent.width
-            height: Theme.dividerWidth
-            color: Theme.outlineVariant
-        }
-
         Item {
             width: parent.width
-            height: parent.height - toolbar.height - toolbarDivider.height
+            height: parent.height - toolbar.height
 
             Loader {
                 id: viewLoader

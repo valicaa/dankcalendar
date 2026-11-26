@@ -3,7 +3,7 @@ import Quickshell
 import qs.Common
 import qs.Services
 import qs.Widgets
-import qs.DankCommon.Widgets
+import qs.DCommon.Widgets
 
 FloatingWindow {
     id: taskModal
@@ -269,7 +269,15 @@ FloatingWindow {
     implicitHeight: Math.max(minimumSize.height, Theme.modalHeight(parentWindow, screen, contentNaturalHeight))
     visible: false
     title: taskModal.createMode ? I18n.tr("New task", "title bar for the create-task dialog") : I18n.tr("Task", "title bar for the edit-task dialog")
-    color: Theme.surface
+    color: Theme.windowSurface
+    surfaceFormat.opaque: false
+
+    WindowBlur {
+        targetWindow: taskModal
+        blurEnabled: Theme.translucentWindows
+        blurWidth: taskModal.width
+        blurHeight: taskModal.height
+    }
 
     Column {
         anchors.fill: parent
@@ -278,7 +286,7 @@ FloatingWindow {
         LayoutMirroring.enabled: I18n.isRtl
         LayoutMirroring.childrenInherit: true
 
-        DankWindowHeader {
+        DWindowHeader {
             id: header
             width: parent.width
             z: 10
@@ -289,9 +297,9 @@ FloatingWindow {
 
         Item {
             width: parent.width
-            height: parent.height - header.height - footer.height - Theme.dividerWidth
+            height: parent.height - header.height - footer.height
 
-            DankFlickable {
+            DFlickable {
                 anchors.fill: parent
                 anchors.margins: Theme.spacingL
                 clip: true
@@ -313,7 +321,7 @@ FloatingWindow {
                         wrapMode: Text.WordWrap
                     }
 
-                    DankTextField {
+                    DTextField {
                         id: titleField
                         width: parent.width
                         outlined: true
@@ -324,7 +332,7 @@ FloatingWindow {
                         onTextChanged: taskModal.formTitle = text
                     }
 
-                    DankTextField {
+                    DTextField {
                         width: parent.width
                         outlined: true
                         leftIconName: "notes"
@@ -337,7 +345,7 @@ FloatingWindow {
                         width: parent.width
                         spacing: Theme.spacingM
 
-                        DankToggle {
+                        DToggle {
                             id: dueToggle
                             checked: taskModal.formHasDue
                             onToggled: checked => taskModal.formHasDue = checked
@@ -374,7 +382,7 @@ FloatingWindow {
                             anchors.verticalCenter: parent.verticalCenter
                         }
 
-                        DankDropdown {
+                        DDropdown {
                             dropdownWidth: Theme.fieldDefaultWidth
                             options: taskModal.priorityOptions.map(o => o.label)
                             currentValue: taskModal._priorityLabel(taskModal.formPriority)
@@ -402,7 +410,7 @@ FloatingWindow {
                             anchors.verticalCenter: parent.verticalCenter
                         }
 
-                        DankDropdown {
+                        DDropdown {
                             dropdownWidth: Theme.fieldDefaultWidth
                             options: taskModal.repeatOptions.map(o => o.label)
                             currentValue: taskModal._repeatLabel(taskModal.formRepeatFreq)
@@ -430,7 +438,7 @@ FloatingWindow {
                             anchors.verticalCenter: parent.verticalCenter
                         }
 
-                        DankTextField {
+                        DTextField {
                             width: taskModal.formLabelWidth
                             text: String(taskModal.formRepeatInterval)
                             onTextChanged: {
@@ -464,7 +472,7 @@ FloatingWindow {
                             anchors.verticalCenter: parent.verticalCenter
                         }
 
-                        DankDropdown {
+                        DDropdown {
                             dropdownWidth: parent.width - taskModal.formLabelWidth - Theme.spacingM
                             options: taskModal.taskLists.map(c => taskModal._listLabel(c))
                             currentValue: taskModal.taskLists.length > 0 ? taskModal._listLabel(taskModal.taskLists[Math.min(taskModal.formCalendarIndex, taskModal.taskLists.length - 1)]) : ""
@@ -484,7 +492,7 @@ FloatingWindow {
                         spacing: Theme.spacingM
                         visible: !taskModal.createMode
 
-                        DankToggle {
+                        DToggle {
                             checked: taskModal.formCompleted
                             onToggled: checked => taskModal.formCompleted = checked
                             anchors.verticalCenter: parent.verticalCenter
@@ -501,16 +509,15 @@ FloatingWindow {
             }
         }
 
-        Rectangle {
-            width: parent.width
-            height: Theme.dividerWidth
-            color: Theme.outlineVariant
-        }
-
         Item {
             id: footer
             width: parent.width
             height: Theme.buttonHeightS + Theme.spacingM * 2
+
+            Rectangle {
+                anchors.fill: parent
+                color: Theme.floatingWindowPaneSurface
+            }
 
             StyledText {
                 anchors.left: parent.left
@@ -532,29 +539,26 @@ FloatingWindow {
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: Theme.spacingS
 
-                DankButton {
+                DButton {
                     visible: !taskModal.createMode
                     text: taskModal.confirmDelete ? I18n.tr("Confirm delete", "task form button to confirm deletion") : I18n.tr("Delete", "task form button to delete the task")
                     iconName: "delete_outline"
-                    backgroundColor: taskModal.confirmDelete ? Theme.errorContainer : "transparent"
-                    textColor: taskModal.confirmDelete ? Theme.onErrorContainer : Theme.error
+                    variant: taskModal.confirmDelete ? "tonal" : "text"
+                    danger: true
                     enabled: !taskModal.saving
                     onClicked: taskModal.removeTask()
                 }
 
-                DankButton {
+                DButton {
                     text: I18n.tr("Cancel", "task form button to discard changes")
-                    backgroundColor: "transparent"
-                    textColor: Theme.primary
+                    variant: "text"
                     enabled: !taskModal.saving
                     onClicked: taskModal.hide()
                 }
 
-                DankButton {
+                DButton {
                     text: I18n.tr("Save", "task form button to persist the task")
                     busy: taskModal.saving
-                    backgroundColor: Theme.primary
-                    textColor: Theme.primaryText
                     enabled: !taskModal.saving
                     onClicked: taskModal.save()
                 }

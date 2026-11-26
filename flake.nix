@@ -1,10 +1,10 @@
 {
-  description = "DankCalendar";
+  description = "Dux Calendar";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     dank-qml-common = {
-      url = "github:AvengeMedia/dank-qml-common";
+      url = "github:duxlabs-dev/dux-qml-common";
       flake = false;
     };
   };
@@ -51,14 +51,14 @@
         pkgs:
         (
           let
-            version = "1.6.1";
+            version = "2.1.2";
           in
           (pkgs.buildGoModule.override { go = goForPkgs pkgs; }) {
             inherit version;
             pname = "dankcalendar";
             src = ./.;
             modRoot = "core";
-            vendorHash = "sha256-w4ENpFxPpiFIMzJ54LNUuLSRayrirzcwoLcWdBgNdII=";
+            vendorHash = "sha256-JT6mHK52mIJh4lzVWYVpqNY2S2oeinSWBIKaI3TiY34=";
 
             subPackages = [ "cmd/dcal" ];
 
@@ -66,14 +66,14 @@
 
             # Mirror `make -C core sync-shell`: bake the quickshell UI into
             # the binary, minus dev-only files. The flake src excludes
-            # submodule content, so the DankCommon symlink is replaced with
+            # submodule content, so the DCommon symlink is replaced with
             # the pinned dank-qml-common input.
             postPatch = ''
               rm -rf core/internal/shellembed/dist
               cp -r quickshell core/internal/shellembed/dist
-              rm -f core/internal/shellembed/dist/DankCommon
-              cp -r ${dank-qml-common}/DankCommon core/internal/shellembed/dist/DankCommon
-              chmod -R u+w core/internal/shellembed/dist/DankCommon
+              rm -f core/internal/shellembed/dist/DCommon
+              cp -r ${dank-qml-common}/DCommon core/internal/shellembed/dist/DCommon
+              chmod -R u+w core/internal/shellembed/dist/DCommon
               rm -rf core/internal/shellembed/dist/scripts \
                 core/internal/shellembed/dist/.claude
               rm -f core/internal/shellembed/dist/.qmlls.ini \
@@ -92,10 +92,12 @@
             ];
 
             postInstall = ''
-              install -Dm644 ${./assets/com.danklinux.dankcalendar.desktop} \
-                $out/share/applications/com.danklinux.dankcalendar.desktop
-              install -Dm644 ${./assets/com.danklinux.dankcalendar.svg} \
-                $out/share/icons/hicolor/scalable/apps/com.danklinux.dankcalendar.svg
+              install -Dm644 ${./assets/dev.duxlabs.calendar.desktop} \
+                $out/share/applications/dev.duxlabs.calendar.desktop
+              substituteInPlace $out/share/applications/dev.duxlabs.calendar.desktop \
+                --replace-fail 'Exec=dcal ' 'Exec='$out'/bin/dcal '
+              install -Dm644 ${./assets/dev.duxlabs.calendar.svg} \
+                $out/share/icons/hicolor/scalable/apps/dev.duxlabs.calendar.svg
 
               install -Dm644 ${./assets/systemd/dcal.service} \
                 $out/lib/systemd/user/dcal.service
@@ -109,8 +111,8 @@
             '';
 
             meta = {
-              description = "Local, Google, Microsoft, and CalDAV calendars for the dank desktop";
-              homepage = "https://github.com/AvengeMedia/dankcalendar";
+              description = "Local, Google, Microsoft, and CalDAV calendars for the Dux desktop";
+              homepage = "https://github.com/duxlabs-dev/dux-calendar";
               license = pkgs.lib.licenses.mit;
               mainProgram = "dcal";
               platforms = pkgs.lib.platforms.linux;

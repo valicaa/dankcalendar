@@ -52,7 +52,7 @@ the Quality checklist's `##`/`###` rule).
 - **Story** — one INVEST line: `As <user>, I want <capability>, so that <outcome>`.
 - **Scenarios** — 1–5, strict Given/When/Then; Then is always the observable, *correct* result
   — never an implementation step, and (bug variant) never the bug itself.
-- **Constraints** — standing rules that bind this change (CGO, migrations, I18n, DankCommon)
+- **Constraints** — standing rules that bind this change (CGO, migrations, I18n, DCommon)
   plus one line, `Upstream-worthy: yes` or `Upstream-worthy: no`.
 - **Acceptance** — a checkable list; every item names the scenario or constraint it proves.
 - **Risks** — callers/data/providers/sync touched, plus the layers-touched line (below).

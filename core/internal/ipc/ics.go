@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/AvengeMedia/dankcalendar/core/internal/calendar"
-	"github.com/AvengeMedia/dankcalendar/core/internal/icsimport"
-	"github.com/AvengeMedia/dankcalendar/core/repo"
+	"github.com/duxlabs-dev/dux-calendar/core/internal/calendar"
+	"github.com/duxlabs-dev/dux-calendar/core/internal/icsimport"
+	"github.com/duxlabs-dev/dux-calendar/core/repo"
 )
 
 func parseIcsParam(params map[string]any) (*icsimport.Document, error) {
@@ -21,7 +21,7 @@ func parseIcsParam(params map[string]any) (*icsimport.Document, error) {
 func handleEventsParseIcs(ctx context.Context, w *ConnWriter, req Request, deps Deps) {
 	doc, err := parseIcsParam(req.Params)
 	if err != nil {
-		RespondError(w, req.ID, err.Error())
+		w.RespondError(req.ID, err.Error())
 		return
 	}
 
@@ -29,44 +29,64 @@ func handleEventsParseIcs(ctx context.Context, w *ConnWriter, req Request, deps 
 	for i := range doc.Events {
 		ev := &doc.Events[i]
 		entry := map[string]any{"event": ev}
-		existing, err := deps.Repo.GetEventByUID(ctx, ev.UID, "")
+		existing, err := deps.Repo.GetEventByUID(ctx, ev.UID, ParamString(req.Params, "calendarId"))
 		switch {
 		case err == nil:
 			entry["existing"] = mapEvent(existing)
 		case !repo.IsNotFound(err):
-			RespondError(w, req.ID, err.Error())
+			w.RespondError(req.ID, err.Error())
 			return
 		}
+		conflicts, err := icsimport.Conflicts(ctx, deps.Repo, *ev)
+		if err != nil {
+			w.RespondError(req.ID, err.Error())
+			return
+		}
+		entry["conflictCount"] = len(conflicts)
+		overlaps := make([]map[string]any, 0, min(20, len(conflicts)))
+		for _, conflict := range conflicts[:min(20, len(conflicts))] {
+			overlaps = append(overlaps, mapEvent(conflict))
+		}
+		entry["conflicts"] = overlaps
+		entry["previewEnd"] = icsimport.PreviewEnd(*ev)
 		items = append(items, entry)
 	}
-	Respond(w, req.ID, map[string]any{"method": doc.Method, "events": items})
+	w.Respond(req.ID, map[string]any{"method": doc.Method, "source": doc.Source, "events": items})
 }
 
 func handleEventsImportIcs(ctx context.Context, w *ConnWriter, req Request, deps Deps) {
 	calendarID := ParamString(req.Params, "calendarId")
 	if calendarID == "" {
-		RespondError(w, req.ID, "calendarId is required")
+		w.RespondError(req.ID, "calendarId is required")
 		return
 	}
 	doc, err := parseIcsParam(req.Params)
 	if err != nil {
-		RespondError(w, req.ID, err.Error())
+		w.RespondError(req.ID, err.Error())
+		return
+	}
+	if doc.Source != "" {
+		w.RespondError(req.ID, "this file is a subscription; add its source as a subscribed calendar")
+		return
+	}
+	if doc.Method == "CANCEL" || doc.Method == "REPLY" {
+		w.RespondError(req.ID, "open the existing meeting to handle this scheduling message")
 		return
 	}
 	selected := selectEvents(doc.Events, ParamStringSlice(req.Params, "uids"))
 	if len(selected) == 0 {
-		RespondError(w, req.ID, "no matching events to import")
+		w.RespondError(req.ID, "no matching events to import")
 		return
 	}
 
 	provider, domCal, err := providerForCalendar(ctx, deps, calendarID)
 	if err != nil {
-		RespondError(w, req.ID, err.Error())
+		w.RespondError(req.ID, err.Error())
 		return
 	}
 	defer provider.Close()
 	if !domCal.HoldsEvents() {
-		RespondError(w, req.ID, fmt.Sprintf("calendar %q holds tasks, not events", domCal.Name))
+		w.RespondError(req.ID, fmt.Sprintf("calendar %q holds tasks, not events", domCal.Name))
 		return
 	}
 
@@ -80,7 +100,7 @@ func handleEventsImportIcs(ctx context.Context, w *ConnWriter, req Request, deps
 			results = append(results, map[string]any{"event": mapEvent(existing), "existing": true})
 			continue
 		case !repo.IsNotFound(err):
-			RespondError(w, req.ID, err.Error())
+			w.RespondError(req.ID, err.Error())
 			return
 		}
 
@@ -101,14 +121,14 @@ func handleEventsImportIcs(ctx context.Context, w *ConnWriter, req Request, deps
 	if imported > 0 {
 		publishEventsChanged(deps, domCal.ID)
 	}
-	Respond(w, req.ID, map[string]any{"calendarId": domCal.ID, "imported": imported, "events": results})
+	w.Respond(req.ID, map[string]any{"calendarId": domCal.ID, "imported": imported, "events": results})
 }
 
 func respondImportError(w *ConnWriter, req Request, deps Deps, calendarID string, imported int, msg string) {
 	if imported > 0 {
 		publishEventsChanged(deps, calendarID)
 	}
-	RespondError(w, req.ID, msg)
+	w.RespondError(req.ID, msg)
 }
 
 func selectEvents(events []calendar.Event, uids []string) []calendar.Event {

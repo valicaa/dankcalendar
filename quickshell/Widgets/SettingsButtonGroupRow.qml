@@ -1,6 +1,6 @@
 import QtQuick
 import qs.Common
-import qs.DankCommon.Widgets
+import qs.DCommon.Widgets
 
 SettingsRow {
     id: root
@@ -12,7 +12,7 @@ SettingsRow {
     property alias minButtonWidth: buttonGroup.minButtonWidth
     property alias checkEnabled: buttonGroup.checkEnabled
 
-    readonly property bool compact: width - buttonGroup.width - SettingsMetrics.rowPaddingH * 2 - SettingsMetrics.rowContentSpacing < SettingsMetrics.buttonGroupCompactThreshold
+    readonly property bool compact: width - buttonGroup.naturalWidth - SettingsMetrics.rowPaddingH * 2 - SettingsMetrics.rowContentSpacing < SettingsMetrics.buttonGroupCompactThreshold
 
     signal selectionChanged(int index, bool selected)
 
@@ -35,7 +35,7 @@ SettingsRow {
         visible: root.compact
     }
 
-    DankButtonGroup {
+    DButtonGroup {
         id: buttonGroup
         parent: root.compact ? bodyHost : trailingHost
         x: root.compact ? (parent.width - width) / 2 : 0

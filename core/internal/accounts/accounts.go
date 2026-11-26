@@ -6,16 +6,16 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/AvengeMedia/dankcalendar/core/ent"
-	"github.com/AvengeMedia/dankcalendar/core/ent/account"
-	"github.com/AvengeMedia/dankcalendar/core/internal/calendar"
-	"github.com/AvengeMedia/dankcalendar/core/internal/keyring"
-	caldavprovider "github.com/AvengeMedia/dankcalendar/core/internal/providers/caldav"
-	"github.com/AvengeMedia/dankcalendar/core/internal/providers/evolution/eds"
-	"github.com/AvengeMedia/dankcalendar/core/internal/providers/google"
-	icalprovider "github.com/AvengeMedia/dankcalendar/core/internal/providers/ical"
-	"github.com/AvengeMedia/dankcalendar/core/internal/providers/microsoft"
-	"github.com/AvengeMedia/dankcalendar/core/repo"
+	"github.com/duxlabs-dev/dux-calendar/core/ent"
+	"github.com/duxlabs-dev/dux-calendar/core/ent/account"
+	"github.com/duxlabs-dev/dux-calendar/core/internal/calendar"
+	"github.com/duxlabs-dev/dux-calendar/core/internal/keyring"
+	caldavprovider "github.com/duxlabs-dev/dux-calendar/core/internal/providers/caldav"
+	"github.com/duxlabs-dev/dux-calendar/core/internal/providers/evolution/eds"
+	"github.com/duxlabs-dev/dux-calendar/core/internal/providers/google"
+	icalprovider "github.com/duxlabs-dev/dux-calendar/core/internal/providers/ical"
+	"github.com/duxlabs-dev/dux-calendar/core/internal/providers/microsoft"
+	"github.com/duxlabs-dev/dux-calendar/core/repo"
 )
 
 const ICloudCalDAVURL = "https://caldav.icloud.com"
@@ -217,9 +217,11 @@ func Delete(ctx context.Context, r *repo.Repo, secrets calendar.SecretStore, acc
 	return r.DeleteAccount(ctx, accountID)
 }
 
+const maxAccountIDLen = 64
+
 func truncateID(id string) string {
-	if len(id) > 64 {
-		return id[:64]
+	if len(id) > maxAccountIDLen {
+		return id[:maxAccountIDLen]
 	}
 	return id
 }

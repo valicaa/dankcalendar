@@ -11,6 +11,9 @@
   "%1 events selected": {
     "%1 events selected": "%1 esemény kijelölve"
   },
+  "%1 overlapping events": {
+    "%1 overlapping events": "%1 átfedő esemény"
+  },
   "%1 selected": {
     "%1 selected": "%1 kijelölve"
   },
@@ -30,7 +33,7 @@
     "%1h before": "%1 órával előtte"
   },
   "%1h%2m": {
-    "%1h%2m": "%1ó %2p"
+    "%1h%2m": "%1 ó %2 p"
   },
   "%1m": {
     "%1m": "%1 p"
@@ -70,6 +73,9 @@
   },
   "1 minute": {
     "1 minute": "1 perc"
+  },
+  "1 overlapping event": {
+    "1 overlapping event": "1 átfedő esemény"
   },
   "1 week before": {
     "1 week before": "1 héttel előtte"
@@ -132,7 +138,7 @@
     "5 minutes before": "5 perccel előtte"
   },
   "50 uses Material shapes. Lower values reduce rounding; higher values increase it.": {
-    "50 uses Material shapes. Lower values reduce rounding; higher values increase it.": ""
+    "50 uses Material shapes. Lower values reduce rounding; higher values increase it.": "Az 50-es érték az anyagformákat veszi figyelembe. Az alacsonyabb értékek csökkentik a lekerekítést, a magasabbak pedig növelik azt."
   },
   "<a href=\"%2\" style=\"text-decoration:none; color:%1;\">MIT License</a>": {
     "<a href=\"%2\" style=\"text-decoration:none; color:%1;\">MIT License</a>": "<a href=\"%2\" style=\"text-decoration:none; color:%1;\">MIT licenc</a>"
@@ -156,7 +162,7 @@
     "Account connected": "Fiók csatlakoztatva"
   },
   "Account options": {
-    "Account options": ""
+    "Account options": "Fiókbeállítások"
   },
   "Account problem — click for options": {
     "Account problem — click for options": "Fiókprobléma – kattints a lehetőségekért"
@@ -194,6 +200,9 @@
   "Add title": {
     "Add title": "Cím hozzáadása"
   },
+  "Add to calendar": {
+    "Add to calendar": "Hozzáadás a naptárhoz"
+  },
   "Adding…": {
     "Adding…": "Hozzáadás…"
   },
@@ -222,7 +231,7 @@
     "All events": "Minden esemény"
   },
   "All-day events": {
-    "All-day events": ""
+    "All-day events": "Egész napos rendezvények"
   },
   "All-day reminder time": {
     "All-day reminder time": "Egész napos emlékeztető ideje"
@@ -231,7 +240,10 @@
     "All-day reminder timing": "Egész napos emlékeztető időzítése"
   },
   "Already in %1": {
-    "Already in %1": ""
+    "Already in %1": "Már ebben: %1"
+  },
+  "Also in these calendars": {
+    "Also in these calendars": "Szerepel ezekben a naptárakban is"
   },
   "Alt+←/Backspace: Back • F1/I: File Info • F10: Help • Esc: Close": {
     "Alt+←/Backspace: Back • F1/I: File Info • F10: Help • Esc: Close": "Alt+←/Backspace: Vissza • F1/I: Fájlinformáció • F10: Súgó • Esc: Bezárás"
@@ -243,7 +255,7 @@
     "Always use the light theme.": "Mindig a világos téma használata."
   },
   "App": {
-    "App": ""
+    "App": "Alkalmazás"
   },
   "App-specific password": {
     "App-specific password": "Alkalmazásspecifikus jelszó"
@@ -256,6 +268,9 @@
   },
   "Apple iCloud calendars via app-specific password.": {
     "Apple iCloud calendars via app-specific password.": "Apple iCloud naptárak alkalmazásspecifikus jelszóval."
+  },
+  "Apply and restart": {
+    "Apply and restart": "Alkalmazás és újraindítás"
   },
   "Approve access in your browser. The window will return here automatically when %1 sends us back the authorization code.": {
     "Approve access in your browser. The window will return here automatically when %1 sends us back the authorization code.": "Hagyd jóvá a hozzáférést a böngésződben. A ablak automatikusan visszatér ide, amint a(z) %1 visszaküldi nekünk az engedélyezési kódot."
@@ -293,11 +308,20 @@
   "Backend not connected.": {
     "Backend not connected.": "Háttérprogram nincs csatlakoztatva."
   },
+  "Background blur": {
+    "Background blur": ""
+  },
   "Balanced": {
-    "Balanced": ""
+    "Balanced": "Kiegyensúlyozott"
   },
   "Begin setup": {
     "Begin setup": "Beállítás indítása"
+  },
+  "Blurs what shows through the window. Needs an opacity below 100%.": {
+    "Blurs what shows through the window. Needs an opacity below 100%.": ""
+  },
+  "Busy": {
+    "Busy": "Elfoglalt"
   },
   "Calendar": {
     "Calendar": "Naptár"
@@ -306,13 +330,13 @@
     "Calendar Settings": "Naptárbeállítások"
   },
   "Calendar file": {
-    "Calendar file": ""
+    "Calendar file": "Naptárfájl"
   },
   "Calendar name": {
     "Calendar name": "Naptár neve"
   },
   "Calendar options": {
-    "Calendar options": ""
+    "Calendar options": "Naptárbeállítások"
   },
   "Calendar preselected when creating events.": {
     "Calendar preselected when creating events.": "Események létrehozásakor előre kiválasztott naptár."
@@ -357,7 +381,7 @@
     "Client Secret": "Klienstitok"
   },
   "Close": {
-    "Close": ""
+    "Close": "Bezárás"
   },
   "Close behavior": {
     "Close behavior": "Bezárási viselkedés"
@@ -369,7 +393,7 @@
     "Collapse or expand a section": "Szekció összecsukása vagy kibontása"
   },
   "Color": {
-    "Color": ""
+    "Color": "Szín"
   },
   "Color source": {
     "Color source": "Színforrás"
@@ -380,6 +404,9 @@
   "Coming soon": {
     "Coming soon": "Hamarosan"
   },
+  "Community": {
+    "Community": "Közösség"
+  },
   "Completed": {
     "Completed": "Befejezve"
   },
@@ -388,6 +415,12 @@
   },
   "Confirm delete": {
     "Confirm delete": "Törlés megerősítése"
+  },
+  "Conflicts use events currently synced to DankCalendar. You can still import an overlapping event.": {
+    "Conflicts use events currently synced to DankCalendar. You can still import an overlapping event.": "Az ütközések a DankCalendarba jelenleg szinkronizált eseményeket használják. Továbbra is importálhatsz átfedő eseményt."
+  },
+  "Conflicts use events currently synced to Dux Calendar. You can still import an overlapping event.": {
+    "Conflicts use events currently synced to Dux Calendar. You can still import an overlapping event.": "Az ütközések a jelenleg a Dux Naptárba szinkronizált eseményeket használják. Az átfedésben lévő események ettől függetlenül importálhatók."
   },
   "Connect": {
     "Connect": "Csatlakozás"
@@ -411,7 +444,7 @@
     "Connected calendar providers.": "Csatlakoztatott naptárszolgáltatók."
   },
   "Connected providers": {
-    "Connected providers": ""
+    "Connected providers": "Kapcsolódó szolgáltatók"
   },
   "Connecting…": {
     "Connecting…": "Kapcsolódás…"
@@ -454,6 +487,9 @@
   },
   "Could not read that file.": {
     "Could not read that file.": "Nem sikerült beolvasni a fájlt."
+  },
+  "Couldn't reconnect. Add the account again to sign in.": {
+    "Couldn't reconnect. Add the account again to sign in.": "Nem sikerült az újrakapcsolódás. A bejelentkezéshez add hozzá újra a fiókot."
   },
   "Couldn't update task": {
     "Couldn't update task": "Nem sikerült frissíteni a feladatot"
@@ -519,7 +555,7 @@
     "Dark": "Sötét"
   },
   "Date": {
-    "Date": ""
+    "Date": "Dátum"
   },
   "Date and time locale": {
     "Date and time locale": "Dátum- és időformátum területi beállítása"
@@ -537,7 +573,10 @@
     "Decline": "Elutasítás"
   },
   "Decrease": {
-    "Decrease": ""
+    "Decrease": "Csökkenés"
+  },
+  "Default": {
+    "Default": "Alapértelmezett"
   },
   "Default calendar": {
     "Default calendar": "Alapértelmezett naptár"
@@ -609,7 +648,7 @@
     "Desktop notifications for upcoming events.": "Asztali értesítések a közelgő eseményekről."
   },
   "Diagnostics": {
-    "Diagnostics": ""
+    "Diagnostics": "Diagnosztika"
   },
   "Directory": {
     "Directory": "Könyvtár"
@@ -625,6 +664,9 @@
   },
   "Display ISO week numbers in month view.": {
     "Display ISO week numbers in month view.": "ISO hétszámok megjelenítése havi nézetben."
+  },
+  "Display family": {
+    "Display family": "Kijelző betűcsaládja"
   },
   "Display name (optional)": {
     "Display name (optional)": "Megjelenítendő név (nem kötelező)"
@@ -663,10 +705,22 @@
     "Duplicate selected events to the next day": "Kijelölt események duplikálása a következő napra"
   },
   "Duration": {
-    "Duration": ""
+    "Duration": "Időtartam"
+  },
+  "Dux Calendar is a calendar for the modern Linux desktop with a <a href=\"https://m3.material.io/\" style=\"text-decoration:none; color:%1;\">material 3 inspired</a> design, plus a hackable CLI and socket API for integrations.<br /><br/>It is built with <a href=\"https://quickshell.org\" style=\"text-decoration:none; color:%1;\">Quickshell</a>, a QT6 framework for building desktop shells, and <a href=\"https://go.dev\" style=\"text-decoration:none; color:%1;\">Go</a>, a statically typed, compiled programming language.": {
+    "Dux Calendar is a calendar for the modern Linux desktop with a <a href=\"https://m3.material.io/\" style=\"text-decoration:none; color:%1;\">material 3 inspired</a> design, plus a hackable CLI and socket API for integrations.<br /><br/>It is built with <a href=\"https://quickshell.org\" style=\"text-decoration:none; color:%1;\">Quickshell</a>, a QT6 framework for building desktop shells, and <a href=\"https://go.dev\" style=\"text-decoration:none; color:%1;\">Go</a>, a statically typed, compiled programming language.": "A Dux Naptár egy modern Linux asztali felületre tervezett naptár <a href=\"https://m3.material.io/\" style=\"text-decoration:none; color:%1;\">Material 3 által inspirált</a> dizájnnal, valamint testreszabható parancssori felülettel és socket API-val az integrációkhoz.<br /><br/>A <a href=\"https://quickshell.org\" style=\"text-decoration:none; color:%1;\">Quickshell</a> (egy asztali felületekhez készült QT6 keretrendszer) és a <a href=\"https://go.dev\" style=\"text-decoration:none; color:%1;\">Go</a> (statikusan típusos, fordított programozási nyelv) segítségével készült."
+  },
+  "Dux Calendar will close and reopen with the new zoom.": {
+    "Dux Calendar will close and reopen with the new zoom.": "A Dux Naptár bezárul, majd az új nagyítási mérettel újraindul."
+  },
+  "Dux Shell not detected — using the %1 preset.": {
+    "Dux Shell not detected — using the %1 preset.": "A Dux Shell nem észlelhető — a(z) %1 előbeállítás használata."
+  },
+  "Dux Shell not detected, using %1.": {
+    "Dux Shell not detected, using %1.": "A Dux Shell nem észlelhető, a(z) %1 használata."
   },
   "Edit": {
-    "Edit": ""
+    "Edit": "Szerkesztés"
   },
   "Edit event": {
     "Edit event": "Esemény szerkesztése"
@@ -682,6 +736,9 @@
   },
   "Enable sync": {
     "Enable sync": "Szinkronizálás engedélyezése"
+  },
+  "End": {
+    "End": "Vége"
   },
   "Ends": {
     "Ends": "Vége"
@@ -717,7 +774,7 @@
     "Every": "Minden"
   },
   "Everything in this file is already on your calendar.": {
-    "Everything in this file is already on your calendar.": ""
+    "Everything in this file is already on your calendar.": "A fájlban szereplő összes esemény már szerepel a naptáradban."
   },
   "Evolution": {
     "Evolution": "Evolution"
@@ -727,6 +784,9 @@
   },
   "F1/I: Toggle • F10: Help": {
     "F1/I: Toggle • F10: Help": "F1/I: Váltás • F10: Súgó"
+  },
+  "Family": {
+    "Family": "Betűcsalád"
   },
   "Feed URL": {
     "Feed URL": "Hírforrás URL-címe"
@@ -750,16 +810,28 @@
     "Focus or leave the sidebar": "Fókuszálás az oldalsávra vagy annak elhagyása"
   },
   "Focus ring": {
-    "Focus ring": ""
+    "Focus ring": "Fókuszgyűrű"
   },
   "Follow DankMaterialShell colors, falling back to a preset.": {
     "Follow DankMaterialShell colors, falling back to a preset.": "A DankMaterialShell színeinek követése, visszaesés előbeállításra."
+  },
+  "Follow Dux Shell colors, falling back to a preset.": {
+    "Follow Dux Shell colors, falling back to a preset.": "A Dux Shell színeinek követése, szükség esetén visszatérés egy előbeállításra."
+  },
+  "Follow colors generated by Matugen.": {
+    "Follow colors generated by Matugen.": "A Matugen által generált színek követése."
   },
   "Follow language": {
     "Follow language": "Nyelv követése"
   },
   "Following the system color scheme (currently %1).": {
     "Following the system color scheme (currently %1).": "A rendszer színsémájának követése (jelenleg %1)."
+  },
+  "Font source": {
+    "Font source": "Betűtípus forrása"
+  },
+  "Foreground layers": {
+    "Foreground layers": ""
   },
   "General": {
     "General": "Általános"
@@ -801,25 +873,25 @@
     "How often accounts are polled for changes.": "Milyen gyakran kérdezi le az alkalmazás a fiókokat a változásokért."
   },
   "Import": {
-    "Import": ""
+    "Import": "Importálás"
   },
   "Import %1 events": {
-    "Import %1 events": ""
+    "Import %1 events": "%1 esemény importálása"
   },
   "Import client_secret.json": {
     "Import client_secret.json": "client_secret.json importálása"
   },
   "Import events": {
-    "Import events": ""
+    "Import events": "Események importálása"
   },
   "Import the client_secret_….json you downloaded when creating the client, or paste the Client ID and Secret manually.": {
     "Import the client_secret_….json you downloaded when creating the client, or paste the Client ID and Secret manually.": "Importáld a kliens létrehozásakor letöltött client_secret_….json fájlt, vagy másold be manuálisan a kliensazonosítót és a titkot."
   },
   "Importing...": {
-    "Importing...": ""
+    "Importing...": "Beolvasás…"
   },
   "Increase": {
-    "Increase": ""
+    "Increase": "Növelés"
   },
   "Initial reminder set on new events.": {
     "Initial reminder set on new events.": "Új eseményeknél beállított kezdeti emlékeztető."
@@ -833,11 +905,14 @@
   "Keep until dismissed": {
     "Keep until dismissed": "Megőrzés az elvetésig"
   },
+  "Keeps cards and panes solid when the window is see-through.": {
+    "Keeps cards and panes solid when the window is see-through.": ""
+  },
   "Keyboard shortcuts": {
     "Keyboard shortcuts": "Gyorsbillentyűk"
   },
   "Keyring locked — unlock it to sync": {
-    "Keyring locked — unlock it to sync": ""
+    "Keyring locked — unlock it to sync": "A kulcstartó zárolva van — oldd fel a zárolást a szinkronizáláshoz"
   },
   "Ko-fi": {
     "Ko-fi": "Ko-fi"
@@ -846,7 +921,7 @@
     "Language": "Nyelv"
   },
   "Language and time": {
-    "Language and time": ""
+    "Language and time": "Nyelv és idő"
   },
   "Language of the interface.": {
     "Language of the interface.": "A felület nyelve."
@@ -854,8 +929,17 @@
   "Launch Dank Calendar in the background when you log in.": {
     "Launch Dank Calendar in the background when you log in.": "A Dank Calendar indítása a háttérben bejelentkezéskor."
   },
+  "Launch Dux Calendar in the background when you log in.": {
+    "Launch Dux Calendar in the background when you log in.": "A Dux Naptár indítása a háttérben bejelentkezéskor."
+  },
+  "Layer opacity": {
+    "Layer opacity": ""
+  },
   "Length used when creating events.": {
     "Length used when creating events.": "Események létrehozásakor használt hossz."
+  },
+  "Lets the desktop show through the window. Text and controls stay solid.": {
+    "Lets the desktop show through the window. Text and controls stay solid.": ""
   },
   "Light": {
     "Light": "Világos"
@@ -885,7 +969,7 @@
     "Locale used for day and month names, time format and week start.": "A napok és hónapok nevéhez, az időformátumhoz és a hét kezdőnapjához használt területi beállítás."
   },
   "Locale, views and defaults": {
-    "Locale, views and defaults": ""
+    "Locale, views and defaults": "Helyi beállítások, nézetek és alapértelmezett értékek"
   },
   "Location": {
     "Location": "Helyszín"
@@ -895,6 +979,12 @@
   },
   "Marked as not done": {
     "Marked as not done": "Nincs készként megjelölve"
+  },
+  "Matugen": {
+    "Matugen": "Matugen"
+  },
+  "Matugen theme missing or invalid — using the %1 preset.": {
+    "Matugen theme missing or invalid — using the %1 preset.": "A Matugen téma hiányzik vagy érvénytelen — a(z) %1 előbeállítás használata."
   },
   "Maximum title lines per event in month view.": {
     "Maximum title lines per event in month view.": "Eseményenkénti cím sorainak maximális száma havi nézetben."
@@ -909,16 +999,19 @@
     "Medium": "Közepes"
   },
   "Meeting cancellation": {
-    "Meeting cancellation": ""
+    "Meeting cancellation": "A találkozó lemondása"
   },
   "Meeting invitation": {
-    "Meeting invitation": ""
+    "Meeting invitation": "Meghívó a találkozóra"
   },
   "Meeting reply": {
-    "Meeting reply": ""
+    "Meeting reply": "Válasz az értekezletre"
   },
   "Menu": {
-    "Menu": ""
+    "Menu": "Menü"
+  },
+  "Merge duplicate events": {
+    "Merge duplicate events": "Duplikált események egyesítése"
   },
   "Microsoft To Do access wasn't granted. Reconnect this account to sync tasks.": {
     "Microsoft To Do access wasn't granted. Reconnect this account to sync tasks.": "A Microsoft To Do hozzáférés nem lett megadva. Csatlakoztasd újra ezt a fiókot a feladatok szinkronizálásához."
@@ -935,6 +1028,9 @@
   "Modified": {
     "Modified": "Módosítva"
   },
+  "Monospace family": {
+    "Monospace family": "Rögzített szélességű (monospace) betűcsalád"
+  },
   "Month": {
     "Month": "Hónap"
   },
@@ -948,7 +1044,7 @@
     "Monthly": "Havonta"
   },
   "Motion": {
-    "Motion": ""
+    "Motion": "Mozgás"
   },
   "Move": {
     "Move": "Áthelyezés"
@@ -963,7 +1059,7 @@
     "Move 1 event here": "1 esemény áthelyezése ide"
   },
   "Move recurring events?": {
-    "Move recurring events?": "Áthelyezi az ismétlődő eseményeket?"
+    "Move recurring events?": "Áthelyezed az ismétlődő eseményeket?"
   },
   "Move through sidebar items": {
     "Move through sidebar items": "Navigálás az oldalsáv elemei között"
@@ -999,7 +1095,7 @@
     "Name": "Név"
   },
   "Names, visibility, removal": {
-    "Names, visibility, removal": ""
+    "Names, visibility, removal": "Nevek, láthatóság, eltávolítás"
   },
   "Navigation": {
     "Navigation": "Navigáció"
@@ -1017,13 +1113,13 @@
     "New event": "Új esemény"
   },
   "New events": {
-    "New events": ""
+    "New events": "Új események"
   },
   "New task": {
     "New task": "Új feladat"
   },
   "Next": {
-    "Next": ""
+    "Next": "Következő"
   },
   "Next day": {
     "Next day": "Következő nap"
@@ -1041,7 +1137,7 @@
     "Next event (next week in month view)": "Következő esemény (havi nézetben a következő hét)"
   },
   "Next month": {
-    "Next month": ""
+    "Next month": "Jövő hónapban"
   },
   "Next week": {
     "Next week": "Következő hét"
@@ -1069,6 +1165,9 @@
   },
   "No matching events": {
     "No matching events": "Nincsenek egyező események"
+  },
+  "No overlapping busy events": {
+    "No overlapping busy events": "Nincsenek átfedő elfoglalt események"
   },
   "No task list available": {
     "No task list available": "Nem áll rendelkezésre feladatlista"
@@ -1107,7 +1206,10 @@
     "Notify for all-day events without their own reminders.": "Értesítés az egész napos eseményekről, amelyeknek nincs saját emlékeztetőjük."
   },
   "Off": {
-    "Off": ""
+    "Off": "Ki"
+  },
+  "Off lets the compositor decorate windows. Open windows update when reopened.": {
+    "Off lets the compositor decorate windows. Open windows update when reopened.": "A „Ki” beállítás engedi, hogy a kompozitor díszítse az ablakokat. A nyitott ablakok az újranyitáskor frissülnek."
   },
   "Offline": {
     "Offline": "Offline"
@@ -1117,6 +1219,9 @@
   },
   "On the day": {
     "On the day": "Aznap"
+  },
+  "Opacity": {
+    "Opacity": ""
   },
   "Open": {
     "Open": "Megnyitás"
@@ -1136,17 +1241,20 @@
   "Open or create event": {
     "Open or create event": "Esemény megnyitása vagy létrehozása"
   },
+  "Open the existing meeting to handle this reply or cancellation.": {
+    "Open the existing meeting to handle this reply or cancellation.": "A válasz vagy lemondás kezeléséhez nyisd meg a meglévő értekezletet."
+  },
   "Order": {
     "Order": "Rendezés"
   },
   "Organized by %1": {
-    "Organized by %1": ""
+    "Organized by %1": "Szervező: %1"
   },
   "Outline": {
-    "Outline": ""
+    "Outline": "Tartalomjegyzék"
   },
   "Outline the control that has keyboard focus.": {
-    "Outline the control that has keyboard focus.": ""
+    "Outline the control that has keyboard focus.": "Jelöld ki azt az elemet, amelyiken jelenleg a billentyűzetes fókusz van."
   },
   "Outlook, Office 365 and Exchange Online calendars.": {
     "Outlook, Office 365 and Exchange Online calendars.": "Outlook, Office 365 és Exchange Online naptárak."
@@ -1215,7 +1323,7 @@
     "Pick a color source, palette, or your own theme file.": "Válassz színforrást, palettát vagy saját témafájlt."
   },
   "Pick time": {
-    "Pick time": ""
+    "Pick time": "Válassz időt"
   },
   "Pictures": {
     "Pictures": "Képek"
@@ -1224,7 +1332,7 @@
     "Play a sound when a reminder fires.": "Hang lejátszása az emlékeztető megszólalásakor."
   },
   "Playful": {
-    "Playful": ""
+    "Playful": "Játékos"
   },
   "Point at a directory of .ics files. Each subdirectory or .ics file becomes a calendar — compatible with vdirsyncer/khal layouts. The directory is created if it doesn't exist.": {
     "Point at a directory of .ics files. Each subdirectory or .ics file becomes a calendar — compatible with vdirsyncer/khal layouts. The directory is created if it doesn't exist.": "Mutass rá egy .ics fájlokat tartalmazó könyvtárra. Minden alkönyvtár vagy .ics fájl naptárrá válik — kompatibilis a vdirsyncer/khal elrendezésekkel. A könyvtár létrejön, ha még nem létezik."
@@ -1233,7 +1341,7 @@
     "Preset": "Előbeállítás"
   },
   "Previous": {
-    "Previous": ""
+    "Previous": "Előző"
   },
   "Previous day": {
     "Previous day": "Előző nap"
@@ -1251,7 +1359,7 @@
     "Previous event (previous week in month view)": "Előző esemény (havi nézetben az előző hét)"
   },
   "Previous month": {
-    "Previous month": ""
+    "Previous month": "Előző hónap"
   },
   "Previous week": {
     "Previous week": "Előző hét"
@@ -1260,7 +1368,7 @@
     "Previous year": "Előző év"
   },
   "Primary": {
-    "Primary": ""
+    "Primary": "Elsődleges"
   },
   "Priority": {
     "Priority": "Prioritás"
@@ -1272,7 +1380,7 @@
     "Quit": "Kilépés"
   },
   "Radius strength": {
-    "Radius strength": ""
+    "Radius strength": "Sugárszilárdság"
   },
   "Read-only events can't be cut": {
     "Read-only events can't be cut": "Az írásvédett események nem vághatók ki"
@@ -1284,22 +1392,25 @@
     "Read-only events can't be moved": "Az írásvédett események nem helyezhetők át"
   },
   "Reading file...": {
-    "Reading file...": ""
+    "Reading file...": "Fájl beolvasása…"
   },
   "Reconnect": {
     "Reconnect": "Újracsatlakozás"
+  },
+  "Recurring event · conflicts checked through %1": {
+    "Recurring event · conflicts checked through %1": "Ismétlődő esemény · az ütközések eddig ellenőrizve: %1"
   },
   "Recurring tasks are managed in Google Tasks.": {
     "Recurring tasks are managed in Google Tasks.": "Az ismétlődő feladatok kezelése a Google Feladatokban történik."
   },
   "Reduce motion": {
-    "Reduce motion": ""
+    "Reduce motion": "Mozgás csökkentése"
   },
   "Reminders": {
     "Reminders": "Emlékeztetők"
   },
   "Reminders and alerts": {
-    "Reminders and alerts": ""
+    "Reminders and alerts": "Emlékeztetők és figyelmeztetések"
   },
   "Reminders and desktop alerts.": {
     "Reminders and desktop alerts.": "Emlékeztetők és asztali értesítések."
@@ -1323,13 +1434,19 @@
     "Remove calendar or account": "Naptár vagy fiók eltávolítása"
   },
   "Remove reminder": {
-    "Remove reminder": ""
+    "Remove reminder": "Emlékeztető eltávolítása"
   },
   "Removes this account and its calendars and events from Dank Calendar. Nothing is deleted from the provider.": {
     "Removes this account and its calendars and events from Dank Calendar. Nothing is deleted from the provider.": "Eltávolítja ezt a fiókot, valamint naptárait és eseményeit a Dank Calendar alkalmazásból. Semmi sem törlődik a szolgáltatónál."
   },
+  "Removes this account and its calendars and events from Dux Calendar. Nothing is deleted from the provider.": {
+    "Removes this account and its calendars and events from Dux Calendar. Nothing is deleted from the provider.": "Eltávolítja ezt a fiókot, valamint naptárait és eseményeit a Dux Naptárból. A szolgáltatónál semmi sem törlődik."
+  },
   "Removes this calendar and its events from Dank Calendar. If the provider still offers it, it will come back on the next sync.": {
     "Removes this calendar and its events from Dank Calendar. If the provider still offers it, it will come back on the next sync.": "Eltávolítja ezt a naptárt és eseményeit a Dank Calendar alkalmazásból. Ha a szolgáltató továbbra is biztosítja azt, a következő szinkronizáláskor visszakerül."
+  },
+  "Removes this calendar and its events from Dux Calendar. If the provider still offers it, it will come back on the next sync.": {
+    "Removes this calendar and its events from Dux Calendar. If the provider still offers it, it will come back on the next sync.": "Eltávolítja ezt a naptárat és az eseményeit a Dux Naptárból. Ha a szolgáltató továbbra is elérhetővé teszi, a következő szinkronizáláskor visszakerül."
   },
   "Remove…": {
     "Remove…": "Eltávolítás…"
@@ -1370,8 +1487,11 @@
   "Reset to global": {
     "Reset to global": "Visszaállítás globálisra"
   },
+  "Restart required": {
+    "Restart required": "Újraindítás szükséges"
+  },
   "Ripple effects": {
-    "Ripple effects": ""
+    "Ripple effects": "Láncreakciók"
   },
   "Save": {
     "Save": "Mentés"
@@ -1380,7 +1500,10 @@
     "Saving...": "Mentés…"
   },
   "Scale": {
-    "Scale": ""
+    "Scale": "Méretarány"
+  },
+  "Scales the whole app. Takes effect after a restart.": {
+    "Scales the whole app. Takes effect after a restart.": "Méretezi a teljes alkalmazást. Újraindítás után lép érvénybe."
   },
   "Search": {
     "Search": "Keresés"
@@ -1395,7 +1518,7 @@
     "Searching": "Keresés"
   },
   "Secondary": {
-    "Secondary": ""
+    "Secondary": "Középfokú"
   },
   "Select File": {
     "Select File": "Fájl kiválasztása"
@@ -1430,11 +1553,14 @@
   "Server URL": {
     "Server URL": "Szerver URL"
   },
+  "Set by QT_SCALE_FACTOR.": {
+    "Set by QT_SCALE_FACTOR.": "A QT_SCALE_FACTOR által beállítva."
+  },
   "Settings": {
     "Settings": "Beállítások"
   },
   "Shape": {
-    "Shape": ""
+    "Shape": "Alak"
   },
   "Show": {
     "Show": "Megjelenítés"
@@ -1442,14 +1568,20 @@
   "Show Dank Calendar in the system tray.": {
     "Show Dank Calendar in the system tray.": "A Dank Calendar megjelenítése a tálcán."
   },
+  "Show Dux Calendar in the system tray.": {
+    "Show Dux Calendar in the system tray.": "A Dux Naptár megjelenítése a tálcán."
+  },
   "Show all events in month view": {
     "Show all events in month view": "Összes esemény megjelenítése havi nézetben"
   },
   "Show all-day reminders": {
     "Show all-day reminders": "Egész napos emlékeztetők megjelenítése"
   },
+  "Show an event that appears in several calendars once, with dots for the other calendars.": {
+    "Show an event that appears in several calendars once, with dots for the other calendars.": "A több naptárban is szereplő esemény egyszeri megjelenítése pontokkal jelezve a többi naptárat."
+  },
   "Show calendar": {
-    "Show calendar": ""
+    "Show calendar": "Naptár megjelenítése"
   },
   "Show task lists and the Tasks view when an account provides them.": {
     "Show task lists and the Tasks view when an account provides them.": "Feladatlisták és a Feladatok nézet megjelenítése, ha egy fiók biztosítja azokat."
@@ -1463,6 +1595,9 @@
   "Show week numbers": {
     "Show week numbers": "Hétszámok megjelenítése"
   },
+  "Showing the first 20 overlaps.": {
+    "Showing the first 20 overlaps.": "Az első 20 átfedés megjelenítése."
+  },
   "Sidebar": {
     "Sidebar": "Oldalsáv"
   },
@@ -1472,8 +1607,14 @@
   "Sign in with Google in your browser and you're done — no setup needed. Dank Calendar syncs your calendars, events, and tasks.": {
     "Sign in with Google in your browser and you're done — no setup needed. Dank Calendar syncs your calendars, events, and tasks.": "Jelentkezz be a Google-fiókoddal a böngésződben, és már kész is vagy – nincs szükség további beállításra. A Dank Calendar szinkronizálja naptáraidat, eseményeidet és feladataidat."
   },
+  "Sign in with Google in your browser and you're done — no setup needed. Dux Calendar syncs your calendars, events, and tasks.": {
+    "Sign in with Google in your browser and you're done — no setup needed. Dux Calendar syncs your calendars, events, and tasks.": "Jelentkezz be a böngésződben a Google-fiókoddal, és már kész is — nincs szükség további beállításra. A Dux Naptár szinkronizálja a naptáraidat, eseményeidet és feladataidat."
+  },
   "Sign in with Microsoft in your browser and you're done — no setup needed. Dank Calendar syncs your Outlook calendars, events, and tasks.": {
     "Sign in with Microsoft in your browser and you're done — no setup needed. Dank Calendar syncs your Outlook calendars, events, and tasks.": "Jelentkezz be a Microsoft-fiókoddal a böngésződben, és már kész is vagy – nincs szükség további beállításra. A Dank Calendar szinkronizálja az Outlook-naptáraidat, eseményeidet és feladataidat."
+  },
+  "Sign in with Microsoft in your browser and you're done — no setup needed. Dux Calendar syncs your Outlook calendars, events, and tasks.": {
+    "Sign in with Microsoft in your browser and you're done — no setup needed. Dux Calendar syncs your Outlook calendars, events, and tasks.": "Jelentkezz be a böngésződben a Microsoft-fiókoddal, és már kész is — nincs szükség további beállításra. A Dux Naptár szinkronizálja az Outlook naptáraidat, eseményeidet és feladataidat."
   },
   "Sign in with your Apple ID and an app-specific password. Regular Apple ID passwords will not work.": {
     "Sign in with your Apple ID and an app-specific password. Regular Apple ID passwords will not work.": "Jelentkezz be Apple ID-dal és egy alkalmazásspecifikus jelszóval. A normál Apple ID-jelszavak nem fognak működni."
@@ -1494,22 +1635,25 @@
     "Skip certificate verification": "Tanúsítványellenőrzés kihagyása"
   },
   "Smooth": {
-    "Smooth": ""
+    "Smooth": "Sima"
   },
   "Snooze duration": {
     "Snooze duration": "Szundi időtartama"
   },
   "Some calendars couldn't be synced; their events may be missing or out of date.": {
-    "Some calendars couldn't be synced; their events may be missing or out of date.": ""
+    "Some calendars couldn't be synced; their events may be missing or out of date.": "Egyes naptárak nem tudtak szinkronizálódni; előfordulhat, hogy az eseményeik hiányoznak vagy elavultak."
   },
   "Sort By": {
     "Sort By": "Rendezés szempontja"
   },
   "Spring": {
-    "Spring": ""
+    "Spring": "Tavasz"
   },
   "Square": {
-    "Square": ""
+    "Square": "Négyzet"
+  },
+  "Start": {
+    "Start": "Kezdés"
   },
   "Start at login": {
     "Start at login": "Indítás bejelentkezéskor"
@@ -1541,6 +1685,12 @@
   "Subscribing…": {
     "Subscribing…": "Feliratkozás…"
   },
+  "Support Dank Linux": {
+    "Support Dank Linux": "A Dank Linux támogatása"
+  },
+  "Support Dux Labs": {
+    "Support Dux Labs": "A Dux Labs támogatása"
+  },
   "Sync interval": {
     "Sync interval": "Szinkronizálási időköz"
   },
@@ -1552,6 +1702,12 @@
   },
   "Synced as \"%1\". The name only changes in Dank Calendar.": {
     "Synced as \"%1\". The name only changes in Dank Calendar.": "Szinkronizálva „%1” néven. A név csak a Dank Calendar alkalmazásban változik meg."
+  },
+  "Synced as \"%1\". The name only changes in Dux Calendar.": {
+    "Synced as \"%1\". The name only changes in Dux Calendar.": "Szinkronizálva mint „%1”. A név csak a Dux Naptárban módosul."
+  },
+  "System": {
+    "System": "Rendszer"
   },
   "System default": {
     "System default": "Rendszer alapértelmezett"
@@ -1584,25 +1740,25 @@
     "Test notification": "Teszt értesítés"
   },
   "Text color": {
-    "Text color": ""
+    "Text color": "A szöveg színe"
   },
   "That file is not valid JSON.": {
     "That file is not valid JSON.": "Ez a fájl nem érvényes JSON."
   },
   "The server refused to return some events or tasks, so they were skipped; the rest of the calendar is syncing.": {
-    "The server refused to return some events or tasks, so they were skipped; the rest of the calendar is syncing.": ""
+    "The server refused to return some events or tasks, so they were skipped; the rest of the calendar is syncing.": "A szerver nem adta vissza bizonyos eseményeket vagy feladatokat, ezért azok ki lettek hagyva; a naptár többi része jelenleg szinkronizálódik."
   },
   "Theme": {
     "Theme": "Téma"
   },
   "Theme, shape and motion": {
-    "Theme, shape and motion": ""
+    "Theme, shape and motion": "Téma, forma és mozgás"
   },
   "These events will be deleted from their calendars. Recurring selections delete only the selected occurrences.": {
     "These events will be deleted from their calendars. Recurring selections delete only the selected occurrences.": "Ezek az események törlésre kerülnek a naptáraikból. Az ismétlődő kijelölésekből csak a kiválasztott előfordulások törlődnek."
   },
   "Thickness": {
-    "Thickness": ""
+    "Thickness": "Vastagság"
   },
   "This account cannot be reconnected — remove it and add it again.": {
     "This account cannot be reconnected — remove it and add it again.": "Ehhez a fiókhoz nem lehet újracsatlakozni – távolítsd el, majd add hozzá újra."
@@ -1611,10 +1767,13 @@
     "This event": "Ez az esemény"
   },
   "This event will be deleted from its calendar.": {
-    "This event will be deleted from its calendar.": "Ez az esemény törlésre kerül a naptárából."
+    "This event will be deleted from its calendar.": "Ez az esemény törlésre kerül a naptárodból."
   },
   "Time format": {
     "Time format": "Időformátum"
+  },
+  "Title bars": {
+    "Title bars": "Címsorok"
   },
   "Title is required": {
     "Title is required": "A cím megadása kötelező"
@@ -1626,7 +1785,7 @@
     "Toggle calendar, switch view or sync account": "Naptár ki/bekapcsolása, nézetváltás vagy fiók szinkronizálása"
   },
   "Toggle sidebar": {
-    "Toggle sidebar": ""
+    "Toggle sidebar": "Oldalsáv be-/ki"
   },
   "Toggle this help": {
     "Toggle this help": "Súgó ki-/bealkapcsolása"
@@ -1650,7 +1809,7 @@
     "Type at least 2 characters to search events.": "Írj be legalább 2 karaktert az események kereséséhez."
   },
   "Typography": {
-    "Typography": ""
+    "Typography": "Tipográfia"
   },
   "Undo": {
     "Undo": "Visszavonás"
@@ -1685,6 +1844,12 @@
   "Using DankMaterialShell dynamic colors.": {
     "Using DankMaterialShell dynamic colors.": "DankMaterialShell dinamikus színek használata."
   },
+  "Using Dux Shell dynamic colors.": {
+    "Using Dux Shell dynamic colors.": "A Dux Shell dinamikus színeinek használata."
+  },
+  "Using Matugen colors.": {
+    "Using Matugen colors.": "Matugen színek használata."
+  },
   "Verify desktop notifications are working.": {
     "Verify desktop notifications are working.": "Ellenőrizd az asztali értesítések működését."
   },
@@ -1692,7 +1857,7 @@
     "Version": "Verzió"
   },
   "Version and links": {
-    "Version and links": ""
+    "Version and links": "Verzió és hivatkozások"
   },
   "Videos": {
     "Videos": "Videók"
@@ -1701,7 +1866,7 @@
     "View": "Nézet"
   },
   "Views": {
-    "Views": ""
+    "Views": "Megtekintések"
   },
   "Visibility, names, and removal per calendar.": {
     "Visibility, names, and removal per calendar.": "Láthatóság, nevek és eltávolítás naptáranként."
@@ -1725,13 +1890,16 @@
     "Weekly": "Heti"
   },
   "Weight": {
-    "Weight": ""
+    "Weight": "Súly"
   },
   "What the window's close button does.": {
     "What the window's close button does.": "Mit tegyen az ablak bezárása gomb."
   },
   "When all-day event reminders fire.": {
     "When all-day event reminders fire.": "Mikor szólaljanak meg az egész napos események emlékeztetői."
+  },
+  "Windows": {
+    "Windows": "Ablakok"
   },
   "Yearly": {
     "Yearly": "Éves"
@@ -1745,8 +1913,14 @@
   "Your client ID, secret, and refresh token are stored in the system keyring (libsecret/kwallet) when available, or an encrypted local file.": {
     "Your client ID, secret, and refresh token are stored in the system keyring (libsecret/kwallet) when available, or an encrypted local file.": "A kliensazonosítód, titkod és frissítési tokened a rendszer kulcstartójában (libsecret/kwallet) vagy egy titkosított helyi fájlban tárolódik, ha az elérhető."
   },
+  "Your compositor does not support background blur.": {
+    "Your compositor does not support background blur.": ""
+  },
   "Your response": {
     "Your response": "A válaszod"
+  },
+  "Zoom": {
+    "Zoom": "Nagyítás"
   },
   "all day": {
     "all day": "egész nap"

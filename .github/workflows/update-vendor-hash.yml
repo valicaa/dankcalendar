@@ -1,4 +1,4 @@
-# SOURCE: https://github.com/AvengeMedia/DankMaterialShell/blob/ddf943846fb437cb255d6de66e6acfe3a07dad2f/.github/workflows/update-vendor-hash.yml
+# SOURCE: https://github.com/duxlabs-dev/dux-shell/blob/ddf943846fb437cb255d6de66e6acfe3a07dad2f/.github/workflows/update-vendor-hash.yml
 
 name: Update Vendor Hash
 
@@ -9,8 +9,10 @@ on:
     paths:
       - "core/go.mod"
       - "core/go.sum"
+      - "core/**.go"
     branches:
       - master
+      - "stable-*"
 
 permissions:
   contents: write
@@ -40,7 +42,7 @@ jobs:
         run: |
           set -euo pipefail
           echo "Attempting nix build to get new vendorHash..."
-          if output=$(nix build .#dankcalendar 2>&1); then
+          if output=$(nix build .#dankcalendar.goModules 2>&1); then
             echo "Build succeeded, no hash update needed"
             exit 0
           fi
@@ -59,8 +61,8 @@ jobs:
         run: |
           set -euo pipefail
           if ! git diff --quiet flake.nix; then
-            git config user.name "dms-ci[bot]"
-            git config user.email "dms-ci[bot]@users.noreply.github.com"
+            git config user.name "dux-ci[bot]"
+            git config user.email "344434142+dux-ci[bot]@users.noreply.github.com"
             git add flake.nix
             git commit -m "nix: update vendorHash for go.mod changes" || exit 0
             git pull --rebase origin ${{ github.ref_name }}

@@ -7,10 +7,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AvengeMedia/dankcalendar/core/ent"
-	"github.com/AvengeMedia/dankcalendar/core/ent/account"
-	"github.com/AvengeMedia/dankcalendar/core/internal/calendar"
-	"github.com/AvengeMedia/dankcalendar/core/repo"
+	"github.com/duxlabs-dev/dux-calendar/core/ent"
+	"github.com/duxlabs-dev/dux-calendar/core/ent/account"
+	"github.com/duxlabs-dev/dux-calendar/core/internal/calendar"
+	"github.com/duxlabs-dev/dux-calendar/core/repo"
 )
 
 // maxScheduleRangeDays bounds a single people.schedule lookup so it never
@@ -22,7 +22,7 @@ func HandlePeople(ctx context.Context, w *ConnWriter, req Request, deps Deps) {
 	case "people.schedule":
 		handlePeopleSchedule(ctx, w, req, deps)
 	default:
-		RespondError(w, req.ID, "unknown method: "+req.Method)
+		w.RespondError(req.ID, "unknown method: "+req.Method)
 	}
 }
 
@@ -32,55 +32,55 @@ func HandlePeople(ctx context.Context, w *ConnWriter, req Request, deps Deps) {
 func handlePeopleSchedule(ctx context.Context, w *ConnWriter, req Request, deps Deps) {
 	email := strings.ToLower(strings.TrimSpace(ParamString(req.Params, "email")))
 	if email == "" || strings.Count(email, "@") != 1 {
-		RespondError(w, req.ID, "email must be a single address")
+		w.RespondError(req.ID, "email must be a single address")
 		return
 	}
 
 	from, err := time.Parse(time.RFC3339, ParamString(req.Params, "from"))
 	if err != nil {
-		RespondError(w, req.ID, "from must be RFC3339")
+		w.RespondError(req.ID, "from must be RFC3339")
 		return
 	}
 	to, err := time.Parse(time.RFC3339, ParamString(req.Params, "to"))
 	if err != nil {
-		RespondError(w, req.ID, "to must be RFC3339")
+		w.RespondError(req.ID, "to must be RFC3339")
 		return
 	}
 	switch {
 	case !to.After(from):
-		RespondError(w, req.ID, "to must be after from")
+		w.RespondError(req.ID, "to must be after from")
 		return
 	case to.Sub(from) > maxScheduleRangeDays*24*time.Hour:
-		RespondError(w, req.ID, fmt.Sprintf("range must be at most %d days", maxScheduleRangeDays))
+		w.RespondError(req.ID, fmt.Sprintf("range must be at most %d days", maxScheduleRangeDays))
 		return
 	}
 
 	if deps.Repo == nil || deps.Registry == nil {
-		RespondError(w, req.ID, "people service unavailable")
+		w.RespondError(req.ID, "people service unavailable")
 		return
 	}
 
 	accounts, err := deps.Repo.ListAccounts(ctx)
 	if err != nil {
-		RespondError(w, req.ID, err.Error())
+		w.RespondError(req.ID, err.Error())
 		return
 	}
 	acc, err := pickScheduleAccount(accounts, email, ParamString(req.Params, "accountId"))
 	if err != nil {
-		RespondError(w, req.ID, err.Error())
+		w.RespondError(req.ID, err.Error())
 		return
 	}
 
 	provider, err := deps.Registry.Build(ctx, domainAccount(acc), deps.Secrets)
 	if err != nil {
-		RespondError(w, req.ID, err.Error())
+		w.RespondError(req.ID, err.Error())
 		return
 	}
 	defer provider.Close()
 
 	reader, ok := provider.(calendar.ScheduleReader)
 	if !ok {
-		RespondError(w, req.ID, "account does not support schedule lookups")
+		w.RespondError(req.ID, "account does not support schedule lookups")
 		return
 	}
 
@@ -96,10 +96,10 @@ func handlePeopleSchedule(ctx context.Context, w *ConnWriter, req Request, deps 
 	switch {
 	case errors.Is(err, calendar.ErrScheduleScope), errors.Is(err, calendar.ErrReauthRequired):
 		result["status"] = "reconnect"
-		Respond(w, req.ID, result)
+		w.Respond(req.ID, result)
 		return
 	case err != nil:
-		RespondError(w, req.ID, err.Error())
+		w.RespondError(req.ID, err.Error())
 		return
 	}
 
@@ -110,7 +110,7 @@ func handlePeopleSchedule(ctx context.Context, w *ConnWriter, req Request, deps 
 	case calendar.ScheduleDetails:
 		idx, err := newOwnerScheduleIndex(ctx, deps, from, to)
 		if err != nil {
-			RespondError(w, req.ID, err.Error())
+			w.RespondError(req.ID, err.Error())
 			return
 		}
 		result["events"] = scheduleEventsJSON(sched.Events, idx)
@@ -118,7 +118,7 @@ func handlePeopleSchedule(ctx context.Context, w *ConnWriter, req Request, deps 
 		result["busy"] = busySpansJSON(sched.Busy)
 	}
 
-	Respond(w, req.ID, result)
+	w.Respond(req.ID, result)
 }
 
 // domainAccount converts a stored account into the domain shape a provider

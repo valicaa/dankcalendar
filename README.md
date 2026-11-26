@@ -1,25 +1,25 @@
-# DankCalendar
+# Dux Calendar
 
 <div align="center">
-  <a href="https://danklinux.com">
-    <img src="assets/danklogo.svg" alt="DankCalendar" width="200">
+  <a href="https://duxlabs.dev">
+    <img src="assets/danklogo.svg" alt="Dux Calendar" width="200">
   </a>
 
 ### Local, Google, Microsoft, CalDAV, and iCloud calendars in one standalone app
 
 Built with [Quickshell](https://quickshell.org/) and [Go](https://go.dev/)
 
-[![GitHub stars](https://img.shields.io/github/stars/AvengeMedia/dankcalendar?style=for-the-badge&labelColor=101418&color=ffd700)](https://github.com/AvengeMedia/dankcalendar/stargazers)
-[![GitHub License](https://img.shields.io/github/license/AvengeMedia/dankcalendar?style=for-the-badge&labelColor=101418&color=b9c8da)](https://github.com/AvengeMedia/dankcalendar/blob/master/LICENSE)
-[![AUR version (bin)](<https://img.shields.io/aur/version/dankcalendar-bin?style=for-the-badge&labelColor=101418&color=9ccbfb&label=AUR%20(bin)>)](https://aur.archlinux.org/packages/dankcalendar-bin)
-[![AUR version (git)](<https://img.shields.io/aur/version/dankcalendar-git?style=for-the-badge&labelColor=101418&color=9ccbfb&label=AUR%20(git)>)](https://aur.archlinux.org/packages/dankcalendar-git)
-[![Flathub version](https://img.shields.io/flathub/v/com.danklinux.dankcalendar?style=for-the-badge&labelColor=101418&color=9ccbfb&label=Flathub)](https://flathub.org/apps/com.danklinux.dankcalendar)
+[![GitHub stars](https://img.shields.io/github/stars/duxlabs-dev/dux-calendar?style=for-the-badge&labelColor=101418&color=ffd700)](https://github.com/duxlabs-dev/dux-calendar/stargazers)
+[![GitHub License](https://img.shields.io/github/license/duxlabs-dev/dux-calendar?style=for-the-badge&labelColor=101418&color=b9c8da)](https://github.com/duxlabs-dev/dux-calendar/blob/master/LICENSE)
+[![AUR version (bin)](<https://img.shields.io/aur/version/dux-calendar-bin?style=for-the-badge&labelColor=101418&color=9ccbfb&label=AUR%20(bin)>)](https://aur.archlinux.org/packages/dux-calendar-bin)
+[![AUR version (git)](<https://img.shields.io/aur/version/dux-calendar-git?style=for-the-badge&labelColor=101418&color=9ccbfb&label=AUR%20(git)>)](https://aur.archlinux.org/packages/dux-calendar-git)
+[![Flathub version](https://img.shields.io/flathub/v/dev.duxlabs.calendar?style=for-the-badge&labelColor=101418&color=9ccbfb&label=Flathub)](https://flathub.org/apps/dev.duxlabs.calendar)
 [![Discord](https://img.shields.io/badge/discord-join?style=for-the-badge&logo=discord&logoColor=ffffff&label=discord&labelColor=101418&color=5865f2)](https://discord.gg/ppWTpKmPgT)
-[![Ko-Fi donate](https://img.shields.io/badge/donate-kofi?style=for-the-badge&logo=ko-fi&logoColor=ffffff&label=ko-fi&labelColor=101418&color=f16061&link=https%3A%2F%2Fko-fi.com%2Fdanklinux)](https://ko-fi.com/danklinux)
+[![Ko-Fi donate](https://img.shields.io/badge/donate-kofi?style=for-the-badge&logo=ko-fi&logoColor=ffffff&label=ko-fi&labelColor=101418&color=f16061&link=https%3A%2F%2Fko-fi.com%2Fduxlabs)](https://ko-fi.com/duxlabs)
 
 </div>
 
-DankCalendar is a standalone calendar app that brings your Local, [Google](https://calendar.google.com/), [Microsoft](https://outlook.com/), [CalDAV](https://en.wikipedia.org/wiki/CalDAV), and [iCloud](https://www.icloud.com/calendar/) calendars together in one place. It runs as a lightweight daemon with a tray icon, keeps your accounts in sync, and reminds you about events — all with the look and feel of [DankMaterialShell](https://github.com/AvengeMedia/DankMaterialShell).
+Dux Calendar is a standalone calendar app that brings your Local, [Google](https://calendar.google.com/), [Microsoft](https://outlook.com/), [CalDAV](https://en.wikipedia.org/wiki/CalDAV), and [iCloud](https://www.icloud.com/calendar/) calendars together in one place. It runs as a lightweight daemon with a tray icon, keeps your accounts in sync, and reminds you about events — all with the look and feel of [Dux Shell](https://github.com/duxlabs-dev/dux-shell).
 
 ## Repository Structure
 
@@ -33,9 +33,9 @@ dankcalendar/
 │   ├── Services/       # IPC bridge and shell-side state
 │   ├── Widgets/        # Calendar-specific Dank UI controls
 │   ├── Common/         # Shared resources, themes, and i18n
-│   ├── DankCommon/     # → symlink into the dank-qml-common submodule
+│   ├── DCommon/     # → symlink into the dux-qml-common submodule
 │   └── translations/   # POEditor-managed string catalogs
-├── dank-qml-common/    # Shared DMS widget library (git submodule)
+├── dux-qml-common/    # Shared DMS widget library (git submodule)
 ├── core/               # Go backend, daemon, and CLI
 │   ├── cmd/dcal/       # dcal CLI and daemon entrypoint
 │   ├── internal/       # Providers, sync engine, reminders, IPC, OAuth
@@ -59,30 +59,30 @@ dankcalendar/
 ### Flatpak
 
 ```bash
-flatpak install flathub com.danklinux.dankcalendar
-flatpak run com.danklinux.dankcalendar
+flatpak install flathub dev.duxlabs.calendar
+flatpak run dev.duxlabs.calendar
 ```
 
 ### Arch Linux (AUR)
 
 ```bash
 # Prebuilt binary
-yay -S dankcalendar-bin
+yay -S dux-calendar-bin
 
 # Build from latest git
-yay -S dankcalendar-git
+yay -S dux-calendar-git
 ```
 
 ### From Source
 
 ```bash
-git clone --recurse-submodules https://github.com/AvengeMedia/dankcalendar.git
-cd dankcalendar
+git clone --recurse-submodules https://github.com/duxlabs-dev/dux-calendar.git
+cd dux-calendar
 sudo make install
 ```
 
 Already cloned without submodules? Run `git submodule update --init` first —
-the shared widget library ([dank-qml-common](https://github.com/AvengeMedia/dank-qml-common))
+the shared widget library ([dux-qml-common](https://github.com/duxlabs-dev/dux-qml-common))
 is vendored as a submodule and the build fails without it.
 
 This installs:
@@ -91,6 +91,11 @@ This installs:
 - Desktop entry + icon
 
 Override the prefix with `PREFIX=/usr sudo make install`.
+
+Release archives for Linux and FreeBSD include the same desktop integration.
+After extracting the platform tarball, install its binary and file associations
+with `sudo sh scripts/install-release.sh ./dcal-<os>-<arch>`. Set `PREFIX` to
+install somewhere other than `/usr/local`.
 
 At launch the embedded UI is unpacked read-only into the session runtime dir
 (`$XDG_RUNTIME_DIR/dankcal-shell/`, tmpfs) and verified against the binary on
@@ -186,6 +191,63 @@ dcal events import invite.ics --calendar <id> # import from the terminal
 dcal events rsvp <event-id> accept            # reply to an imported invitation
 ```
 
+## Calendar files
+
+Open `.ics` and `.vcs` files with Dux Calendar, or run
+`dcal open invitation.ics appointment.vcs`. Event files show a destination calendar
+picker and a preview of overlapping events before import. Subscription links and
+files carrying a refreshable calendar source open subscription setup instead.
+
+See [calendar file imports](docs/calendar-file-import.md) for supported formats,
+conflict-preview behavior, and legacy compatibility.
+
+## Matugen colors
+
+In **Settings → Appearance → Color source**, select **Matugen** to read
+`$XDG_CONFIG_HOME/dankcal/matugen-theme.json` (normally
+`~/.config/dankcal/matugen-theme.json`). Dux Calendar reloads this file when
+it changes. Matugen is optional and runs independently of the app.
+
+Copy the included [template](assets/matugen/dankcalendar.json.template) from
+the repository into your Matugen configuration:
+
+```bash
+mkdir -p ~/.config/matugen/templates ~/.config/dankcal
+cp assets/matugen/dankcalendar.json.template ~/.config/matugen/templates/dankcalendar.json.template
+```
+
+Add this entry to `~/.config/matugen/config.toml`:
+
+```toml
+[templates.dankcalendar]
+input_path = "~/.config/matugen/templates/dankcalendar.json.template"
+output_path = "~/.config/dankcal/matugen-theme.json"
+```
+
+If you use a custom `XDG_CONFIG_HOME`, adjust these paths to match it. Then
+generate your colors:
+
+```bash
+matugen image /path/to/wallpaper.png
+```
+
+No reload hook is needed. The template generates both `dark` and `light`
+palettes; Dux Calendar's light/dark/automatic setting selects the palette.
+Its [Matugen template syntax](https://github.com/InioX/matugen-themes) maps
+Material colors to the app's existing theme roles.
+
+The theme file is separate from `ui-settings.json`. It accepts either a
+flat object of theme roles or `dark`/`light` objects, with colors encoded as
+`#RRGGBB`. Partial palettes override only the supplied roles; the selected
+preset supplies the remaining colors. Missing, empty, or invalid theme
+files fall back to the preset. Select **Auto** to follow Dux Shell
+again, or **Custom** to load a theme from another path.
+
+For **Flatpak**, set the Matugen entry's `output_path` to
+`~/.var/app/dev.duxlabs.calendar/config/dankcal/matugen-theme.json`
+and create its parent directory first. This writes directly to the app's
+configuration directory without requiring extra sandbox permissions.
+
 ## IPC
 
 The daemon exposes a scriptable IPC surface — handy for keybinds and automation:
@@ -209,11 +271,11 @@ git submodule update --init   # once after clone (or clone with --recurse-submod
 make run            # build and run against the in-repo quickshell config
 make test           # run the Go test suite
 make fmt            # format Go code
-make update-common  # bump the dank-qml-common submodule + nix flake input together
+make update-common  # bump the dux-qml-common submodule + nix flake input together
 ```
 
-Shared widgets (`quickshell/DankCommon/`) live in the
-[dank-qml-common](https://github.com/AvengeMedia/dank-qml-common) submodule —
+Shared widgets (`quickshell/DCommon/`) live in the
+[dux-qml-common](https://github.com/duxlabs-dev/dux-qml-common) submodule —
 edit them in place, they hot-reload like any other QML, but they are committed
 and PR'd in that repo. See CONTRIBUTING for the workflow.
 
@@ -251,7 +313,7 @@ Include screenshots or video in your PR when the change is user-facing.
 ## Credits
 
 - [Quickshell](https://quickshell.org/) - Shell framework
-- [DankMaterialShell](https://github.com/AvengeMedia/DankMaterialShell) - Design language and widgets
+- [Dux Shell](https://github.com/duxlabs-dev/dux-shell) - Design language and widgets
 - [Ent](https://entgo.io/) - Go ORM
 - [HUMA](https://huma.rocks/) - HTTP API framework
 
@@ -265,9 +327,9 @@ This repository includes a Google OAuth client and a Microsoft app registration 
 `dcal account add google` and `dcal account add microsoft` work out of the box.
 Distribution packages built from this repository (AUR, Flathub, Fedora, Debian, Nix,
 and the like) are welcome to ship them unchanged — no special permission is needed to
-package or redistribute DankCalendar.
+package or redistribute Dux Calendar.
 
-These credential strings identify the upstream DankCalendar application to Google and
+These credential strings identify the upstream Dux Calendar application to Google and
 Microsoft. They are not authorized for use by forks, rebranded builds, or unrelated
 applications — under [Google's API Services Terms](https://developers.google.com/terms)
 and Microsoft's identity platform terms, such projects must register their own OAuth

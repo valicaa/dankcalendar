@@ -16,8 +16,8 @@ for a narrow lookup is fine).
    its shape. If the brief is wrong or the change needs more than it allows (a new migration,
    a new dependency, another layer), stop and report why instead of widening scope.
 3. Follow CLAUDE.md's rules: `CGO_ENABLED=0`, no generated-code edits, `I18n.tr` + `make
-   i18n-extract` for new strings, `Log.scoped` not `console.*`, DankCommon wrappers, and never
-   edit `quickshell/DankCommon`.
+   i18n-extract` for new strings, `Log.scoped` not `console.*`, DCommon wrappers, and never
+   edit `quickshell/DCommon`.
 4. Run the checks that cover what you touched (`make test`, `make vet`, gofmt, `qmllint`, the
    brief's own commands) and fix failures you caused.
 5. Commit only if the brief says so, as `area: lowercase summary`. Edit files under `tasks/` if

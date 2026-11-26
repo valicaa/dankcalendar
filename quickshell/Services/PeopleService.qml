@@ -411,10 +411,23 @@ Singleton {
         return (lane && lane[_dayKeyOf(day)]) || [];
     }
 
-    // Colours of the colleagues who share an own event, in chip order.
+    // Colours of the colleagues who share an own event, in chip order. The
+    // backend matches the owner's primary-calendar copy, which a merged
+    // duplicate (mergeDuplicateEvents) may not be the representative of, so
+    // every merged copy's key counts too.
     function sharedWith(ev) {
         version;
-        return (ev && _store.index.shared[EventUtils.eventKey(ev)]) || [];
+        if (!ev)
+            return [];
+        const shared = _store.index.shared;
+        const colors = (shared[EventUtils.eventKey(ev)] || []).slice();
+        for (const other of ev.mergedFrom || []) {
+            for (const color of shared[other.key] || []) {
+                if (colors.indexOf(color) === -1)
+                    colors.push(color);
+            }
+        }
+        return colors;
     }
 
     function _byStart(items) {

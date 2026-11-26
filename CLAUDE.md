@@ -46,7 +46,7 @@ The main session follows `project-manager`: it elicits, specs (a GitHub issue), 
 
 ## Architecture — two halves, one binary
 
-- **`core/`** — Go daemon (module `github.com/AvengeMedia/dankcalendar/core`).
+- **`core/`** — Go daemon (module `github.com/duxlabs-dev/dux-calendar/core`).
   `cmd/dcal/` is the cobra CLI and composition root (`daemon.go` wires everything via
   `ipc.Deps`). `internal/ipc/` is the API the UI uses. `repo/` wraps Ent (`ent/schema/`
   is the only hand-written part of `ent/`). `internal/providers/*` implement calendar
@@ -56,8 +56,8 @@ The main session follows `project-manager`: it elicits, specs (a GitHub issue), 
   of the daemon (IPC socket, `sendRequest(method, params, cb)` + topic subscriptions).
   `Common/` holds singletons (`Theme`, `SettingsData`, `I18n`), `Modules/` the window and
   views, `Modals/` dialogs and settings pages, `Widgets/` app widgets.
-- **`quickshell/DankCommon`** is a symlink into the `dank-qml-common` submodule (still
-  AvengeMedia's repo). Do not edit it here; changes belong in that repo.
+- **`quickshell/DCommon`** is a symlink into the `dux-qml-common` submodule (still
+  upstream's repo, duxlabs-dev/dux-qml-common). Do not edit it here; changes belong in that repo.
 
 Data flow for a feature: QML → `DankCalService.sendRequest` → `internal/ipc` handler →
 provider (writes) / `repo` (reads) → `deps.Bus.Publish(topic)` → UI refreshes via its
@@ -97,8 +97,8 @@ make migrate name=x   # new DB migration from schema diff
   services), `repo.OpenMemory`, `t.TempDir()`, `humatest`, table-driven for pure functions.
 - QML: every user-facing string is `I18n.tr("text", "translator context")`, reusing existing
   terms in `translations/en.json` where possible. No `console.*` — use
-  `readonly property var log: Log.scoped("Name")`. Use DankCommon wrappers (`DankListView`,
-  `DankFlickable`, `DankIcon`, `StyledText`, …) instead of raw Qt equivalents.
+  `readonly property var log: Log.scoped("Name")`. Use DCommon wrappers (`DListView`,
+  `DFlickable`, `DIcon`, `StyledText`, …) instead of raw Qt equivalents.
 - UI settings the daemon also reads need matching defaults in `SettingsData.qml` and
   `core/internal/settings/settings.go`.
 - A new DB migration is a one-way door for the user's real database — call it out and get
@@ -115,6 +115,6 @@ make migrate name=x   # new DB migration from schema diff
 - `internal/ipc` handlers name their request `req`, shadowing the `req()` ParamSpec helper.
 - Comment in `core/internal/settings/settings.go` points at
   `quickshell/Services/SettingsData.qml`; the real file is `quickshell/Common/SettingsData.qml`.
-- `golangci-lint` (CI uses v2.11) isn't installed locally; from `core/`, run
-  `GOTOOLCHAIN=go1.26.4 go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.11.0 run`
-  (pin matches `go.mod` — system Go 1.27 breaks lint v2.11).
+- `golangci-lint` (CI uses v2.14) isn't installed locally; from `core/`, run
+  `go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.14.0 run`
+  (pin matches CI).

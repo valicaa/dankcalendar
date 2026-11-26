@@ -19,7 +19,7 @@ for a narrow lookup is fine).
 3. Check, in order: acceptance criteria met and nothing beyond non-goals; correctness and edge
    cases; callers of each changed function (`.claude/tools/graph-calls.py <file>`, plus grep for
    interface implementations); CLAUDE.md rules (generated code, `CGO_ENABLED=0`, `I18n.tr`,
-   `Log.scoped`, DankCommon wrappers, migration approval, commit subjects); tests cover the
+   `Log.scoped`, DCommon wrappers, migration approval, commit subjects); tests cover the
    change; fitness for an upstream PR.
 4. Do not edit anything. Run read-only commands only (`git diff`, `git grep`, `make test` is fine).
 5. Report each finding as `severity (blocker|major|minor) — path:line — problem — fix`. End

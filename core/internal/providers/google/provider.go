@@ -15,24 +15,26 @@ import (
 	"google.golang.org/api/option"
 	gtasks "google.golang.org/api/tasks/v1"
 
-	cal "github.com/AvengeMedia/dankcalendar/core/internal/calendar"
-	"github.com/AvengeMedia/dankcalendar/core/internal/oauth"
-	"github.com/AvengeMedia/dankcalendar/core/internal/providers/oauthbase"
-	"github.com/AvengeMedia/dankcalendar/core/internal/tzcache"
-	"github.com/AvengeMedia/dankgo/log"
+	cal "github.com/duxlabs-dev/dux-calendar/core/internal/calendar"
+	"github.com/duxlabs-dev/dux-calendar/core/internal/oauth"
+	"github.com/duxlabs-dev/dux-calendar/core/internal/providers/oauthbase"
+	"github.com/duxlabs-dev/dux-calendar/core/internal/tzcache"
+	"github.com/duxlabs-dev/dux-go/log"
 )
 
 const maxPageSize = 2500
 
 type Provider struct {
-	account   cal.Account
-	svc       *calendar.Service
-	tasksSvc  *gtasks.Service
-	notices   []string
-	quotaOnce sync.Once
-	quota     *quotaGate
-	retryMu   sync.Mutex
-	retryWait time.Duration
+	account        cal.Account
+	svc            *calendar.Service
+	tasksSvc       *gtasks.Service
+	notices        []string
+	quotaOnce      sync.Once
+	quota          *quotaGate
+	tasksQuotaOnce sync.Once
+	tasksQuota     *quotaGate
+	retryMu        sync.Mutex
+	retryWait      time.Duration
 }
 
 func (p *Provider) Notices() []string { return p.notices }
@@ -63,6 +65,8 @@ func (p *Provider) Account() cal.Account  { return p.account }
 // Google APIs. Either may be disabled in the user's Cloud project, so a
 // "service disabled" failure on one degrades to a soft notice while the other
 // still syncs; only when both are unreachable does the account fail outright.
+// Tasks is metered and served separately, so any non-auth Tasks failure skips
+// task lists for the cycle instead of stopping events (#138).
 func (p *Provider) ListCalendars(ctx context.Context) ([]cal.Calendar, error) {
 	p.notices = nil
 
@@ -78,15 +82,18 @@ func (p *Provider) ListCalendars(ctx context.Context) ([]cal.Calendar, error) {
 		return taskLists, nil
 	case calErr != nil:
 		return nil, fmt.Errorf("list google calendars: %w", classifyAuthErr(calErr))
-	case taskErr != nil && isOptionalServiceUnavailable(taskErr):
+	case taskErr == nil:
+		return append(cals, taskLists...), nil
+	case isOptionalServiceUnavailable(taskErr):
 		p.notices = append(p.notices, cal.NoticeTasksUnavailable)
 		log.Warnf("account %s: Google Tasks unavailable, syncing calendars only: %v", p.account.ID, taskErr)
 		return cals, nil
-	case taskErr != nil:
-		return nil, fmt.Errorf("list google task lists: %w", classifyAuthErr(taskErr))
+	case errors.Is(taskErr, cal.ErrReauthRequired):
+		return nil, taskErr
 	}
 
-	return append(cals, taskLists...), nil
+	log.Warnf("account %s: Google Tasks failed, syncing calendars only: %v", p.account.ID, taskErr)
+	return cals, nil
 }
 
 func (p *Provider) listEventCalendars(ctx context.Context) ([]cal.Calendar, error) {
@@ -344,11 +351,7 @@ func (p *Provider) RespondToEvent(ctx context.Context, c cal.Calendar, ev *cal.E
 		return nil, fmt.Errorf("respond google event: %q is not an attendee", self)
 	}
 
-	remoteID := ev.RemoteID
-	if !ev.OriginalStart.IsZero() && ev.RecurringID != "" {
-		remoteID = googleInstanceID(ev.RemoteID, ev.OriginalStart, ev.AllDay)
-	}
-
+	remoteID := googleRespondTargetID(ev)
 	updated, err := googleCall(ctx, p, false, func() (*calendar.Event, error) {
 		return p.svc.Events.Patch(c.RemoteID, remoteID, &calendar.Event{Attendees: attendees}).Context(ctx).Do()
 	})
@@ -356,6 +359,15 @@ func (p *Provider) RespondToEvent(ctx context.Context, c cal.Calendar, ev *cal.E
 		return nil, fmt.Errorf("respond google event: %w", classifyAuthErr(err))
 	}
 	return fromGoogleEvent(c, updated), nil
+}
+
+// A synced exception row already carries its instance id as RemoteID; only a
+// reply synthesized from the master (RemoteID == RecurringID) needs one built.
+func googleRespondTargetID(ev *cal.Event) string {
+	if ev.OriginalStart.IsZero() || ev.RecurringID == "" || ev.RemoteID != ev.RecurringID {
+		return ev.RemoteID
+	}
+	return googleInstanceID(ev.RemoteID, ev.OriginalStart, ev.AllDay)
 }
 
 // googleInstanceID addresses one occurrence of a recurring event: the master id

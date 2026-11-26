@@ -3,7 +3,7 @@ import Quickshell
 import qs.Common
 import qs.Services
 import qs.Widgets
-import qs.DankCommon.Widgets
+import qs.DCommon.Widgets
 import "../../Common/EventUtils.js" as EventUtils
 
 Item {
@@ -130,12 +130,12 @@ Item {
         }
     }
 
-    DankTooltipV2 {
+    DTooltipV2 {
         id: chipTooltip
     }
 
     function eventTooltip(ev) {
-        const suffix = (ev.location ? " · " + ev.location : "") + (ev.calendar ? " · " + ev.calendar : "");
+        const suffix = (ev.location ? " · " + ev.location : "") + (ev.calendar ? " · " + DankCalService.calendarNames(ev) : "");
         if (ev.allDay)
             return ev.title + " · " + I18n.tr("All day", "all-day marker in event tooltip") + suffix;
         return ev.title + " · " + SettingsData.formatTime(ev.start) + " – " + SettingsData.formatTime(ev.end) + suffix;
@@ -216,7 +216,7 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             spacing: Theme.spacingS
 
-            DankIcon {
+            DIcon {
                 name: "warning"
                 size: Theme.iconSizeSmall
                 color: Theme.warning
@@ -231,7 +231,7 @@ Item {
             }
         }
 
-        DankButton {
+        DButton {
             anchors.right: parent.right
             anchors.rightMargin: Theme.spacingM
             anchors.verticalCenter: parent.verticalCenter
@@ -332,6 +332,10 @@ Item {
                         dimmed: PeopleService.active && stripeColors.length === 0
                         hovered: allDayMouseArea.containsMouse
 
+                        MergedEventDots {
+                            event: ownAllDayDayChip.modelData
+                        }
+
                         StyledText {
                             anchors.left: parent.left
                             anchors.right: parent.right
@@ -410,7 +414,7 @@ Item {
         height: root.hiddenInfo.before ? 16 : 0
         visible: root.hiddenInfo.before
 
-        DankIcon {
+        DIcon {
             anchors.centerIn: parent
             name: "keyboard_arrow_up"
             size: Theme.iconSizeSmall
@@ -418,7 +422,7 @@ Item {
         }
     }
 
-    DankFlickable {
+    DFlickable {
         id: dayFlickable
         anchors.top: hiddenBeforeStrip.bottom
         anchors.left: parent.left
@@ -499,7 +503,7 @@ Item {
                     onCreateRequested: (start, end) => root.createTimedRequested(start, end)
                 }
 
-                DankIcon {
+                DIcon {
                     visible: root.hiddenInfo.after
                     anchors.horizontalCenter: parent.horizontalCenter
                     y: root.hourCount * root.hourHeight + 2
@@ -561,6 +565,10 @@ Item {
                         selected: isSelected
                         dimmed: PeopleService.active && stripeColors.length === 0
                         hovered: timedMouseArea.containsMouse
+
+                        MergedEventDots {
+                            event: ownDayTimedChip.modelData
+                        }
 
                         AttendeeStripes {
                             visible: ownDayTimedChip.stripeColors.length > 1

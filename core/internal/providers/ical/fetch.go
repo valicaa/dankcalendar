@@ -16,8 +16,8 @@ import (
 
 	ical "github.com/emersion/go-ical"
 
-	"github.com/AvengeMedia/dankcalendar/core/internal/providers/httpauth"
-	"github.com/AvengeMedia/dankcalendar/core/internal/providers/icalconv"
+	"github.com/duxlabs-dev/dux-calendar/core/internal/providers/httpauth"
+	"github.com/duxlabs-dev/dux-calendar/core/internal/providers/icalconv"
 )
 
 const (
@@ -55,11 +55,11 @@ func normalizeURL(raw string) (string, error) {
 	}
 
 	switch strings.ToLower(u.Scheme) {
-	case "webcal":
+	case "webcal", "webcals":
 		u.Scheme = "https"
 	case "http", "https":
 	default:
-		return "", fmt.Errorf("unsupported url scheme %q (expected http, https or webcal)", u.Scheme)
+		return "", fmt.Errorf("unsupported url scheme %q (expected http, https, webcal or webcals)", u.Scheme)
 	}
 	if u.Host == "" {
 		return "", errors.New("url has no host")

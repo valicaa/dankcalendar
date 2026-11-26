@@ -4,7 +4,7 @@ import qs.Common
 import qs.Modals
 import qs.Services
 import qs.Widgets
-import qs.DankCommon.Widgets
+import qs.DCommon.Widgets
 
 Item {
     id: root
@@ -344,7 +344,7 @@ Item {
         deleteConfirmLoader.active = true;
         deleteConfirmLoader.item.show({
             title: I18n.tr("Delete \"%1\"?", "confirm dialog title for deleting a calendar, %1 is the calendar name").arg(cal.name),
-            message: I18n.tr("Removes this calendar and its events from Dank Calendar. If the provider still offers it, it will come back on the next sync.", "confirm dialog body for deleting a calendar"),
+            message: I18n.tr("Removes this calendar and its events from Dux Calendar. If the provider still offers it, it will come back on the next sync.", "confirm dialog body for deleting a calendar"),
             confirmText: I18n.tr("Delete", "confirm button for deleting a calendar"),
             danger: true
         });
@@ -355,7 +355,7 @@ Item {
         accountRemoveLoader.active = true;
         accountRemoveLoader.item.show({
             title: I18n.tr("Remove \"%1\"?", "confirm dialog title for removing an account, %1 is the account label").arg(DankCalService.accountLabel(acc)),
-            message: I18n.tr("Removes this account and its calendars and events from Dank Calendar. Nothing is deleted from the provider.", "confirm dialog body for removing an account"),
+            message: I18n.tr("Removes this account and its calendars and events from Dux Calendar. Nothing is deleted from the provider.", "confirm dialog body for removing an account"),
             confirmText: I18n.tr("Remove", "confirm button for removing an account"),
             danger: true
         });
@@ -468,7 +468,7 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             spacing: Theme.spacingXS
 
-            DankIcon {
+            DIcon {
                 name: "expand_more"
                 size: Theme.iconSizeSmall
                 color: Theme.surfaceVariantText
@@ -498,11 +498,11 @@ Item {
         }
     }
 
-    DankTooltipV2 {
+    DTooltipV2 {
         id: calTooltip
     }
 
-    DankTooltipV2 {
+    DTooltipV2 {
         id: authTooltip
     }
 
@@ -511,16 +511,15 @@ Item {
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.margins: Theme.spacingM
+        anchors.margins: Theme.windowInset
+        anchors.topMargin: 0
         spacing: Theme.spacingL
 
-        DankButton {
+        DButton {
             width: parent.width
             text: I18n.tr("Create event", "sidebar button to create a new event")
             iconName: "add"
             buttonHeight: Theme.buttonHeightS
-            backgroundColor: Theme.primary
-            textColor: Theme.primaryText
             focusPolicy: Qt.NoFocus
             onClicked: root.createEventRequested()
         }
@@ -553,7 +552,7 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: Theme.spacingM
 
-                        DankIcon {
+                        DIcon {
                             name: viewRow.modelData.icon
                             size: Theme.iconSizeMedium
                             color: viewRow.active ? viewRow.contentColor : Theme.surfaceVariantText
@@ -578,7 +577,7 @@ Item {
         }
     }
 
-    DankFlickable {
+    DFlickable {
         id: scroll
         anchors.top: topSection.bottom
         anchors.topMargin: Theme.spacingL
@@ -613,7 +612,7 @@ Item {
                     spacing: Theme.spacingS
                     visible: root.peopleExpanded
 
-                    DankSearchField {
+                    DSearchField {
                         id: peopleSearchField
                         width: parent.width
                         height: Theme.buttonHeightS
@@ -674,7 +673,7 @@ Item {
                             text: I18n.tr("Reconnect %1 to see availability", "sidebar message shown when a colleague lookup needs the account reconnected").arg(parent.reconnectLabel)
                         }
 
-                        DankButton {
+                        DButton {
                             text: I18n.tr("Reconnect", "sidebar button that reconnects the account used for a colleague lookup")
                             buttonHeight: Theme.buttonHeightXS
                             focusPolicy: Qt.NoFocus
@@ -767,7 +766,7 @@ Item {
                                     }
                                 }
 
-                                DankIcon {
+                                DIcon {
                                     id: authWarning
                                     visible: !group.authorized
                                     anchors.right: accMoreButton.left
@@ -795,7 +794,7 @@ Item {
                                     }
                                 }
 
-                                DankActionButton {
+                                DActionButton {
                                     id: accMoreButton
                                     readonly property bool menuOpenHere: accountMenu.opened && (root.actionAccount ? root.actionAccount.id : "") === group.modelData.id
                                     anchors.right: parent.right
@@ -826,7 +825,7 @@ Item {
                                     anchors.verticalCenter: parent.verticalCenter
                                     spacing: Theme.spacingXS
 
-                                    DankIcon {
+                                    DIcon {
                                         name: "expand_more"
                                         size: Theme.iconSizeSmall
                                         color: Theme.surfaceVariantText
@@ -841,7 +840,7 @@ Item {
                                         }
                                     }
 
-                                    DankIcon {
+                                    DIcon {
                                         name: root.providerIcon(group.flavor)
                                         size: Theme.iconSizeSmall
                                         color: group.authorized ? Theme.surfaceVariantText : Theme.error
@@ -951,7 +950,7 @@ Item {
                                         }
                                     }
 
-                                    DankActionButton {
+                                    DActionButton {
                                         id: moreButton
                                         readonly property bool menuOpenHere: calendarMenu.opened && (root.actionCalendar ? root.actionCalendar.id : "") === calRow.modelData.id
                                         anchors.right: parent.right
@@ -978,13 +977,12 @@ Item {
                         }
                     }
 
-                    DankButton {
+                    DButton {
                         width: parent.width
                         text: I18n.tr("Add account", "sidebar button to add a provider account")
                         iconName: "add"
                         buttonHeight: Theme.buttonHeightXS
-                        backgroundColor: "transparent"
-                        textColor: Theme.primary
+                        variant: "text"
                         focusPolicy: Qt.NoFocus
                         onClicked: root.addAccountRequested()
                     }
@@ -1113,14 +1111,13 @@ Item {
                     }
                 }
 
-                DankButton {
+                DButton {
                     visible: root.tasksExpanded && DankCalService.taskListCalendars().length > 0
                     width: parent.width
                     text: I18n.tr("Add task", "sidebar button to add a task")
                     iconName: "add"
                     buttonHeight: Theme.buttonHeightXS
-                    backgroundColor: "transparent"
-                    textColor: Theme.primary
+                    variant: "text"
                     focusPolicy: Qt.NoFocus
                     onClicked: root.createTaskRequested()
                 }

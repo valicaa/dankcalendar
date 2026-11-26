@@ -22,7 +22,7 @@ Worked example: `system.autostart.get/set`.
 2. **Handler.** Add a `case` to the group's switch: `system.go`, `handlers.go` (calendars/events),
    `tasks.go`, `accounts.go`, `ui.go`, `reminders.go` or `people.go`. Read params with `ParamString`,
    `ParamInt`, `ParamBool` or `ParamStringSlice` (from `models.go`). Reply with
-   `Respond(w, req.ID, map[string]any{…})` or `RespondError(w, req.ID, msg)` and `return`
+   `w.Respond(req.ID, map[string]any{…})` or `w.RespondError(req.ID, msg)` and `return`
    early. Validate required params explicitly, the way `system.openUri` checks `uri`. A failed
    provider write replies with `respondWriteError(w, req.ID, err)` instead, which adds an
    `errorCode` (`write_errors.go`) the UI turns into a friendly message.
@@ -87,12 +87,12 @@ In `quickshell/Modals/`:
 - Views live in `quickshell/Modules/views/` and are instantiated in `Modules/CalendarContent.qml`.
 - Modals live in `quickshell/Modals/` and are `Loader`s in `Modules/CalendarWindow.qml` (~line 895+),
   opened with `xLoader.active = true; xLoader.item.show()`.
-- Reusable app widgets go in `quickshell/Widgets/`. Check DankCommon first
-  (`dank-qml-common/DankCommon/Widgets/`: `DankIcon`, `DankButton`, `DankToggle`,
-  `DankDropdown`, `DankListView`, `DankFlickable`, `StyledText`, `StyledRect`, …). Never add raw
-  `ListView`/`Flickable`/`ScrollView` where a Dank* wrapper exists.
+- Reusable app widgets go in `quickshell/Widgets/`. Check DCommon first
+  (`dux-qml-common/DCommon/Widgets/`: `DIcon`, `DButton`, `DToggle`,
+  `DDropdown`, `DListView`, `DFlickable`, `StyledText`, `StyledRect`, …). Never add raw
+  `ListView`/`Flickable`/`ScrollView` where a D* wrapper exists.
 - Imports: `qs.Common`, `qs.Services`, `qs.Widgets`, `qs.Modals`, `qs.Modules`,
-  `qs.DankCommon.Widgets`.
+  `qs.DCommon.Widgets`.
 - Styling: take colours, spacing, radii and fonts from `Theme`, never hard-coded values. Animations go through `Anims`.
 - Logging: `readonly property var log: Log.scoped("ComponentName")`. `console.*` is rejected by
   pre-commit.

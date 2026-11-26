@@ -17,10 +17,10 @@ import (
 	"github.com/emersion/go-webdav/caldav"
 	"github.com/google/uuid"
 
-	cal "github.com/AvengeMedia/dankcalendar/core/internal/calendar"
-	"github.com/AvengeMedia/dankcalendar/core/internal/providers/httpauth"
-	"github.com/AvengeMedia/dankcalendar/core/internal/providers/icalconv"
-	"github.com/AvengeMedia/dankgo/log"
+	cal "github.com/duxlabs-dev/dux-calendar/core/internal/calendar"
+	"github.com/duxlabs-dev/dux-calendar/core/internal/providers/httpauth"
+	"github.com/duxlabs-dev/dux-calendar/core/internal/providers/icalconv"
+	"github.com/duxlabs-dev/dux-go/log"
 )
 
 type Provider struct {
@@ -113,9 +113,10 @@ func discoveryCandidates(endpoint *url.URL) []*url.URL {
 }
 
 // newHTTPClient returns the HTTP client the caldav client is built on,
-// wrapped so redirects keep their method and non-compliant ETags get repaired
-// before go-webdav parses them. Authentication sits innermost so every
-// redirect hop signs its own URI; Baïkal (#98) only accepts Digest.
+// wrapped so redirects keep their method and non-compliant ETags and
+// getlastmodified dates get repaired before go-webdav parses them.
+// Authentication sits innermost so every redirect hop signs its own URI;
+// Baïkal (#98) only accepts Digest.
 // Servers with self-signed certificates opt out of TLS verification via the
 // SettingInsecureSkipVerify account setting.
 func newHTTPClient(account cal.Account, username, password string) *http.Client {
@@ -127,7 +128,7 @@ func newHTTPClient(account cal.Account, username, password string) *http.Client 
 	}
 	auth := &httpauth.Transport{Base: base, Username: username, Password: password}
 	return &http.Client{
-		Transport: etagNormalizingTransport{base: redirectFollowingTransport{base: auth}},
+		Transport: normalizingTransport{base: redirectFollowingTransport{base: auth}},
 		CheckRedirect: func(*http.Request, []*http.Request) error {
 			return http.ErrUseLastResponse
 		},
@@ -297,7 +298,7 @@ func (p *Provider) CreateEvent(ctx context.Context, c cal.Calendar, ev *cal.Even
 	}
 
 	path := objectPath(c.RemoteID, uid)
-	obj, err := p.client.PutCalendarObject(ctx, path, icalconv.CalendarFromEvent(ev, uid))
+	etag, err := p.putObject(ctx, path, icalconv.CalendarFromEvent(ev, uid))
 	if err != nil {
 		return nil, fmt.Errorf("put caldav object %q: %w", path, err)
 	}
@@ -305,7 +306,7 @@ func (p *Provider) CreateEvent(ctx context.Context, c cal.Calendar, ev *cal.Even
 	out := *ev
 	out.UID = uid
 	out.RemoteID = path
-	out.Etag = obj.ETag
+	out.Etag = etag
 	return &out, nil
 }
 
@@ -318,13 +319,13 @@ func (p *Provider) UpdateEvent(ctx context.Context, c cal.Calendar, ev *cal.Even
 		return nil, errors.New("caldav update requires remote id")
 	}
 
-	obj, err := p.client.PutCalendarObject(ctx, ev.RemoteID, icalconv.CalendarFromEvent(ev, ev.UID))
+	etag, err := p.putObject(ctx, ev.RemoteID, icalconv.CalendarFromEvent(ev, ev.UID))
 	if err != nil {
 		return nil, fmt.Errorf("put caldav object %q: %w", ev.RemoteID, err)
 	}
 
 	out := *ev
-	out.Etag = obj.ETag
+	out.Etag = etag
 	return &out, nil
 }
 
@@ -337,23 +338,23 @@ func (p *Provider) RespondToEvent(ctx context.Context, c cal.Calendar, ev *cal.E
 		return nil, errors.New("caldav respond requires remote id")
 	}
 
-	obj, err := p.client.GetCalendarObject(ctx, ev.RemoteID)
+	doc, err := p.getObject(ctx, ev.RemoteID)
 	if err != nil {
 		return nil, fmt.Errorf("get caldav object %q: %w", ev.RemoteID, err)
 	}
 
-	rid, err := icalconv.ApplyParticipation(obj.Data, ev, p.account.SelfEmail(), response)
+	rid, err := icalconv.ApplyParticipation(doc, ev, p.account.SelfEmail(), response)
 	if err != nil {
 		return nil, err
 	}
 
-	put, err := p.client.PutCalendarObject(ctx, ev.RemoteID, obj.Data)
+	etag, err := p.putObject(ctx, ev.RemoteID, doc)
 	if err != nil {
 		return nil, fmt.Errorf("put caldav object %q: %w", ev.RemoteID, err)
 	}
 
 	out := *ev
-	out.Etag = put.ETag
+	out.Etag = etag
 	if rid != "" {
 		out.UID = out.RecurringID + "/" + rid
 	}
@@ -364,7 +365,7 @@ func (p *Provider) DeleteEvent(ctx context.Context, c cal.Calendar, ev cal.Event
 	if ev.RemoteID == "" {
 		return errors.New("caldav delete requires remote id")
 	}
-	if err := p.client.RemoveAll(ctx, ev.RemoteID); err != nil {
+	if err := p.deleteObject(ctx, ev.RemoteID); err != nil {
 		return fmt.Errorf("delete caldav object %q: %w", ev.RemoteID, err)
 	}
 	return nil
@@ -377,7 +378,7 @@ func (p *Provider) CreateTask(ctx context.Context, c cal.Calendar, t *cal.Task) 
 	}
 
 	path := objectPath(c.RemoteID, uid)
-	obj, err := p.client.PutCalendarObject(ctx, path, icalconv.CalendarFromTask(t, uid))
+	etag, err := p.putObject(ctx, path, icalconv.CalendarFromTask(t, uid))
 	if err != nil {
 		return nil, fmt.Errorf("put caldav task %q: %w", path, err)
 	}
@@ -385,7 +386,7 @@ func (p *Provider) CreateTask(ctx context.Context, c cal.Calendar, t *cal.Task) 
 	out := *t
 	out.UID = uid
 	out.RemoteID = path
-	out.Etag = obj.ETag
+	out.Etag = etag
 	return &out, nil
 }
 
@@ -394,13 +395,13 @@ func (p *Provider) UpdateTask(ctx context.Context, c cal.Calendar, t *cal.Task) 
 		return nil, errors.New("caldav update requires remote id")
 	}
 
-	obj, err := p.client.PutCalendarObject(ctx, t.RemoteID, icalconv.CalendarFromTask(t, t.UID))
+	etag, err := p.putObject(ctx, t.RemoteID, icalconv.CalendarFromTask(t, t.UID))
 	if err != nil {
 		return nil, fmt.Errorf("put caldav task %q: %w", t.RemoteID, err)
 	}
 
 	out := *t
-	out.Etag = obj.ETag
+	out.Etag = etag
 	return &out, nil
 }
 
@@ -408,7 +409,7 @@ func (p *Provider) DeleteTask(ctx context.Context, c cal.Calendar, t cal.Task) e
 	if t.RemoteID == "" {
 		return errors.New("caldav delete requires remote id")
 	}
-	if err := p.client.RemoveAll(ctx, t.RemoteID); err != nil {
+	if err := p.deleteObject(ctx, t.RemoteID); err != nil {
 		return fmt.Errorf("delete caldav task %q: %w", t.RemoteID, err)
 	}
 	return nil
@@ -428,9 +429,19 @@ func (p *Provider) queryComponents(ctx context.Context, calendarPath, comp strin
 		CompFilter:  caldav.CompFilter{Name: ical.CompCalendar, Comps: []caldav.CompFilter{compFilter}},
 	}
 
-	objects, queryErr := p.client.QueryCalendar(ctx, calendarPath, query)
-	if queryErr == nil {
-		return objects, nil
+	// A query is time-bounded when either end of the range is set; a full
+	// sync passes neither. Some servers answer a calendar-query without a
+	// time-range with only the recurring masters, so an unbounded query
+	// skips it and enumerates the collection instead.
+	timeBounded := !start.IsZero() || !end.IsZero()
+
+	var queryErr error
+	if timeBounded {
+		objects, err := p.client.QueryCalendar(ctx, calendarPath, query)
+		if err == nil {
+			return objects, nil
+		}
+		queryErr = err
 	}
 
 	// Some servers (notably iCloud) refuse to return calendar-data from a
@@ -456,13 +467,9 @@ func (p *Provider) multiGetAll(ctx context.Context, calendarPath string) ([]cald
 		return nil, nil
 	}
 
-	req := caldav.CalendarCompRequest{Name: ical.CompCalendar, AllProps: true, AllComps: true}
 	var out []caldav.CalendarObject
 	for chunk := range slices.Chunk(paths, 50) {
-		objs, err := p.client.MultiGetCalendar(ctx, calendarPath, &caldav.CalendarMultiGet{
-			Paths:       chunk,
-			CompRequest: req,
-		})
+		objs, err := p.multiGet(ctx, calendarPath, chunk)
 		switch {
 		case err == nil:
 		case len(objs) == 0:
@@ -475,7 +482,7 @@ func (p *Provider) multiGetAll(ctx context.Context, calendarPath string) ([]cald
 	return out, nil
 }
 
-// go-webdav returns the objects it could decode alongside a joined error for
+// multiGet returns the objects it could decode alongside a joined error for
 // responses the server refused (iCloud answers 404 for stale invites, #108).
 func (p *Provider) noticeItemsSkipped(calendarPath string, err error) {
 	log.Warnf("caldav: skipped unreadable objects in %q: %v", calendarPath, err)
@@ -486,7 +493,8 @@ func (p *Provider) noticeItemsSkipped(calendarPath string, err error) {
 }
 
 // Raw PROPFIND asking only for hrefs: go-webdav's higher-level helpers error
-// on iCloud's 404 propstats for props we don't even need.
+// on iCloud's 404 propstats for props we don't even need. Hrefs stay in the
+// server's own encoding, see objects.go.
 const listObjectsBody = `<?xml version="1.0" encoding="UTF-8"?>
 <d:propfind xmlns:d="DAV:"><d:prop><d:getetag/></d:prop></d:propfind>`
 
@@ -520,29 +528,13 @@ func (p *Provider) listObjectPaths(ctx context.Context, calendarPath string) ([]
 	normalizedCal := strings.TrimSuffix(calendarPath, "/")
 	paths := make([]string, 0, len(ms.Responses))
 	for _, r := range ms.Responses {
-		href := strings.TrimSpace(r.Href)
-		if href == "" || strings.HasSuffix(href, "/") {
+		u, err := url.Parse(strings.TrimSpace(r.Href))
+		if err != nil || u.Path == "" || strings.HasSuffix(u.Path, "/") || strings.TrimSuffix(u.Path, "/") == normalizedCal {
 			continue
 		}
-		if u, err := url.Parse(href); err == nil {
-			href = u.Path
-		}
-		if unescaped, err := url.PathUnescape(href); err == nil {
-			href = unescaped
-		}
-		if strings.TrimSuffix(href, "/") == normalizedCal {
-			continue
-		}
-		paths = append(paths, href)
+		paths = append(paths, u.EscapedPath())
 	}
 	return paths, nil
-}
-
-func objectPath(calendarPath, uid string) string {
-	if !strings.HasSuffix(calendarPath, "/") {
-		calendarPath += "/"
-	}
-	return calendarPath + uid + ".ics"
 }
 
 func (p *Provider) Close() error { return nil }

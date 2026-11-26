@@ -1,6 +1,6 @@
 import QtQuick
 import qs.Common
-import qs.DankCommon.Widgets
+import qs.DCommon.Widgets
 
 // A colleague's busy time on a time grid: a tint in their colour drawn
 // behind every chip. It takes no clicks; hover over its uncovered part only
