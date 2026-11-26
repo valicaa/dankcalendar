@@ -55,7 +55,8 @@ Singleton {
     // "auto" | "light" | "dark"
     property alias themeMode: adapter.themeMode
     // "auto" follows DMS dynamic colors when available, falling back to the
-    // chosen preset; "preset" forces a bundled palette; "custom" loads a JSON file
+    // chosen preset; "preset" forces a bundled palette; "custom" loads a JSON file;
+    // "matugen" loads matugen-theme.json from configDir.
     property alias colorSource: adapter.colorSource
     property alias presetTheme: adapter.presetTheme
     property alias customThemeFile: adapter.customThemeFile
@@ -67,12 +68,25 @@ Singleton {
     // 0 smooth, 1 balanced, 2 playful
     property alias springBounce: adapter.springBounce
     property alias enableRippleEffects: adapter.enableRippleEffects
+    property alias fontSource: adapter.fontSource
+    property alias fontFamily: adapter.fontFamily
+    property alias monoFontFamily: adapter.monoFontFamily
+    property alias displayFontFamily: adapter.displayFontFamily
     property alias fontWeight: adapter.fontWeight
     property alias fontScale: adapter.fontScale
+    property alias uiScale: adapter.uiScale
+    readonly property real effectiveUiScale: parseFloat(Quickshell.env("QT_SCALE_FACTOR")) || 1
+    // dcal sets DANKCAL_UI_SCALE only when uiScale is in control
+    readonly property bool uiScaleFromEnv: !!Quickshell.env("QT_SCALE_FACTOR") && !Quickshell.env("DANKCAL_UI_SCALE")
     property alias focusRingEnabled: adapter.focusRingEnabled
     property alias focusRingWidth: adapter.focusRingWidth
     // "primary" | "secondary" | "outline" | "surfaceText"
     property alias focusRingColor: adapter.focusRingColor
+    property alias windowTitleBars: adapter.windowTitleBars
+    property alias floatingWindowTransparency: adapter.floatingWindowTransparency
+    property alias floatingWindowForegroundLayers: adapter.floatingWindowForegroundLayers
+    property alias floatingWindowForegroundTransparency: adapter.floatingWindowForegroundTransparency
+    property alias blurEnabled: adapter.blurEnabled
     // "" follows the system language, otherwise a bundled translation code such as "de" or "zh_CN"
     property alias language: adapter.language
     // "" follows the interface language for date and time names, otherwise a locale code
@@ -88,6 +102,7 @@ Singleton {
     property alias showTasks: adapter.showTasks
     property alias monthEventTitleLines: adapter.monthEventTitleLines
     property alias monthShowAllEvents: adapter.monthShowAllEvents
+    property alias mergeDuplicateEvents: adapter.mergeDuplicateEvents
     property alias weekEventTitleLines: adapter.weekEventTitleLines
     property alias defaultEventDurationMinutes: adapter.defaultEventDurationMinutes
     // -1 = no reminder
@@ -240,11 +255,21 @@ Singleton {
             property bool reduceMotion: false
             property int springBounce: 1
             property bool enableRippleEffects: true
+            property string fontSource: "auto"
+            property string fontFamily: ""
+            property string monoFontFamily: ""
+            property string displayFontFamily: ""
             property int fontWeight: 400
             property real fontScale: 1.0
+            property real uiScale: 1.0
             property bool focusRingEnabled: true
             property real focusRingWidth: 1.5
             property string focusRingColor: "primary"
+            property bool windowTitleBars: true
+            property real floatingWindowTransparency: 1.0
+            property bool floatingWindowForegroundLayers: true
+            property real floatingWindowForegroundTransparency: 1.0
+            property bool blurEnabled: false
             property string language: ""
             property string timeLocale: ""
             property int firstDayOfWeek: -1
@@ -257,6 +282,7 @@ Singleton {
             property bool showTasks: true
             property int monthEventTitleLines: 1
             property bool monthShowAllEvents: false
+            property bool mergeDuplicateEvents: false
             property int weekEventTitleLines: 1
             property int defaultEventDurationMinutes: 30
             property int defaultReminderMinutes: 10

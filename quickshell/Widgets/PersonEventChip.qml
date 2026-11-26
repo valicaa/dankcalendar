@@ -1,6 +1,6 @@
 import QtQuick
 import qs.Common
-import qs.DankCommon.Widgets
+import qs.DCommon.Widgets
 
 // A colleague-schedule overlay item (PeopleService). Read-only: it swallows
 // presses so nothing under it is clicked or created, and only reports hover.

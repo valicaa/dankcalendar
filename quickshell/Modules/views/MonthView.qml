@@ -3,7 +3,8 @@ import Quickshell
 import qs.Common
 import qs.Services
 import qs.Widgets
-import qs.DankCommon.Widgets
+import qs.DCommon.Widgets
+import "../../DCommon/Common/WheelInput.js" as WheelInput
 
 Item {
     id: root
@@ -106,7 +107,7 @@ Item {
                 return;
 
             const delta = event.angleDelta.y;
-            const isTouchpad = event.pixelDelta && event.pixelDelta.y !== 0;
+            const isTouchpad = WheelInput.isTouchpad(event);
 
             if (isTouchpad) {
                 touchpadAccumulator += delta;
@@ -132,7 +133,7 @@ Item {
         }
     }
 
-    DankTooltipV2 {
+    DTooltipV2 {
         id: chipTooltip
     }
 
@@ -145,8 +146,8 @@ Item {
 
     function eventTooltip(ev) {
         if (ev.allDay)
-            return ev.title + " · " + I18n.tr("All day", "all-day marker in event tooltip") + (ev.calendar ? " · " + ev.calendar : "");
-        return ev.title + " · " + SettingsData.formatTime(ev.start) + " – " + SettingsData.formatTime(ev.end) + (ev.calendar ? " · " + ev.calendar : "");
+            return ev.title + " · " + I18n.tr("All day", "all-day marker in event tooltip") + (ev.calendar ? " · " + DankCalService.calendarNames(ev) : "");
+        return ev.title + " · " + SettingsData.formatTime(ev.start) + " – " + SettingsData.formatTime(ev.end) + (ev.calendar ? " · " + DankCalService.calendarNames(ev) : "");
     }
 
     function overlayEventsFor(day) {
@@ -491,6 +492,10 @@ Item {
                                         selected: !chipDelegate.isOverlay && root.isEventSelected(chipDelegate.ev)
                                         dimmed: !chipDelegate.isOverlay && PeopleService.active && chipDelegate.stripeColors.length === 0
                                         hovered: !chipDelegate.isOverlay && chipMouseArea.containsMouse
+
+                                        MergedEventDots {
+                                            event: chipDelegate.ev
+                                        }
 
                                         Row {
                                             anchors.left: parent.left

@@ -21,7 +21,7 @@ docs-only only if this prints nothing for its range — `master...HEAD` on the b
 git diff --name-only master...HEAD | grep -vE '^(\.claude/|tasks/|CLAUDE\.md$|\.graphifyignore$|\.github/ISSUE_TEMPLATE/|[^/]+\.md$)'
 ```
 
-Any path it prints — code, the `dank-qml-common` submodule, `Makefile`, `scripts/`, `assets/`,
+Any path it prints — code, the `dux-qml-common` submodule, `Makefile`, `scripts/`, `assets/`,
 `flake.nix`, `distro/`, `.github/` outside `ISSUE_TEMPLATE/` — means the full checks in
 sections 1–5. A docs-only change stops here, with no build, dev instance or service stop:
 
@@ -43,7 +43,7 @@ cd core && go mod tidy && git diff --exit-code go.mod go.sum; cd ..
 test -z "$(cd core && gofmt -s -l $(git ls-files '*.go' | grep -v '^ent/'))" || echo "gofmt needed"
 make vet
 make test
-(cd core && GOTOOLCHAIN=go1.26.4 go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.11.0 run)  # pin toolchain: system Go 1.27 export data breaks lint v2.11
+(cd core && go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.14.0 run)
 git diff master...HEAD -- 'quickshell/*.qml' | grep -n '^+.*console\.' && echo "console.* in QML — use Log.scoped"
 git diff --check master...HEAD
 ```
@@ -67,7 +67,7 @@ changed QML, the graph's QML callers are stale until the QML refresh runs, so gr
   on lines you touched as failures; pre-existing noise is fine — say so.
 - `make i18n-extract` then `git status quickshell/translations` — must be clean (i.e. the
   extracted catalog was already committed). Every new visible string must be in `I18n.tr`.
-- No raw `Flickable`/`ListView`/`ScrollView` added where a DankCommon wrapper exists.
+- No raw `Flickable`/`ListView`/`ScrollView` added where a DCommon wrapper exists.
 
 ## 3. Build
 
@@ -90,14 +90,14 @@ lets only one `start` or `stop` run at a time (`stop` waits up to 180s for it). 
 one Bash call from any directory.
 `<checkout>` is the literal absolute path of the checkout under test: the main checkout, or a
 linked worktree `<worktree>` of this repo. This procedure never re-initialises the main
-checkout's submodule. A new worktree has no `dank-qml-common` yet; initialise it from the main
+checkout's submodule. A new worktree has no `dux-qml-common` yet; initialise it from the main
 checkout's clone (local, no network). The first two lines stop unless `<worktree>` is a linked
 worktree of this repo:
 
 ```bash
 c=$(git -C <worktree> rev-parse --path-format=absolute --git-common-dir) && g=$(git -C <worktree> rev-parse --absolute-git-dir) || exit 1
 [ "$c" = /home/nozomi/Documents/code/calendar/.git ] && case "$g" in "$c"/worktrees/?*) true ;; *) false ;; esac || { echo "STOP: <worktree> is not a linked worktree of this repo"; exit 1; }
-timeout 60 git -C <worktree> -c protocol.file.allow=always -c submodule.dank-qml-common.url=/home/nozomi/Documents/code/calendar/dank-qml-common submodule update --init
+timeout 60 git -C <worktree> -c protocol.file.allow=always -c submodule.dank-qml-common.url=/home/nozomi/Documents/code/calendar/dux-qml-common submodule update --init
 ```
 
 If the error names a commit the local clone lacks (`not our ref <sha>`, `did not contain
@@ -105,8 +105,8 @@ If the error names a commit the local clone lacks (`not our ref <sha>`, `did not
 then run the block above again:
 
 ```bash
-[ -f <worktree>/dank-qml-common/.git ] || { echo "STOP: no submodule clone; use the remove-and-recreate block"; exit 1; }
-timeout 120 git -C <worktree>/dank-qml-common fetch https://github.com/AvengeMedia/dank-qml-common.git <sha>
+[ -f <worktree>/dux-qml-common/.git ] || { echo "STOP: no submodule clone; use the remove-and-recreate block"; exit 1; }
+timeout 120 git -C <worktree>/dux-qml-common fetch https://github.com/duxlabs-dev/dux-qml-common.git <sha>
 ```
 
 On any other failure or a timeout, don't repair the submodule by hand (and never

@@ -60,7 +60,7 @@ var Methods = []MethodSpec{
 	{Name: "events.update", Group: "events", Desc: "Update an event", Params: []ParamSpec{req("id", ""), opt("summary", ""), opt("start", "RFC3339"), opt("end", "RFC3339"), opt("description", ""), opt("location", ""), opt("allDay", "true|false"), opt("status", "confirmed|tentative|cancelled"), opt("transparency", "opaque|transparent (busy|free)"), opt("reminders", ""), opt("recurrence", "RRULE list"), opt("occurrenceStart", "RFC3339 start of the edited occurrence; shifts a recurring series by the start delta")}},
 	{Name: "events.delete", Group: "events", Desc: "Delete an event", Params: []ParamSpec{req("id", ""), opt("occurrenceStart", "RFC3339 start of one occurrence; excludes it via EXDATE instead of deleting the series")}},
 	{Name: "events.rsvp", Group: "events", Desc: "Respond to a meeting invitation", Params: []ParamSpec{req("id", ""), req("response", "accept|decline|tentative"), opt("occurrenceStart", "RFC3339; reply for this single occurrence of a recurring event")}},
-	{Name: "events.parseIcs", Group: "events", Desc: "Parse iCalendar data (e.g. an emailed invitation) and match it against synced events", Params: []ParamSpec{req("ics", "iCalendar text")}},
+	{Name: "events.parseIcs", Group: "events", Desc: "Preview calendar events, duplicates and busy overlaps", Params: []ParamSpec{req("ics", "iCalendar or vCalendar text"), opt("calendarId", "destination calendar for duplicate detection")}},
 	{Name: "events.importIcs", Group: "events", Desc: "Import events from iCalendar data into a calendar", Params: []ParamSpec{req("ics", "iCalendar text"), req("calendarId", ""), opt("uids", "only import these event UIDs")}},
 
 	{Name: "tasks.list", Group: "tasks", Desc: "List tasks", Params: []ParamSpec{opt("query", "text filter"), opt("calendarId", "limit to one task list"), opt("includeCompleted", "true|false, default true"), opt("limit", ""), opt("offset", "")}},
@@ -95,6 +95,7 @@ var Methods = []MethodSpec{
 	{Name: "ui.hide", Group: "ui", Desc: "Hide the calendar window"},
 	{Name: "ui.toggle", Group: "ui", Desc: "Toggle the calendar window", Params: []ParamSpec{opt("view", "month|week|day|agenda")}},
 	{Name: "ui.quit", Group: "ui", Desc: "Quit the running daemon"},
+	{Name: "ui.restart", Group: "ui", Desc: "Restart the running daemon and reopen the window"},
 
 	{Name: "people.schedule", Group: "people", Desc: "Read a colleague's schedule for a range (not stored)", Params: []ParamSpec{req("email", ""), req("from", "RFC3339"), req("to", "RFC3339"), opt("accountId", "defaults to a domain match, else the first Google account")}},
 

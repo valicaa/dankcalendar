@@ -1,8 +1,8 @@
 package ipc
 
 import (
-	dankipc "github.com/AvengeMedia/dankgo/ipc"
-	"github.com/AvengeMedia/dankgo/ipc/params"
+	dankipc "github.com/duxlabs-dev/dux-go/ipc"
+	"github.com/duxlabs-dev/dux-go/ipc/params"
 )
 
 const APIVersion = 1
@@ -21,10 +21,6 @@ var (
 	NewConnWriter = dankipc.NewConnWriter
 	Dial          = dankipc.Dial
 )
-
-func Respond[T any](w *ConnWriter, id int, result T) { dankipc.Respond(w, id, result) }
-
-func RespondError(w *ConnWriter, id int, msg string) { dankipc.RespondError(w, id, msg) }
 
 func FindRunningSocket() (string, error) { return dankipc.FindRunningSocket("dankcal") }
 

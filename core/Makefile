@@ -12,7 +12,7 @@ FISHCOMP_DIR=$(PREFIX)/share/fish/vendor_completions.d
 
 GO=go
 
-BASE_VERSION=$(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//' || echo "0.0.0")
+BASE_VERSION=$(or $(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//'),0.0.0)
 COMMIT_COUNT=$(shell git rev-list --count HEAD 2>/dev/null || echo "0")
 COMMIT_HASH=$(shell git rev-parse --short=8 HEAD 2>/dev/null || echo "unknown")
 VERSION?=$(BASE_VERSION)+git$(COMMIT_COUNT).$(COMMIT_HASH)
@@ -27,11 +27,11 @@ all: build completions
 
 # Copy the quickshell UI into the embed dir (gitignored) so tagged builds
 # can bake it into the binary. Dev-only files are stripped. tar -h dereferences
-# the DankCommon submodule symlink; go:embed rejects symlinks. .qmlls.ini is
+# the DCommon submodule symlink; go:embed rejects symlinks. .qmlls.ini is
 # excluded at copy time: it's a symlink into the quickshell runtime VFS and
 # dereferencing it fails whenever the shell isn't running.
 sync-shell:
-	@test -f $(SHELL_SRC)/DankCommon/Widgets/DankIcon.qml || { echo "DankCommon missing: run git submodule update --init"; exit 1; }
+	@test -f $(SHELL_SRC)/DCommon/Widgets/DIcon.qml || { echo "DCommon missing: run git submodule update --init"; exit 1; }
 	@rm -rf $(EMBED_DIR)
 	@mkdir -p $(EMBED_DIR)
 	@tar -C $(SHELL_SRC) --exclude=.qmlls.ini -chf - . | tar -C $(EMBED_DIR) -xf -

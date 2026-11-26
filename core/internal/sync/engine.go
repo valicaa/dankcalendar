@@ -8,15 +8,15 @@ import (
 	"sync"
 	"time"
 
-	"github.com/AvengeMedia/dankcalendar/core/ent"
-	entaccount "github.com/AvengeMedia/dankcalendar/core/ent/account"
-	"github.com/AvengeMedia/dankcalendar/core/internal/calendar"
-	"github.com/AvengeMedia/dankcalendar/core/internal/eventconv"
-	"github.com/AvengeMedia/dankcalendar/core/internal/keyring"
-	"github.com/AvengeMedia/dankcalendar/core/internal/notify"
-	"github.com/AvengeMedia/dankcalendar/core/internal/taskconv"
-	"github.com/AvengeMedia/dankcalendar/core/repo"
-	"github.com/AvengeMedia/dankgo/log"
+	"github.com/duxlabs-dev/dux-calendar/core/ent"
+	entaccount "github.com/duxlabs-dev/dux-calendar/core/ent/account"
+	"github.com/duxlabs-dev/dux-calendar/core/internal/calendar"
+	"github.com/duxlabs-dev/dux-calendar/core/internal/eventconv"
+	"github.com/duxlabs-dev/dux-calendar/core/internal/keyring"
+	"github.com/duxlabs-dev/dux-calendar/core/internal/notify"
+	"github.com/duxlabs-dev/dux-calendar/core/internal/taskconv"
+	"github.com/duxlabs-dev/dux-calendar/core/repo"
+	"github.com/duxlabs-dev/dux-go/log"
 )
 
 type Notifier func(topic string, data any)
@@ -296,8 +296,22 @@ func (e *Engine) SyncAccount(ctx context.Context, acc *ent.Account) error {
 	if e.recordKeyringLocked(acc.ID, errors.Is(err, keyring.ErrLocked)) {
 		retryAfter = keyringLockedRetry
 	}
+	e.recordSyncFailure(ctx, acc, err)
 	e.schedule(acc.ID, retryAfter)
 	return err
+}
+
+// A sync that dies before any calendar runs (provider build, ListCalendars)
+// would otherwise leave the account looking healthy (#138): needs_reauth stays
+// false and the notice keeps whatever the last good cycle wrote.
+func (e *Engine) recordSyncFailure(ctx context.Context, acc *ent.Account, err error) {
+	switch {
+	case err == nil, errors.Is(err, context.Canceled):
+		return
+	case errors.Is(err, keyring.ErrLocked), errors.Is(err, calendar.ErrReauthRequired):
+		return
+	}
+	e.setSyncNotice(ctx, acc, calendar.NoticeCalendarSyncFailed)
 }
 
 func (e *Engine) recordKeyringLocked(accountID string, locked bool) bool {
@@ -379,7 +393,10 @@ func (e *Engine) recordSyncNotice(ctx context.Context, acc *ent.Account, provide
 	if calendarFailed {
 		codes = append(codes, calendar.NoticeCalendarSyncFailed)
 	}
-	notice := strings.Join(codes, ",")
+	e.setSyncNotice(ctx, acc, strings.Join(codes, ","))
+}
+
+func (e *Engine) setSyncNotice(ctx context.Context, acc *ent.Account, notice string) {
 	if notice == acc.SyncNotice {
 		return
 	}
@@ -415,7 +432,7 @@ func (e *Engine) recordAuthState(ctx context.Context, acc *ent.Account, syncErr 
 
 	if needsReauth && e.sender != nil {
 		if _, err := e.sender.Send(notify.Notification{
-			Summary: "Dank Calendar",
+			Summary: "Dux Calendar",
 			Body:    fmt.Sprintf("%s needs to sign in again to keep syncing.", acc.DisplayName),
 			Urgency: notify.UrgencyNormal,
 		}); err != nil {

@@ -2,7 +2,7 @@ import QtQuick
 import Quickshell
 import qs.Common
 import qs.Widgets
-import qs.DankCommon.Widgets
+import qs.DCommon.Widgets
 
 FloatingWindow {
     id: settingsModal
@@ -27,8 +27,16 @@ FloatingWindow {
     minimumSize: Qt.size(520, 420)
     implicitWidth: Math.max(minimumSize.width, Theme.modalWidth(parentWindow, screen, 880))
     implicitHeight: Math.max(minimumSize.height, Theme.modalHeight(parentWindow, screen, 720))
-    color: Theme.surface
+    color: Theme.windowSurface
+    surfaceFormat.opaque: false
     visible: false
+
+    WindowBlur {
+        targetWindow: settingsModal
+        blurEnabled: Theme.translucentWindows
+        blurWidth: settingsModal.width
+        blurHeight: settingsModal.height
+    }
 
     onIsCompactModeChanged: menuVisible = false
 
@@ -72,7 +80,7 @@ FloatingWindow {
             anchors.fill: parent
             spacing: 0
 
-            DankWindowHeader {
+            DWindowHeader {
                 id: header
                 width: parent.width
                 z: 10
@@ -80,7 +88,7 @@ FloatingWindow {
                 title: I18n.tr("Settings", "settings window header title")
                 onCloseRequested: settingsModal.hide()
 
-                DankActionButton {
+                DActionButton {
                     visible: settingsModal.isCompactMode
                     iconName: "menu"
                     buttonSize: Theme.buttonHeightXXS
@@ -111,14 +119,27 @@ FloatingWindow {
 
                 FocusScope {
                     id: contentScope
+
+                    readonly property real paneInset: SettingsMetrics.paneMargin
+
                     anchors.left: settingsModal.isCompactMode ? (settingsModal.menuVisible ? sidebar.right : parent.left) : sidebar.right
                     anchors.right: parent.right
                     anchors.top: parent.top
                     anchors.bottom: parent.bottom
-                    clip: true
+                    anchors.leftMargin: settingsModal.isCompactMode ? paneInset : 0
+                    anchors.rightMargin: paneInset
+                    anchors.bottomMargin: paneInset
+
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: SettingsMetrics.paneRadius
+                        color: SettingsMetrics.paneColor
+                    }
 
                     SettingsContent {
                         anchors.fill: parent
+                        anchors.leftMargin: SettingsMetrics.panePadding
+                        anchors.rightMargin: SettingsMetrics.panePadding
                         currentIndex: settingsModal.currentTabIndex
                         hostWindow: settingsModal
                         onAddAccountRequested: settingsModal.addAccountRequested()

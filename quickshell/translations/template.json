@@ -63,6 +63,13 @@
     "comment": ""
   },
   {
+    "term": "%1 overlapping events",
+    "translation": "",
+    "context": "import conflict count",
+    "reference": "",
+    "comment": ""
+  },
+  {
     "term": "%1 selected",
     "translation": "",
     "context": "multi-event action shelf selection count; %1 is event count",
@@ -199,6 +206,13 @@
     "term": "1 minute",
     "translation": "",
     "context": "sync interval dropdown option",
+    "reference": "",
+    "comment": ""
+  },
+  {
+    "term": "1 overlapping event",
+    "translation": "",
+    "context": "import single conflict count",
     "reference": "",
     "comment": ""
   },
@@ -373,7 +387,7 @@
   {
     "term": "About",
     "translation": "",
-    "context": "about page project section header | settings sidebar tab label",
+    "context": "settings sidebar tab label",
     "reference": "",
     "comment": ""
   },
@@ -483,6 +497,13 @@
     "comment": ""
   },
   {
+    "term": "Add to calendar",
+    "translation": "",
+    "context": "import destination label",
+    "reference": "",
+    "comment": ""
+  },
+  {
     "term": "Adding…",
     "translation": "",
     "context": "add button while evolution account is created | add button while local account is created",
@@ -581,6 +602,13 @@
     "comment": ""
   },
   {
+    "term": "Also in these calendars",
+    "translation": "",
+    "context": "event details row listing other calendars a merged duplicate event appears in",
+    "reference": "",
+    "comment": ""
+  },
+  {
     "term": "Always use the dark theme.",
     "translation": "",
     "context": "theme mode setting description",
@@ -637,6 +665,13 @@
     "comment": ""
   },
   {
+    "term": "Apply and restart",
+    "translation": "",
+    "context": "interface zoom restart button",
+    "reference": "",
+    "comment": ""
+  },
+  {
     "term": "Approve access in your browser. The window will return here automatically when %1 sends us back the authorization code.",
     "translation": "",
     "context": "browser step body while waiting for oauth",
@@ -674,7 +709,7 @@
   {
     "term": "Auto",
     "translation": "",
-    "context": "color source button group option following DMS | theme mode button group option | time format button group option",
+    "context": "color source button group option following DMS | font source button group option following DMS | theme mode button group option | time format button group option",
     "reference": "",
     "comment": ""
   },
@@ -709,7 +744,14 @@
   {
     "term": "Backend not connected.",
     "translation": "",
-    "context": "accounts settings section subtitle | calendars page empty state | test notification setting description when backend is unavailable",
+    "context": "accounts settings section subtitle | calendars page empty state | interface zoom pending restart description when backend is unavailable | test notification setting description when backend is unavailable",
+    "reference": "",
+    "comment": ""
+  },
+  {
+    "term": "Background blur",
+    "translation": "",
+    "context": "toggle asking the compositor to blur behind see-through windows",
     "reference": "",
     "comment": ""
   },
@@ -721,16 +763,23 @@
     "comment": ""
   },
   {
+    "term": "Blurs what shows through the window. Needs an opacity below 100%.",
+    "translation": "",
+    "context": "background blur toggle description",
+    "reference": "",
+    "comment": ""
+  },
+  {
     "term": "Busy",
     "translation": "",
-    "context": "overlay label for a colleague's free/busy-only or private time block",
+    "context": "fallback title for a private event whose details are hidden | overlay label for a colleague's free/busy-only or private time block",
     "reference": "",
     "comment": ""
   },
   {
     "term": "Calendar",
     "translation": "",
-    "context": "main window title | main window title bar text",
+    "context": "about page hero, app name | main window title | main window title bar text",
     "reference": "",
     "comment": ""
   },
@@ -910,6 +959,13 @@
     "comment": ""
   },
   {
+    "term": "Community",
+    "translation": "",
+    "context": "about page card title, chat and community links",
+    "reference": "",
+    "comment": ""
+  },
+  {
     "term": "Completed",
     "translation": "",
     "context": "task form toggle label for marking a task done | tasks view section header for finished tasks",
@@ -927,6 +983,13 @@
     "term": "Confirm delete",
     "translation": "",
     "context": "event details button to confirm deleting the event | task form button to confirm deletion",
+    "reference": "",
+    "comment": ""
+  },
+  {
+    "term": "Conflicts use events currently synced to Dux Calendar. You can still import an overlapping event.",
+    "translation": "",
+    "context": "import preview explains the data and non-blocking conflicts",
     "reference": "",
     "comment": ""
   },
@@ -1171,7 +1234,7 @@
   {
     "term": "Custom",
     "translation": "",
-    "context": "color source button group option for a custom theme file | recurrence dropdown option",
+    "context": "color source button group option for a custom theme file | font source button group option for app-chosen fonts | recurrence dropdown option",
     "reference": "",
     "comment": ""
   },
@@ -1221,27 +1284,6 @@
     "term": "Daily",
     "translation": "",
     "context": "recurrence dropdown option | task recurrence dropdown option",
-    "reference": "",
-    "comment": ""
-  },
-  {
-    "term": "Dank Calendar is a calendar for the modern Linux desktop with a <a href=\"https://m3.material.io/\" style=\"text-decoration:none; color:%1;\">material 3 inspired</a> design, plus a hackable CLI and socket API for integrations.<br /><br/>It is built with <a href=\"https://quickshell.org\" style=\"text-decoration:none; color:%1;\">Quickshell</a>, a QT6 framework for building desktop shells, and <a href=\"https://go.dev\" style=\"text-decoration:none; color:%1;\">Go</a>, a statically typed, compiled programming language.",
-    "translation": "",
-    "context": "about page project description with embedded links",
-    "reference": "",
-    "comment": ""
-  },
-  {
-    "term": "Dank Linux Discord",
-    "translation": "",
-    "context": "about page community icon tooltip",
-    "reference": "",
-    "comment": ""
-  },
-  {
-    "term": "DankMaterialShell not detected — using the %1 preset.",
-    "translation": "",
-    "context": "auto color source status when DMS is missing",
     "reference": "",
     "comment": ""
   },
@@ -1298,6 +1340,13 @@
     "term": "Decrease",
     "translation": "",
     "context": "slider row step down button",
+    "reference": "",
+    "comment": ""
+  },
+  {
+    "term": "Default",
+    "translation": "",
+    "context": "font family dropdown option for the bundled font",
     "reference": "",
     "comment": ""
   },
@@ -1491,6 +1540,13 @@
     "comment": ""
   },
   {
+    "term": "Display family",
+    "translation": "",
+    "context": "display font family dropdown label",
+    "reference": "",
+    "comment": ""
+  },
+  {
     "term": "Display name (optional)",
     "translation": "",
     "context": "optional account display name field label",
@@ -1564,6 +1620,34 @@
     "term": "Duration",
     "translation": "",
     "context": "animation duration slider label",
+    "reference": "",
+    "comment": ""
+  },
+  {
+    "term": "Dux Calendar is a calendar for the modern Linux desktop with a <a href=\"https://m3.material.io/\" style=\"text-decoration:none; color:%1;\">material 3 inspired</a> design, plus a hackable CLI and socket API for integrations.<br /><br/>It is built with <a href=\"https://quickshell.org\" style=\"text-decoration:none; color:%1;\">Quickshell</a>, a QT6 framework for building desktop shells, and <a href=\"https://go.dev\" style=\"text-decoration:none; color:%1;\">Go</a>, a statically typed, compiled programming language.",
+    "translation": "",
+    "context": "about page project description with embedded links",
+    "reference": "",
+    "comment": ""
+  },
+  {
+    "term": "Dux Calendar will close and reopen with the new zoom.",
+    "translation": "",
+    "context": "interface zoom pending restart description",
+    "reference": "",
+    "comment": ""
+  },
+  {
+    "term": "Dux Shell not detected — using the %1 preset.",
+    "translation": "",
+    "context": "auto color source status when DMS is missing",
+    "reference": "",
+    "comment": ""
+  },
+  {
+    "term": "Dux Shell not detected, using %1.",
+    "translation": "",
+    "context": "auto font source status when DMS is missing",
     "reference": "",
     "comment": ""
   },
@@ -1722,6 +1806,13 @@
     "comment": ""
   },
   {
+    "term": "Family",
+    "translation": "",
+    "context": "font family dropdown label",
+    "reference": "",
+    "comment": ""
+  },
+  {
     "term": "Feed URL",
     "translation": "",
     "context": "ical feed url field label",
@@ -1757,9 +1848,16 @@
     "comment": ""
   },
   {
-    "term": "Follow DankMaterialShell colors, falling back to a preset.",
+    "term": "Follow Dux Shell colors, falling back to a preset.",
     "translation": "",
     "context": "color source description for auto",
+    "reference": "",
+    "comment": ""
+  },
+  {
+    "term": "Follow colors generated by Matugen.",
+    "translation": "",
+    "context": "color source description for Matugen",
     "reference": "",
     "comment": ""
   },
@@ -1774,6 +1872,20 @@
     "term": "Following the system color scheme (currently %1).",
     "translation": "",
     "context": "theme mode setting description",
+    "reference": "",
+    "comment": ""
+  },
+  {
+    "term": "Font source",
+    "translation": "",
+    "context": "font source setting label",
+    "reference": "",
+    "comment": ""
+  },
+  {
+    "term": "Foreground layers",
+    "translation": "",
+    "context": "toggle keeping cards and panes solid over a see-through window",
     "reference": "",
     "comment": ""
   },
@@ -1932,6 +2044,13 @@
     "comment": ""
   },
   {
+    "term": "Keeps cards and panes solid when the window is see-through.",
+    "translation": "",
+    "context": "foreground layers toggle description",
+    "reference": "",
+    "comment": ""
+  },
+  {
     "term": "Keyboard shortcuts",
     "translation": "",
     "context": "keyboard shortcuts overlay title",
@@ -1942,13 +2061,6 @@
     "term": "Keyring locked — unlock it to sync",
     "translation": "",
     "context": "account status when the system keyring holding the credentials is locked | tooltip on the account warning icon when the system keyring holding the credentials is locked",
-    "reference": "",
-    "comment": ""
-  },
-  {
-    "term": "Ko-fi",
-    "translation": "",
-    "context": "about page resource button",
     "reference": "",
     "comment": ""
   },
@@ -1974,9 +2086,16 @@
     "comment": ""
   },
   {
-    "term": "Launch Dank Calendar in the background when you log in.",
+    "term": "Launch Dux Calendar in the background when you log in.",
     "translation": "",
     "context": "autostart setting description",
+    "reference": "",
+    "comment": ""
+  },
+  {
+    "term": "Layer opacity",
+    "translation": "",
+    "context": "foreground layer opacity slider label",
     "reference": "",
     "comment": ""
   },
@@ -1984,6 +2103,13 @@
     "term": "Length used when creating events.",
     "translation": "",
     "context": "default event duration setting description",
+    "reference": "",
+    "comment": ""
+  },
+  {
+    "term": "Lets the desktop show through the window. Text and controls stay solid.",
+    "translation": "",
+    "context": "window opacity slider description",
     "reference": "",
     "comment": ""
   },
@@ -2079,6 +2205,20 @@
     "comment": ""
   },
   {
+    "term": "Matugen",
+    "translation": "",
+    "context": "color source button group option for Matugen",
+    "reference": "",
+    "comment": ""
+  },
+  {
+    "term": "Matugen theme missing or invalid — using the %1 preset.",
+    "translation": "",
+    "context": "Matugen color source fallback status",
+    "reference": "",
+    "comment": ""
+  },
+  {
     "term": "Maximum title lines per event in month view.",
     "translation": "",
     "context": "month event title line count setting description",
@@ -2142,6 +2282,13 @@
     "comment": ""
   },
   {
+    "term": "Merge duplicate events",
+    "translation": "",
+    "context": "merge duplicate events setting label",
+    "reference": "",
+    "comment": ""
+  },
+  {
     "term": "Microsoft To Do access wasn't granted. Reconnect this account to sync tasks.",
     "translation": "",
     "context": "account notice when microsoft to do permission is missing",
@@ -2159,6 +2306,13 @@
     "term": "Minimize",
     "translation": "",
     "context": "close behavior button group option to hide to tray",
+    "reference": "",
+    "comment": ""
+  },
+  {
+    "term": "Monospace family",
+    "translation": "",
+    "context": "monospace font family dropdown label",
     "reference": "",
     "comment": ""
   },
@@ -2450,6 +2604,13 @@
     "comment": ""
   },
   {
+    "term": "No overlapping busy events",
+    "translation": "",
+    "context": "import preview with no time conflicts",
+    "reference": "",
+    "comment": ""
+  },
+  {
     "term": "No task list available",
     "translation": "",
     "context": "task form error when no calendar can hold tasks",
@@ -2541,6 +2702,13 @@
     "comment": ""
   },
   {
+    "term": "Off lets the compositor decorate windows. Open windows update when reopened.",
+    "translation": "",
+    "context": "window title bars toggle description",
+    "reference": "",
+    "comment": ""
+  },
+  {
     "term": "Offline",
     "translation": "",
     "context": "about page daemon status value",
@@ -2558,6 +2726,13 @@
     "term": "On the day",
     "translation": "",
     "context": "all-day reminder day dropdown option",
+    "reference": "",
+    "comment": ""
+  },
+  {
+    "term": "Opacity",
+    "translation": "",
+    "context": "window opacity slider label",
     "reference": "",
     "comment": ""
   },
@@ -2600,6 +2775,13 @@
     "term": "Open or create event",
     "translation": "",
     "context": "keyboard shortcut description",
+    "reference": "",
+    "comment": ""
+  },
+  {
+    "term": "Open the existing meeting to handle this reply or cancellation.",
+    "translation": "",
+    "context": "scheduling messages cannot be imported as new events",
     "reference": "",
     "comment": ""
   },
@@ -2656,13 +2838,6 @@
     "term": "Palette: %1",
     "translation": "",
     "context": "selected preset palette name",
-    "reference": "",
-    "comment": ""
-  },
-  {
-    "term": "Part of the Dank Linux suite.",
-    "translation": "",
-    "context": "app tagline on about page",
     "reference": "",
     "comment": ""
   },
@@ -2933,6 +3108,13 @@
     "comment": ""
   },
   {
+    "term": "Recurring event · conflicts checked through %1",
+    "translation": "",
+    "context": "bounded recurring import preview",
+    "reference": "",
+    "comment": ""
+  },
+  {
     "term": "Recurring tasks are managed in Google Tasks.",
     "translation": "",
     "context": "task form note when recurrence cannot be edited on google",
@@ -3017,14 +3199,14 @@
     "comment": ""
   },
   {
-    "term": "Removes this account and its calendars and events from Dank Calendar. Nothing is deleted from the provider.",
+    "term": "Removes this account and its calendars and events from Dux Calendar. Nothing is deleted from the provider.",
     "translation": "",
     "context": "confirm dialog body for removing an account | remove account confirmation message",
     "reference": "",
     "comment": ""
   },
   {
-    "term": "Removes this calendar and its events from Dank Calendar. If the provider still offers it, it will come back on the next sync.",
+    "term": "Removes this calendar and its events from Dux Calendar. If the provider still offers it, it will come back on the next sync.",
     "translation": "",
     "context": "confirm dialog body for deleting a calendar | delete calendar confirmation message",
     "reference": "",
@@ -3129,6 +3311,13 @@
     "comment": ""
   },
   {
+    "term": "Restart required",
+    "translation": "",
+    "context": "interface zoom pending restart label",
+    "reference": "",
+    "comment": ""
+  },
+  {
     "term": "Ripple effects",
     "translation": "",
     "context": "ripple effects toggle label",
@@ -3152,7 +3341,14 @@
   {
     "term": "Scale",
     "translation": "",
-    "context": "font scale slider label",
+    "context": "font scale slider label | interface zoom slider label",
+    "reference": "",
+    "comment": ""
+  },
+  {
+    "term": "Scales the whole app. Takes effect after a restart.",
+    "translation": "",
+    "context": "interface zoom slider description",
     "reference": "",
     "comment": ""
   },
@@ -3269,6 +3465,13 @@
     "comment": ""
   },
   {
+    "term": "Set by QT_SCALE_FACTOR.",
+    "translation": "",
+    "context": "interface zoom slider description when the environment overrides it",
+    "reference": "",
+    "comment": ""
+  },
+  {
     "term": "Settings",
     "translation": "",
     "context": "keyboard shortcut description | settings window header title",
@@ -3290,7 +3493,7 @@
     "comment": ""
   },
   {
-    "term": "Show Dank Calendar in the system tray.",
+    "term": "Show Dux Calendar in the system tray.",
     "translation": "",
     "context": "tray icon toggle description",
     "reference": "",
@@ -3307,6 +3510,13 @@
     "term": "Show all-day reminders",
     "translation": "",
     "context": "all-day reminders toggle label | per-calendar all-day reminders override label",
+    "reference": "",
+    "comment": ""
+  },
+  {
+    "term": "Show an event that appears in several calendars once, with dots for the other calendars.",
+    "translation": "",
+    "context": "merge duplicate events setting description",
     "reference": "",
     "comment": ""
   },
@@ -3346,6 +3556,13 @@
     "comment": ""
   },
   {
+    "term": "Showing the first 20 overlaps.",
+    "translation": "",
+    "context": "import conflict list limit",
+    "reference": "",
+    "comment": ""
+  },
+  {
     "term": "Sidebar",
     "translation": "",
     "context": "keyboard shortcuts overlay section header",
@@ -3360,14 +3577,14 @@
     "comment": ""
   },
   {
-    "term": "Sign in with Google in your browser and you're done — no setup needed. Dank Calendar syncs your calendars, events, and tasks.",
+    "term": "Sign in with Google in your browser and you're done — no setup needed. Dux Calendar syncs your calendars, events, and tasks.",
     "translation": "",
     "context": "google one-click sign-in intro text",
     "reference": "",
     "comment": ""
   },
   {
-    "term": "Sign in with Microsoft in your browser and you're done — no setup needed. Dank Calendar syncs your Outlook calendars, events, and tasks.",
+    "term": "Sign in with Microsoft in your browser and you're done — no setup needed. Dux Calendar syncs your Outlook calendars, events, and tasks.",
     "translation": "",
     "context": "microsoft one-click sign-in intro text",
     "reference": "",
@@ -3528,6 +3745,13 @@
     "comment": ""
   },
   {
+    "term": "Support Dux Labs",
+    "translation": "",
+    "context": "about page hero button, opens the Ko-fi donation page",
+    "reference": "",
+    "comment": ""
+  },
+  {
     "term": "Sync interval",
     "translation": "",
     "context": "sync interval setting label",
@@ -3549,9 +3773,16 @@
     "comment": ""
   },
   {
-    "term": "Synced as \"%1\". The name only changes in Dank Calendar.",
+    "term": "Synced as \"%1\". The name only changes in Dux Calendar.",
     "translation": "",
     "context": "rename calendar dialog note showing provider name",
+    "reference": "",
+    "comment": ""
+  },
+  {
+    "term": "System",
+    "translation": "",
+    "context": "font source button group option for the Qt system font",
     "reference": "",
     "comment": ""
   },
@@ -3703,6 +3934,13 @@
     "comment": ""
   },
   {
+    "term": "Title bars",
+    "translation": "",
+    "context": "window title bars toggle label",
+    "reference": "",
+    "comment": ""
+  },
+  {
     "term": "Title is required",
     "translation": "",
     "context": "event form validation error for missing title | task form validation error for missing title",
@@ -3850,9 +4088,16 @@
     "comment": ""
   },
   {
-    "term": "Using DankMaterialShell dynamic colors.",
+    "term": "Using Dux Shell dynamic colors.",
     "translation": "",
     "context": "auto color source status when DMS is active",
+    "reference": "",
+    "comment": ""
+  },
+  {
+    "term": "Using Matugen colors.",
+    "translation": "",
+    "context": "Matugen color source status when loaded",
     "reference": "",
     "comment": ""
   },
@@ -3962,6 +4207,13 @@
     "comment": ""
   },
   {
+    "term": "Windows",
+    "translation": "",
+    "context": "appearance settings section label",
+    "reference": "",
+    "comment": ""
+  },
+  {
     "term": "Yearly",
     "translation": "",
     "context": "recurrence dropdown option | task recurrence dropdown option",
@@ -3990,9 +4242,23 @@
     "comment": ""
   },
   {
+    "term": "Your compositor does not support background blur.",
+    "translation": "",
+    "context": "hint shown instead of the background blur toggle",
+    "reference": "",
+    "comment": ""
+  },
+  {
     "term": "Your response",
     "translation": "",
     "context": "event details RSVP section label",
+    "reference": "",
+    "comment": ""
+  },
+  {
+    "term": "Zoom",
+    "translation": "",
+    "context": "appearance settings section label",
     "reference": "",
     "comment": ""
   },

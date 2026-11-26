@@ -99,8 +99,8 @@ cmd_start() {
 	[ "$(git -C "$checkout" rev-parse --show-toplevel 2>/dev/null)" = "$checkout" ] ||
 		die "$checkout is not the top of a git checkout"
 	[ -d "$checkout/core/cmd/dcal" ] || die "$checkout has no core/cmd/dcal"
-	[ -f "$checkout/quickshell/DankCommon/Widgets/DankIcon.qml" ] ||
-		die "DankCommon missing in $checkout: initialise its submodule as in verify-change section 4"
+	[ -f "$checkout/quickshell/DCommon/Widgets/DIcon.qml" ] ||
+		die "DCommon missing in $checkout: initialise its submodule as in verify-change section 4"
 	case "$(systemctl --user is-active "$UNIT" || true)" in
 	active | activating | reloading | deactivating) die "$UNIT is running; stop it first" ;;
 	esac

@@ -11,7 +11,7 @@ import (
 	"google.golang.org/api/googleapi"
 	gtasks "google.golang.org/api/tasks/v1"
 
-	cal "github.com/AvengeMedia/dankcalendar/core/internal/calendar"
+	cal "github.com/duxlabs-dev/dux-calendar/core/internal/calendar"
 )
 
 // taskListPrefix namespaces task-list remote ids so they cannot collide with
@@ -19,7 +19,7 @@ import (
 const taskListPrefix = "tasklist:"
 
 func (p *Provider) listTaskLists(ctx context.Context) ([]cal.Calendar, error) {
-	res, err := googleCall(ctx, p, true, func() (*gtasks.TaskLists, error) {
+	res, err := tasksCall(ctx, p, true, func() (*gtasks.TaskLists, error) {
 		return p.tasksSvc.Tasklists.List().Context(ctx).MaxResults(100).Do()
 	})
 	if err != nil {
@@ -54,7 +54,7 @@ func (p *Provider) syncTasks(ctx context.Context, c cal.Calendar) (*cal.SyncResu
 			call = call.PageToken(pageToken)
 		}
 
-		res, err := googleCall(ctx, p, true, func() (*gtasks.Tasks, error) { return call.Do() })
+		res, err := tasksCall(ctx, p, true, func() (*gtasks.Tasks, error) { return call.Do() })
 		if err != nil {
 			return nil, fmt.Errorf("sync google tasks: %w", classifyAuthErr(err))
 		}
@@ -75,7 +75,7 @@ func (p *Provider) syncTasks(ctx context.Context, c cal.Calendar) (*cal.SyncResu
 }
 
 func (p *Provider) CreateTask(ctx context.Context, c cal.Calendar, t *cal.Task) (*cal.Task, error) {
-	created, err := googleCall(ctx, p, false, func() (*gtasks.Task, error) {
+	created, err := tasksCall(ctx, p, false, func() (*gtasks.Task, error) {
 		return p.tasksSvc.Tasks.Insert(taskListID(c.RemoteID), toGoogleTask(t)).Context(ctx).Do()
 	})
 	if err != nil {
@@ -92,7 +92,7 @@ func (p *Provider) UpdateTask(ctx context.Context, c cal.Calendar, t *cal.Task) 
 	// it must be set or the API rejects the call with "Missing task ID".
 	body := toGoogleTask(t)
 	body.Id = t.RemoteID
-	updated, err := googleCall(ctx, p, false, func() (*gtasks.Task, error) {
+	updated, err := tasksCall(ctx, p, false, func() (*gtasks.Task, error) {
 		return p.tasksSvc.Tasks.Update(taskListID(c.RemoteID), t.RemoteID, body).Context(ctx).Do()
 	})
 	if err != nil {
@@ -105,7 +105,7 @@ func (p *Provider) DeleteTask(ctx context.Context, c cal.Calendar, t cal.Task) e
 	if t.RemoteID == "" {
 		return errors.New("delete google task: missing remote id")
 	}
-	_, err := googleCall(ctx, p, false, func() (*struct{}, error) {
+	_, err := tasksCall(ctx, p, false, func() (*struct{}, error) {
 		return nil, p.tasksSvc.Tasks.Delete(taskListID(c.RemoteID), t.RemoteID).Context(ctx).Do()
 	})
 	if err == nil {

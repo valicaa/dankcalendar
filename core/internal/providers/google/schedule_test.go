@@ -14,7 +14,7 @@ import (
 	"google.golang.org/api/calendar/v3"
 	"google.golang.org/api/option"
 
-	cal "github.com/AvengeMedia/dankcalendar/core/internal/calendar"
+	cal "github.com/duxlabs-dev/dux-calendar/core/internal/calendar"
 )
 
 func scheduleTestProvider(t *testing.T, handler http.HandlerFunc) *Provider {

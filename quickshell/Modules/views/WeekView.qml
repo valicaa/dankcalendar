@@ -3,7 +3,7 @@ import Quickshell
 import qs.Common
 import qs.Services
 import qs.Widgets
-import qs.DankCommon.Widgets
+import qs.DCommon.Widgets
 import "../../Common/EventUtils.js" as EventUtils
 
 Item {
@@ -214,12 +214,12 @@ Item {
         }
     }
 
-    DankTooltipV2 {
+    DTooltipV2 {
         id: chipTooltip
     }
 
     function eventTooltip(ev) {
-        const suffix = (ev.location ? " · " + ev.location : "") + (ev.calendar ? " · " + ev.calendar : "");
+        const suffix = (ev.location ? " · " + ev.location : "") + (ev.calendar ? " · " + DankCalService.calendarNames(ev) : "");
         if (ev.allDay)
             return ev.title + " · " + I18n.tr("All day", "all-day marker in event tooltip") + suffix;
         return ev.title + " · " + SettingsData.formatTime(ev.start) + " – " + SettingsData.formatTime(ev.end) + suffix;
@@ -422,7 +422,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: Theme.spacingS
 
-                DankIcon {
+                DIcon {
                     name: "warning"
                     size: Theme.iconSizeSmall
                     color: Theme.warning
@@ -437,7 +437,7 @@ Item {
                 }
             }
 
-            DankButton {
+            DButton {
                 anchors.right: parent.right
                 anchors.rightMargin: Theme.spacingM
                 anchors.verticalCenter: parent.verticalCenter
@@ -635,6 +635,10 @@ Item {
                                                 dimmed: PeopleService.active && stripeColors.length === 0
                                                 hovered: allDayMouseArea.containsMouse
 
+                                                MergedEventDots {
+                                                    event: ownAllDayChip.modelData
+                                                }
+
                                                 StyledText {
                                                     anchors.left: parent.left
                                                     anchors.right: parent.right
@@ -754,7 +758,7 @@ Item {
                             width: root.dayWidth
                             height: parent.height
 
-                            DankIcon {
+                            DIcon {
                                 visible: {
                                     root.eventsVersion;
                                     return root.hiddenInfoFor(parent.d).before;
@@ -770,7 +774,7 @@ Item {
             }
         }
 
-        DankFlickable {
+        DFlickable {
             id: weekFlickable
             width: parent.width
             height: parent.height - 56 - coreHoursWarning.height - hiddenBeforeStrip.height - allDayRow.height
@@ -923,7 +927,7 @@ Item {
                                     }
                                 }
 
-                                DankIcon {
+                                DIcon {
                                     visible: {
                                         root.eventsVersion;
                                         return root.hiddenInfoFor(root.dayAt(dayColumn.index - 1)).after;
@@ -962,6 +966,10 @@ Item {
                                         selected: isSelected
                                         dimmed: PeopleService.active && stripeColors.length === 0
                                         hovered: timedMouseArea.containsMouse
+
+                                        MergedEventDots {
+                                            event: ownTimedChip.modelData
+                                        }
 
                                         Column {
                                             anchors.fill: parent

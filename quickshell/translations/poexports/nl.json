@@ -9,10 +9,13 @@
     "%1 appointments fall outside core hours": "%1 afspraken vallen buiten de kernuren"
   },
   "%1 events selected": {
-    "%1 events selected": ""
+    "%1 events selected": "%1 afspraken geselecteerd"
+  },
+  "%1 overlapping events": {
+    "%1 overlapping events": "%1 overlappende afspraken"
   },
   "%1 selected": {
-    "%1 selected": ""
+    "%1 selected": "%1 geselecteerd"
   },
   "%1 times": {
     "%1 times": "%1 keer"
@@ -48,10 +51,10 @@
     "+%1 more": "+nog %1"
   },
   "+1 day": {
-    "+1 day": ""
+    "+1 day": "+1 dag"
   },
   "+1 week": {
-    "+1 week": ""
+    "+1 week": "+1 week"
   },
   "1 appointment falls outside core hours": {
     "1 appointment falls outside core hours": "1 afspraak valt buiten de kernuren"
@@ -70,6 +73,9 @@
   },
   "1 minute": {
     "1 minute": "1 minuut"
+  },
+  "1 overlapping event": {
+    "1 overlapping event": "1 overlappende afspraak"
   },
   "1 week before": {
     "1 week before": "1 week van tevoren"
@@ -132,7 +138,7 @@
     "5 minutes before": "5 minuten van tevoren"
   },
   "50 uses Material shapes. Lower values reduce rounding; higher values increase it.": {
-    "50 uses Material shapes. Lower values reduce rounding; higher values increase it.": ""
+    "50 uses Material shapes. Lower values reduce rounding; higher values increase it.": "50 gebruikt Material-vormen. Lagere waarden verminderen de afronding; hogere waarden vergroten deze."
   },
   "<a href=\"%2\" style=\"text-decoration:none; color:%1;\">MIT License</a>": {
     "<a href=\"%2\" style=\"text-decoration:none; color:%1;\">MIT License</a>": "<a href=\"%2\" style=\"text-decoration:none; color:%1;\">MIT-licentie</a>"
@@ -156,7 +162,7 @@
     "Account connected": "Account verbonden"
   },
   "Account options": {
-    "Account options": ""
+    "Account options": "Accountopties"
   },
   "Account problem — click for options": {
     "Account problem — click for options": "Accountprobleem — klik voor opties"
@@ -165,7 +171,7 @@
     "Accounts": "Accounts"
   },
   "Actions apply to the whole selection": {
-    "Actions apply to the whole selection": ""
+    "Actions apply to the whole selection": "Acties gelden voor de hele selectie"
   },
   "Add": {
     "Add": "Toevoegen"
@@ -183,7 +189,7 @@
     "Add description": "Beschrijving toevoegen"
   },
   "Add or remove an event from the selection": {
-    "Add or remove an event from the selection": ""
+    "Add or remove an event from the selection": "Een afspraak toevoegen aan of verwijderen uit de selectie"
   },
   "Add reminder": {
     "Add reminder": "Herinnering toevoegen"
@@ -193,6 +199,9 @@
   },
   "Add title": {
     "Add title": "Titel toevoegen"
+  },
+  "Add to calendar": {
+    "Add to calendar": "Toevoegen aan agenda"
   },
   "Adding…": {
     "Adding…": "Toevoegen…"
@@ -219,10 +228,10 @@
     "All done": "Helemaal klaar"
   },
   "All events": {
-    "All events": ""
+    "All events": "Alle afspraken"
   },
   "All-day events": {
-    "All-day events": ""
+    "All-day events": "Afspraken voor de hele dag"
   },
   "All-day reminder time": {
     "All-day reminder time": "Herinneringstijd voor dagafspraken"
@@ -231,7 +240,10 @@
     "All-day reminder timing": "Timing herinnering dagafspraak"
   },
   "Already in %1": {
-    "Already in %1": ""
+    "Already in %1": "Al in %1"
+  },
+  "Also in these calendars": {
+    "Also in these calendars": "Ook in deze agenda's"
   },
   "Alt+←/Backspace: Back • F1/I: File Info • F10: Help • Esc: Close": {
     "Alt+←/Backspace: Back • F1/I: File Info • F10: Help • Esc: Close": "Alt+←/Backspace: Terug • F1/I: Bestandsinfo • F10: Help • Esc: Sluiten"
@@ -243,7 +255,7 @@
     "Always use the light theme.": "Altijd het lichte thema gebruiken."
   },
   "App": {
-    "App": ""
+    "App": "App"
   },
   "App-specific password": {
     "App-specific password": "App-specifiek wachtwoord"
@@ -256,6 +268,9 @@
   },
   "Apple iCloud calendars via app-specific password.": {
     "Apple iCloud calendars via app-specific password.": "Apple iCloud-agenda's via app-specifiek wachtwoord."
+  },
+  "Apply and restart": {
+    "Apply and restart": "Toepassen en herstarten"
   },
   "Approve access in your browser. The window will return here automatically when %1 sends us back the authorization code.": {
     "Approve access in your browser. The window will return here automatically when %1 sends us back the authorization code.": "Keur toegang goed in je browser. Dit venster keert automatisch terug wanneer %1 de autorisatiecode terugstuurt."
@@ -293,11 +308,20 @@
   "Backend not connected.": {
     "Backend not connected.": "Backend niet verbonden."
   },
+  "Background blur": {
+    "Background blur": ""
+  },
   "Balanced": {
-    "Balanced": ""
+    "Balanced": "Gebalanceerd"
   },
   "Begin setup": {
     "Begin setup": "Installatie starten"
+  },
+  "Blurs what shows through the window. Needs an opacity below 100%.": {
+    "Blurs what shows through the window. Needs an opacity below 100%.": ""
+  },
+  "Busy": {
+    "Busy": "Bezet"
   },
   "Calendar": {
     "Calendar": "Agenda"
@@ -306,16 +330,16 @@
     "Calendar Settings": "Agenda-instellingen"
   },
   "Calendar file": {
-    "Calendar file": ""
+    "Calendar file": "Agendabestand"
   },
   "Calendar name": {
     "Calendar name": "Agendanaam"
   },
   "Calendar options": {
-    "Calendar options": ""
+    "Calendar options": "Agenda-opties"
   },
   "Calendar preselected when creating events.": {
-    "Calendar preselected when creating events.": ""
+    "Calendar preselected when creating events.": "Agenda die vooraf is geselecteerd bij het aanmaken van afspraken."
   },
   "Calendars": {
     "Calendars": "Agenda's"
@@ -342,7 +366,7 @@
     "Choose calendar directory": "Kies agendamap"
   },
   "Clear": {
-    "Clear": ""
+    "Clear": "Wissen"
   },
   "Clear event selection": {
     "Clear event selection": "Selectie wissen"
@@ -357,7 +381,7 @@
     "Client Secret": "Client Secret"
   },
   "Close": {
-    "Close": ""
+    "Close": "Sluiten"
   },
   "Close behavior": {
     "Close behavior": "Sluitgedrag"
@@ -369,7 +393,7 @@
     "Collapse or expand a section": "Sectie in- of uitklappen"
   },
   "Color": {
-    "Color": ""
+    "Color": "Kleur"
   },
   "Color source": {
     "Color source": "Kleurbron"
@@ -380,6 +404,9 @@
   "Coming soon": {
     "Coming soon": "Binnenkort beschikbaar"
   },
+  "Community": {
+    "Community": "Gemeenschap"
+  },
   "Completed": {
     "Completed": "Voltooid"
   },
@@ -388,6 +415,12 @@
   },
   "Confirm delete": {
     "Confirm delete": "Verwijderen bevestigen"
+  },
+  "Conflicts use events currently synced to DankCalendar. You can still import an overlapping event.": {
+    "Conflicts use events currently synced to DankCalendar. You can still import an overlapping event.": "Conflicten zijn gebaseerd op afspraken die momenteel met DankCalendar zijn gesynchroniseerd. Je kunt een overlappende afspraak nog steeds importeren."
+  },
+  "Conflicts use events currently synced to Dux Calendar. You can still import an overlapping event.": {
+    "Conflicts use events currently synced to Dux Calendar. You can still import an overlapping event.": "Conflicten zijn gebaseerd op afspraken die momenteel met Dux Calendar zijn gesynchroniseerd. Je kunt een overlappende afspraak nog steeds importeren."
   },
   "Connect": {
     "Connect": "Verbinden"
@@ -411,7 +444,7 @@
     "Connected calendar providers.": "Verbonden agendaproviders."
   },
   "Connected providers": {
-    "Connected providers": ""
+    "Connected providers": "Gekoppelde aanbieders"
   },
   "Connecting…": {
     "Connecting…": "Verbinden…"
@@ -420,22 +453,22 @@
     "Continue": "Doorgaan"
   },
   "Copied %1 events": {
-    "Copied %1 events": ""
+    "Copied %1 events": "%1 afspraken gekopieerd"
   },
   "Copied 1 event": {
-    "Copied 1 event": ""
+    "Copied 1 event": "1 afspraak gekopieerd"
   },
   "Copied to clipboard": {
     "Copied to clipboard": "Gekopieerd naar klembord"
   },
   "Copy": {
-    "Copy": ""
+    "Copy": "Kopiëren"
   },
   "Copy %1 events": {
-    "Copy %1 events": ""
+    "Copy %1 events": "%1 afspraken kopiëren"
   },
   "Copy event": {
-    "Copy event": ""
+    "Copy event": "Afspraak kopiëren"
   },
   "Copy link": {
     "Copy link": "Link kopiëren"
@@ -444,7 +477,7 @@
     "Copy path": "Pad kopiëren"
   },
   "Copy selected events": {
-    "Copy selected events": ""
+    "Copy selected events": "Geselecteerde afspraken kopiëren"
   },
   "Core hours": {
     "Core hours": "Kernuren"
@@ -454,6 +487,9 @@
   },
   "Could not read that file.": {
     "Could not read that file.": "Kon dat bestand niet lezen."
+  },
+  "Couldn't reconnect. Add the account again to sign in.": {
+    "Couldn't reconnect. Add the account again to sign in.": "Opnieuw verbinden mislukt. Voeg het account opnieuw toe om je aan te melden."
   },
   "Couldn't update task": {
     "Couldn't update task": "Kon taak niet bijwerken"
@@ -465,13 +501,13 @@
     "Create event": "Afspraak maken"
   },
   "Created %1 events": {
-    "Created %1 events": ""
+    "Created %1 events": "%1 afspraken aangemaakt"
   },
   "Created %1 of %2 events": {
-    "Created %1 of %2 events": ""
+    "Created %1 of %2 events": "%1 van %2 afspraken aangemaakt"
   },
   "Created 1 event": {
-    "Created 1 event": ""
+    "Created 1 event": "1 afspraak aangemaakt"
   },
   "Credentials stay on this machine": {
     "Credentials stay on this machine": "Inloggegevens blijven op deze computer"
@@ -480,19 +516,19 @@
     "Custom": "Aangepast"
   },
   "Cut": {
-    "Cut": ""
+    "Cut": "Knippen"
   },
   "Cut %1 events": {
-    "Cut %1 events": ""
+    "Cut %1 events": "%1 afspraken knippen"
   },
   "Cut 1 event": {
-    "Cut 1 event": ""
+    "Cut 1 event": "1 afspraak geknipt"
   },
   "Cut event": {
-    "Cut event": ""
+    "Cut event": "Afspraak knippen"
   },
   "Cut selected events": {
-    "Cut selected events": ""
+    "Cut selected events": "Geselecteerde afspraken knippen"
   },
   "DMS dynamic": {
     "DMS dynamic": "DMS dynamisch"
@@ -519,16 +555,16 @@
     "Dark": "Donker"
   },
   "Date": {
-    "Date": ""
+    "Date": "Datum"
   },
   "Date and time locale": {
-    "Date and time locale": ""
+    "Date and time locale": "Landinstelling voor datum en tijd"
   },
   "Day": {
     "Day": "Dag"
   },
   "Day actions": {
-    "Day actions": ""
+    "Day actions": "Dagacties"
   },
   "Day view": {
     "Day view": "Dagweergave"
@@ -537,10 +573,13 @@
     "Decline": "Weigeren"
   },
   "Decrease": {
-    "Decrease": ""
+    "Decrease": "Verlagen"
+  },
+  "Default": {
+    "Default": "Standaard"
   },
   "Default calendar": {
-    "Default calendar": ""
+    "Default calendar": "Standaardagenda"
   },
   "Default event duration": {
     "Default event duration": "Standaardduur afspraak"
@@ -558,40 +597,40 @@
     "Delete \"%1\"?": "\"%1\" verwijderen?"
   },
   "Delete %1 events": {
-    "Delete %1 events": ""
+    "Delete %1 events": "%1 afspraken verwijderen"
   },
   "Delete %1 events?": {
-    "Delete %1 events?": ""
+    "Delete %1 events?": "%1 afspraken verwijderen?"
   },
   "Delete %1 events…": {
-    "Delete %1 events…": ""
+    "Delete %1 events…": "%1 afspraken verwijderen…"
   },
   "Delete event": {
-    "Delete event": ""
+    "Delete event": "Afspraak verwijderen"
   },
   "Delete event?": {
-    "Delete event?": ""
+    "Delete event?": "Afspraak verwijderen?"
   },
   "Delete event…": {
-    "Delete event…": ""
+    "Delete event…": "Afspraak verwijderen…"
   },
   "Delete occurrence": {
     "Delete occurrence": "Exemplaar verwijderen"
   },
   "Delete selected events": {
-    "Delete selected events": ""
+    "Delete selected events": "Geselecteerde afspraken verwijderen"
   },
   "Delete series": {
     "Delete series": "Reeks verwijderen"
   },
   "Deleted %1 events": {
-    "Deleted %1 events": ""
+    "Deleted %1 events": "%1 afspraken verwijderd"
   },
   "Deleted %1 of %2 events": {
-    "Deleted %1 of %2 events": ""
+    "Deleted %1 of %2 events": "%1 van %2 afspraken verwijderd"
   },
   "Deleted 1 event": {
-    "Deleted 1 event": ""
+    "Deleted 1 event": "1 afspraak verwijderd"
   },
   "Delete…": {
     "Delete…": "Verwijderen…"
@@ -609,7 +648,7 @@
     "Desktop notifications for upcoming events.": "Desktopnotificaties voor aankomende afspraken."
   },
   "Diagnostics": {
-    "Diagnostics": ""
+    "Diagnostics": "Diagnostiek"
   },
   "Directory": {
     "Directory": "Map"
@@ -625,6 +664,9 @@
   },
   "Display ISO week numbers in month view.": {
     "Display ISO week numbers in month view.": "ISO-weeknummers weergeven in maandweergave."
+  },
+  "Display family": {
+    "Display family": "Weergavelettertype"
   },
   "Display name (optional)": {
     "Display name (optional)": "Weergavenaam (optioneel)"
@@ -651,22 +693,34 @@
     "Due date": "Vervaldatum"
   },
   "Duplicate": {
-    "Duplicate": ""
+    "Duplicate": "Dupliceren"
   },
   "Duplicate %1 events": {
-    "Duplicate %1 events": ""
+    "Duplicate %1 events": "%1 afspraken dupliceren"
   },
   "Duplicate selected events": {
-    "Duplicate selected events": ""
+    "Duplicate selected events": "Geselecteerde afspraken dupliceren"
   },
   "Duplicate selected events to the next day": {
-    "Duplicate selected events to the next day": ""
+    "Duplicate selected events to the next day": "Geselecteerde afspraken dupliceren naar de volgende dag"
   },
   "Duration": {
-    "Duration": ""
+    "Duration": "Duur"
+  },
+  "Dux Calendar is a calendar for the modern Linux desktop with a <a href=\"https://m3.material.io/\" style=\"text-decoration:none; color:%1;\">material 3 inspired</a> design, plus a hackable CLI and socket API for integrations.<br /><br/>It is built with <a href=\"https://quickshell.org\" style=\"text-decoration:none; color:%1;\">Quickshell</a>, a QT6 framework for building desktop shells, and <a href=\"https://go.dev\" style=\"text-decoration:none; color:%1;\">Go</a>, a statically typed, compiled programming language.": {
+    "Dux Calendar is a calendar for the modern Linux desktop with a <a href=\"https://m3.material.io/\" style=\"text-decoration:none; color:%1;\">material 3 inspired</a> design, plus a hackable CLI and socket API for integrations.<br /><br/>It is built with <a href=\"https://quickshell.org\" style=\"text-decoration:none; color:%1;\">Quickshell</a>, a QT6 framework for building desktop shells, and <a href=\"https://go.dev\" style=\"text-decoration:none; color:%1;\">Go</a>, a statically typed, compiled programming language.": "Dux Calendar is een agenda voor de moderne Linux-desktop met een <a href=\"https://m3.material.io/\" style=\"text-decoration:none; color:%1;\">op Material 3 geïnspireerd</a> ontwerp, plus een aanpasbare CLI en socket-API voor integraties.<br /><br/>Het is gebouwd met <a href=\"https://quickshell.org\" style=\"text-decoration:none; color:%1;\">Quickshell</a>, een QT6-framework voor het bouwen van desktopshells, en <a href=\"https://go.dev\" style=\"text-decoration:none; color:%1;\">Go</a>, een statisch getypeerde, gecompileerde programmeertaal."
+  },
+  "Dux Calendar will close and reopen with the new zoom.": {
+    "Dux Calendar will close and reopen with the new zoom.": "Dux Calendar wordt gesloten en opnieuw geopend met de nieuwe zoom."
+  },
+  "Dux Shell not detected — using the %1 preset.": {
+    "Dux Shell not detected — using the %1 preset.": "Dux Shell niet gevonden — de voorinstelling %1 wordt gebruikt."
+  },
+  "Dux Shell not detected, using %1.": {
+    "Dux Shell not detected, using %1.": "Dux Shell niet gevonden, %1 wordt gebruikt."
   },
   "Edit": {
-    "Edit": ""
+    "Edit": "Bewerken"
   },
   "Edit event": {
     "Edit event": "Afspraak bewerken"
@@ -682,6 +736,9 @@
   },
   "Enable sync": {
     "Enable sync": "Synchronisatie inschakelen"
+  },
+  "End": {
+    "End": "Einde"
   },
   "Ends": {
     "Ends": "Eindigt"
@@ -708,7 +765,7 @@
     "Event": "Afspraak"
   },
   "Event actions": {
-    "Event actions": ""
+    "Event actions": "Afspraakacties"
   },
   "Event details": {
     "Event details": "Afspraakdetails"
@@ -717,7 +774,7 @@
     "Every": "Elke"
   },
   "Everything in this file is already on your calendar.": {
-    "Everything in this file is already on your calendar.": ""
+    "Everything in this file is already on your calendar.": "Alles in dit bestand staat al in je agenda."
   },
   "Evolution": {
     "Evolution": "Evolution"
@@ -727,6 +784,9 @@
   },
   "F1/I: Toggle • F10: Help": {
     "F1/I: Toggle • F10: Help": "F1/I: Omschakelen • F10: Help"
+  },
+  "Family": {
+    "Family": "Lettertype"
   },
   "Feed URL": {
     "Feed URL": "Feed-URL"
@@ -741,7 +801,7 @@
     "Files - %1": "Bestanden - %1"
   },
   "First calendar": {
-    "First calendar": ""
+    "First calendar": "Eerste agenda"
   },
   "First day shown in week and month views.": {
     "First day shown in week and month views.": "Eerste dag getoond in week- en maandweergave."
@@ -750,16 +810,28 @@
     "Focus or leave the sidebar": "Zijbalk focussen of verlaten"
   },
   "Focus ring": {
-    "Focus ring": ""
+    "Focus ring": "Focusring"
   },
   "Follow DankMaterialShell colors, falling back to a preset.": {
     "Follow DankMaterialShell colors, falling back to a preset.": "Volg de kleuren van DankMaterialShell, of val terug op een preset."
   },
+  "Follow Dux Shell colors, falling back to a preset.": {
+    "Follow Dux Shell colors, falling back to a preset.": "Dux Shell-kleuren volgen, met een voorinstelling als terugval."
+  },
+  "Follow colors generated by Matugen.": {
+    "Follow colors generated by Matugen.": "Kleuren volgen die door Matugen zijn gegenereerd."
+  },
   "Follow language": {
-    "Follow language": ""
+    "Follow language": "Taal volgen"
   },
   "Following the system color scheme (currently %1).": {
     "Following the system color scheme (currently %1).": "Systeemkleurenschema volgen (momenteel %1)."
+  },
+  "Font source": {
+    "Font source": "Lettertypebron"
+  },
+  "Foreground layers": {
+    "Foreground layers": ""
   },
   "General": {
     "General": "Algemeen"
@@ -801,25 +873,25 @@
     "How often accounts are polled for changes.": "Hoe vaak accounts worden gecontroleerd op wijzigingen."
   },
   "Import": {
-    "Import": ""
+    "Import": "Importeren"
   },
   "Import %1 events": {
-    "Import %1 events": ""
+    "Import %1 events": "%1 afspraken importeren"
   },
   "Import client_secret.json": {
     "Import client_secret.json": "client_secret.json importeren"
   },
   "Import events": {
-    "Import events": ""
+    "Import events": "Afspraken importeren"
   },
   "Import the client_secret_….json you downloaded when creating the client, or paste the Client ID and Secret manually.": {
     "Import the client_secret_….json you downloaded when creating the client, or paste the Client ID and Secret manually.": "Importeer het client_secret_….json-bestand dat je hebt gedownload bij het maken van de client, of plak de Client-ID en Secret handmatig."
   },
   "Importing...": {
-    "Importing...": ""
+    "Importing...": "Importeren..."
   },
   "Increase": {
-    "Increase": ""
+    "Increase": "Verhogen"
   },
   "Initial reminder set on new events.": {
     "Initial reminder set on new events.": "Initiële herinnering ingesteld bij nieuwe afspraken."
@@ -833,29 +905,41 @@
   "Keep until dismissed": {
     "Keep until dismissed": "Bewaren tot gesloten"
   },
+  "Keeps cards and panes solid when the window is see-through.": {
+    "Keeps cards and panes solid when the window is see-through.": ""
+  },
   "Keyboard shortcuts": {
     "Keyboard shortcuts": "Sneltoetsen"
   },
   "Keyring locked — unlock it to sync": {
-    "Keyring locked — unlock it to sync": ""
+    "Keyring locked — unlock it to sync": "Sleutelbos vergrendeld — ontgrendel deze om te synchroniseren"
   },
   "Ko-fi": {
     "Ko-fi": "Ko-fi"
   },
   "Language": {
-    "Language": ""
+    "Language": "Taal"
   },
   "Language and time": {
-    "Language and time": ""
+    "Language and time": "Taal en tijd"
   },
   "Language of the interface.": {
-    "Language of the interface.": ""
+    "Language of the interface.": "Taal van de interface."
   },
   "Launch Dank Calendar in the background when you log in.": {
     "Launch Dank Calendar in the background when you log in.": "Dank Calendar op de achtergrond starten wanneer je inlogt."
   },
+  "Launch Dux Calendar in the background when you log in.": {
+    "Launch Dux Calendar in the background when you log in.": "Dux Calendar op de achtergrond starten wanneer je je aanmeldt."
+  },
+  "Layer opacity": {
+    "Layer opacity": ""
+  },
   "Length used when creating events.": {
     "Length used when creating events.": "Gebruikte duur bij het aanmaken van afspraken."
+  },
+  "Lets the desktop show through the window. Text and controls stay solid.": {
+    "Lets the desktop show through the window. Text and controls stay solid.": ""
   },
   "Light": {
     "Light": "Licht"
@@ -882,10 +966,10 @@
     "Local calendars": "Lokale agenda's"
   },
   "Locale used for day and month names, time format and week start.": {
-    "Locale used for day and month names, time format and week start.": ""
+    "Locale used for day and month names, time format and week start.": "Landinstelling voor dag- en maandnamen, tijdnotatie en begin van de week."
   },
   "Locale, views and defaults": {
-    "Locale, views and defaults": ""
+    "Locale, views and defaults": "Landinstelling, weergaven en standaarden"
   },
   "Location": {
     "Location": "Locatie"
@@ -895,6 +979,12 @@
   },
   "Marked as not done": {
     "Marked as not done": "Gemarkeerd als niet voltooid"
+  },
+  "Matugen": {
+    "Matugen": "Matugen"
+  },
+  "Matugen theme missing or invalid — using the %1 preset.": {
+    "Matugen theme missing or invalid — using the %1 preset.": "Matugen-thema ontbreekt of is ongeldig — de voorinstelling %1 wordt gebruikt."
   },
   "Maximum title lines per event in month view.": {
     "Maximum title lines per event in month view.": "Maximaal aantal titelregels per gebeurtenis in de maandweergave."
@@ -909,16 +999,19 @@
     "Medium": "Gemiddeld"
   },
   "Meeting cancellation": {
-    "Meeting cancellation": ""
+    "Meeting cancellation": "Annulering van vergadering"
   },
   "Meeting invitation": {
-    "Meeting invitation": ""
+    "Meeting invitation": "Uitnodiging voor vergadering"
   },
   "Meeting reply": {
-    "Meeting reply": ""
+    "Meeting reply": "Antwoord op vergadering"
   },
   "Menu": {
-    "Menu": ""
+    "Menu": "Menu"
+  },
+  "Merge duplicate events": {
+    "Merge duplicate events": "Dubbele afspraken samenvoegen"
   },
   "Microsoft To Do access wasn't granted. Reconnect this account to sync tasks.": {
     "Microsoft To Do access wasn't granted. Reconnect this account to sync tasks.": "Toegang tot Microsoft To Do is niet verleend. Verbind dit account opnieuw om taken te synchroniseren."
@@ -935,6 +1028,9 @@
   "Modified": {
     "Modified": "Gewijzigd"
   },
+  "Monospace family": {
+    "Monospace family": "Lettertype met vaste breedte"
+  },
   "Month": {
     "Month": "Maand"
   },
@@ -948,22 +1044,22 @@
     "Monthly": "Maandelijks"
   },
   "Motion": {
-    "Motion": ""
+    "Motion": "Beweging"
   },
   "Move": {
-    "Move": ""
+    "Move": "Verplaatsen"
   },
   "Move %1 events": {
-    "Move %1 events": ""
+    "Move %1 events": "%1 afspraken verplaatsen"
   },
   "Move %1 events here": {
-    "Move %1 events here": ""
+    "Move %1 events here": "%1 afspraken hierheen verplaatsen"
   },
   "Move 1 event here": {
-    "Move 1 event here": ""
+    "Move 1 event here": "1 afspraak hierheen verplaatsen"
   },
   "Move recurring events?": {
-    "Move recurring events?": ""
+    "Move recurring events?": "Terugkerende afspraken verplaatsen?"
   },
   "Move through sidebar items": {
     "Move through sidebar items": "Door zijbalk-items navigeren"
@@ -972,19 +1068,19 @@
     "Move to Trash": "Verplaatsen naar prullenbak"
   },
   "Move to selected day": {
-    "Move to selected day": ""
+    "Move to selected day": "Naar geselecteerde dag verplaatsen"
   },
   "Moved %1 events": {
-    "Moved %1 events": ""
+    "Moved %1 events": "%1 afspraken verplaatst"
   },
   "Moved %1 of %2 events": {
-    "Moved %1 of %2 events": ""
+    "Moved %1 of %2 events": "%1 van %2 afspraken verplaatst"
   },
   "Moved 1 event": {
-    "Moved 1 event": ""
+    "Moved 1 event": "1 afspraak verplaatst"
   },
   "Moving a recurring event moves its entire series.": {
-    "Moving a recurring event moves its entire series.": ""
+    "Moving a recurring event moves its entire series.": "Als je een terugkerende afspraak verplaatst, wordt de hele reeks verplaatst."
   },
   "Music": {
     "Music": "Muziek"
@@ -999,7 +1095,7 @@
     "Name": "Naam"
   },
   "Names, visibility, removal": {
-    "Names, visibility, removal": ""
+    "Names, visibility, removal": "Namen, zichtbaarheid, verwijderen"
   },
   "Navigation": {
     "Navigation": "Navigatie"
@@ -1017,13 +1113,13 @@
     "New event": "Nieuwe afspraak"
   },
   "New events": {
-    "New events": ""
+    "New events": "Nieuwe afspraken"
   },
   "New task": {
     "New task": "Nieuwe taak"
   },
   "Next": {
-    "Next": ""
+    "Next": "Volgende"
   },
   "Next day": {
     "Next day": "Volgende dag"
@@ -1041,7 +1137,7 @@
     "Next event (next week in month view)": "Volgende afspraak (volgende week in maandoverzicht)"
   },
   "Next month": {
-    "Next month": ""
+    "Next month": "Volgende maand"
   },
   "Next week": {
     "Next week": "Volgende week"
@@ -1069,6 +1165,9 @@
   },
   "No matching events": {
     "No matching events": "Geen overeenkomende afspraken"
+  },
+  "No overlapping busy events": {
+    "No overlapping busy events": "Geen overlappende bezette afspraken"
   },
   "No task list available": {
     "No task list available": "Geen takenlijst beschikbaar"
@@ -1107,7 +1206,10 @@
     "Notify for all-day events without their own reminders.": "Melding geven voor dagafspraken zonder eigen herinneringen."
   },
   "Off": {
-    "Off": ""
+    "Off": "Uit"
+  },
+  "Off lets the compositor decorate windows. Open windows update when reopened.": {
+    "Off lets the compositor decorate windows. Open windows update when reopened.": "Bij uit worden vensters door de compositor gedecoreerd. Geopende vensters worden bijgewerkt wanneer ze opnieuw worden geopend."
   },
   "Offline": {
     "Offline": "Offline"
@@ -1117,6 +1219,9 @@
   },
   "On the day": {
     "On the day": "Op de dag zelf"
+  },
+  "Opacity": {
+    "Opacity": ""
   },
   "Open": {
     "Open": "Openen"
@@ -1128,25 +1233,28 @@
     "Open browser again": "Browser opnieuw openen"
   },
   "Open event": {
-    "Open event": ""
+    "Open event": "Afspraak openen"
   },
   "Open event actions": {
-    "Open event actions": ""
+    "Open event actions": "Afspraakacties openen"
   },
   "Open or create event": {
     "Open or create event": "Afspraak openen of maken"
+  },
+  "Open the existing meeting to handle this reply or cancellation.": {
+    "Open the existing meeting to handle this reply or cancellation.": "Open de bestaande vergadering om dit antwoord of deze annulering te verwerken."
   },
   "Order": {
     "Order": "Volgorde"
   },
   "Organized by %1": {
-    "Organized by %1": ""
+    "Organized by %1": "Georganiseerd door %1"
   },
   "Outline": {
-    "Outline": ""
+    "Outline": "Omtrek"
   },
   "Outline the control that has keyboard focus.": {
-    "Outline the control that has keyboard focus.": ""
+    "Outline the control that has keyboard focus.": "Omlijn het bedieningselement dat toetsenbordfocus heeft."
   },
   "Outlook, Office 365 and Exchange Online calendars.": {
     "Outlook, Office 365 and Exchange Online calendars.": "Outlook-, Office 365- en Exchange Online-agenda's."
@@ -1176,22 +1284,22 @@
     "Password (optional)": "Wachtwoord (optioneel)"
   },
   "Paste %1 events": {
-    "Paste %1 events": ""
+    "Paste %1 events": "%1 afspraken plakken"
   },
   "Paste %1 events here": {
-    "Paste %1 events here": ""
+    "Paste %1 events here": "%1 afspraken hier plakken"
   },
   "Paste 1 event": {
-    "Paste 1 event": ""
+    "Paste 1 event": "1 afspraak plakken"
   },
   "Paste 1 event here": {
-    "Paste 1 event here": ""
+    "Paste 1 event here": "1 afspraak hier plakken"
   },
   "Paste credentials": {
     "Paste credentials": "Inloggegevens plakken"
   },
   "Paste events on the selected day": {
-    "Paste events on the selected day": ""
+    "Paste events on the selected day": "Afspraken plakken op de geselecteerde dag"
   },
   "Paste the Application (client) ID from your app registration's Overview page.": {
     "Paste the Application (client) ID from your app registration's Overview page.": "Plak de Applicatie-ID (client-ID) van de overzichtspagina van je app-registratie."
@@ -1203,19 +1311,19 @@
     "Paste your credentials": "Plak je inloggegevens"
   },
   "Pasted %1 events": {
-    "Pasted %1 events": ""
+    "Pasted %1 events": "%1 afspraken geplakt"
   },
   "Pasted %1 of %2 events": {
-    "Pasted %1 of %2 events": ""
+    "Pasted %1 of %2 events": "%1 van %2 afspraken geplakt"
   },
   "Pasted 1 event": {
-    "Pasted 1 event": ""
+    "Pasted 1 event": "1 afspraak geplakt"
   },
   "Pick a color source, palette, or your own theme file.": {
     "Pick a color source, palette, or your own theme file.": "Kies een kleurbron, palet of eigen themabestand."
   },
   "Pick time": {
-    "Pick time": ""
+    "Pick time": "Tijd kiezen"
   },
   "Pictures": {
     "Pictures": "Afbeeldingen"
@@ -1224,7 +1332,7 @@
     "Play a sound when a reminder fires.": "Speel een geluid af wanneer een herinnering afgaat."
   },
   "Playful": {
-    "Playful": ""
+    "Playful": "Speels"
   },
   "Point at a directory of .ics files. Each subdirectory or .ics file becomes a calendar — compatible with vdirsyncer/khal layouts. The directory is created if it doesn't exist.": {
     "Point at a directory of .ics files. Each subdirectory or .ics file becomes a calendar — compatible with vdirsyncer/khal layouts. The directory is created if it doesn't exist.": "Wijs naar een map met .ics-bestanden. Elke submap of elk .ics-bestand wordt een agenda — compatibel met vdirsyncer/khal-indelingen. De map wordt aangemaakt als deze nog niet bestaat."
@@ -1233,7 +1341,7 @@
     "Preset": "Preset"
   },
   "Previous": {
-    "Previous": ""
+    "Previous": "Vorige"
   },
   "Previous day": {
     "Previous day": "Vorige dag"
@@ -1251,7 +1359,7 @@
     "Previous event (previous week in month view)": "Vorige afspraak (vorige week in maandoverzicht)"
   },
   "Previous month": {
-    "Previous month": ""
+    "Previous month": "Vorige maand"
   },
   "Previous week": {
     "Previous week": "Vorige week"
@@ -1260,7 +1368,7 @@
     "Previous year": "Vorig jaar"
   },
   "Primary": {
-    "Primary": ""
+    "Primary": "Primair"
   },
   "Priority": {
     "Priority": "Prioriteit"
@@ -1272,34 +1380,37 @@
     "Quit": "Afsluiten"
   },
   "Radius strength": {
-    "Radius strength": ""
+    "Radius strength": "Afrondingssterkte"
   },
   "Read-only events can't be cut": {
-    "Read-only events can't be cut": ""
+    "Read-only events can't be cut": "Alleen-lezen afspraken kunnen niet worden geknipt"
   },
   "Read-only events can't be deleted": {
-    "Read-only events can't be deleted": ""
+    "Read-only events can't be deleted": "Alleen-lezen afspraken kunnen niet worden verwijderd"
   },
   "Read-only events can't be moved": {
-    "Read-only events can't be moved": ""
+    "Read-only events can't be moved": "Alleen-lezen afspraken kunnen niet worden verplaatst"
   },
   "Reading file...": {
-    "Reading file...": ""
+    "Reading file...": "Bestand lezen..."
   },
   "Reconnect": {
     "Reconnect": "Opnieuw verbinden"
+  },
+  "Recurring event · conflicts checked through %1": {
+    "Recurring event · conflicts checked through %1": "Terugkerende afspraak · conflicten gecontroleerd tot en met %1"
   },
   "Recurring tasks are managed in Google Tasks.": {
     "Recurring tasks are managed in Google Tasks.": "Terugkerende taken worden beheerd in Google Tasks."
   },
   "Reduce motion": {
-    "Reduce motion": ""
+    "Reduce motion": "Beweging verminderen"
   },
   "Reminders": {
     "Reminders": "Herinneringen"
   },
   "Reminders and alerts": {
-    "Reminders and alerts": ""
+    "Reminders and alerts": "Herinneringen en waarschuwingen"
   },
   "Reminders and desktop alerts.": {
     "Reminders and desktop alerts.": "Herinneringen en desktopmeldingen."
@@ -1323,13 +1434,19 @@
     "Remove calendar or account": "Agenda of account verwijderen"
   },
   "Remove reminder": {
-    "Remove reminder": ""
+    "Remove reminder": "Herinnering verwijderen"
   },
   "Removes this account and its calendars and events from Dank Calendar. Nothing is deleted from the provider.": {
     "Removes this account and its calendars and events from Dank Calendar. Nothing is deleted from the provider.": "Verwijdert dit account en de bijbehorende agenda's en afspraken uit Dank Calendar. Er wordt niets verwijderd bij de provider."
   },
+  "Removes this account and its calendars and events from Dux Calendar. Nothing is deleted from the provider.": {
+    "Removes this account and its calendars and events from Dux Calendar. Nothing is deleted from the provider.": "Verwijdert dit account en de bijbehorende agenda's en afspraken uit Dux Calendar. Er wordt niets bij de provider verwijderd."
+  },
   "Removes this calendar and its events from Dank Calendar. If the provider still offers it, it will come back on the next sync.": {
     "Removes this calendar and its events from Dank Calendar. If the provider still offers it, it will come back on the next sync.": "Verwijdert deze agenda en de bijbehorende afspraken uit Dank Calendar. Als de provider deze nog aanbiedt, komt deze bij de volgende synchronisatie weer terug."
+  },
+  "Removes this calendar and its events from Dux Calendar. If the provider still offers it, it will come back on the next sync.": {
+    "Removes this calendar and its events from Dux Calendar. If the provider still offers it, it will come back on the next sync.": "Verwijdert deze agenda en de bijbehorende afspraken uit Dux Calendar. Als de provider de agenda nog aanbiedt, komt deze bij de volgende synchronisatie terug."
   },
   "Remove…": {
     "Remove…": "Verwijderen…"
@@ -1347,16 +1464,16 @@
     "Repeat": "Herhalen"
   },
   "Repeat %1 events next week": {
-    "Repeat %1 events next week": ""
+    "Repeat %1 events next week": "%1 afspraken volgende week herhalen"
   },
   "Repeat %1 events tomorrow": {
-    "Repeat %1 events tomorrow": ""
+    "Repeat %1 events tomorrow": "%1 afspraken morgen herhalen"
   },
   "Repeat next week": {
-    "Repeat next week": ""
+    "Repeat next week": "Volgende week herhalen"
   },
   "Repeat tomorrow": {
-    "Repeat tomorrow": ""
+    "Repeat tomorrow": "Morgen herhalen"
   },
   "Repeats": {
     "Repeats": "Herhaalt"
@@ -1370,8 +1487,11 @@
   "Reset to global": {
     "Reset to global": "Herstellen naar globaal"
   },
+  "Restart required": {
+    "Restart required": "Herstart vereist"
+  },
   "Ripple effects": {
-    "Ripple effects": ""
+    "Ripple effects": "Rimpeleffecten"
   },
   "Save": {
     "Save": "Opslaan"
@@ -1380,7 +1500,10 @@
     "Saving...": "Opslaan..."
   },
   "Scale": {
-    "Scale": ""
+    "Scale": "Schaal"
+  },
+  "Scales the whole app. Takes effect after a restart.": {
+    "Scales the whole app. Takes effect after a restart.": "Schaalt de hele app. Wordt van kracht na een herstart."
   },
   "Search": {
     "Search": "Zoeken"
@@ -1395,19 +1518,19 @@
     "Searching": "Zoeken..."
   },
   "Secondary": {
-    "Secondary": ""
+    "Secondary": "Secundair"
   },
   "Select File": {
     "Select File": "Bestand selecteren"
   },
   "Select a range of events": {
-    "Select a range of events": ""
+    "Select a range of events": "Een reeks afspraken selecteren"
   },
   "Select all %1 events": {
-    "Select all %1 events": ""
+    "Select all %1 events": "Alle %1 afspraken selecteren"
   },
   "Select all events on the selected day": {
-    "Select all events on the selected day": ""
+    "Select all events on the selected day": "Alle afspraken op de geselecteerde dag selecteren"
   },
   "Select client_secret.json": {
     "Select client_secret.json": "client_secret.json selecteren"
@@ -1416,7 +1539,7 @@
     "Select days for a new event (month view)": "Dagen selecteren voor een nieuwe afspraak (maandoverzicht)"
   },
   "Select event": {
-    "Select event": ""
+    "Select event": "Afspraak selecteren"
   },
   "Select file": {
     "Select file": "Bestand selecteren"
@@ -1430,11 +1553,14 @@
   "Server URL": {
     "Server URL": "Server-URL"
   },
+  "Set by QT_SCALE_FACTOR.": {
+    "Set by QT_SCALE_FACTOR.": "Ingesteld door QT_SCALE_FACTOR."
+  },
   "Settings": {
     "Settings": "Instellingen"
   },
   "Shape": {
-    "Shape": ""
+    "Shape": "Vorm"
   },
   "Show": {
     "Show": "Tonen"
@@ -1442,14 +1568,20 @@
   "Show Dank Calendar in the system tray.": {
     "Show Dank Calendar in the system tray.": "Dank Calendar in het systeemvak tonen."
   },
+  "Show Dux Calendar in the system tray.": {
+    "Show Dux Calendar in the system tray.": "Dux Calendar tonen in het systeemvak."
+  },
   "Show all events in month view": {
     "Show all events in month view": "Alle afspraken tonen in maandoverzicht"
   },
   "Show all-day reminders": {
     "Show all-day reminders": "Dagherinneringen tonen"
   },
+  "Show an event that appears in several calendars once, with dots for the other calendars.": {
+    "Show an event that appears in several calendars once, with dots for the other calendars.": "Een afspraak die in meerdere agenda's voorkomt één keer tonen, met stippen voor de andere agenda's."
+  },
   "Show calendar": {
-    "Show calendar": ""
+    "Show calendar": "Agenda tonen"
   },
   "Show task lists and the Tasks view when an account provides them.": {
     "Show task lists and the Tasks view when an account provides them.": "Toon takenlijsten en de takenweergave wanneer een account deze aanbiedt."
@@ -1463,6 +1595,9 @@
   "Show week numbers": {
     "Show week numbers": "Weeknummers tonen"
   },
+  "Showing the first 20 overlaps.": {
+    "Showing the first 20 overlaps.": "De eerste 20 overlappingen worden getoond."
+  },
   "Sidebar": {
     "Sidebar": "Zijbalk"
   },
@@ -1472,8 +1607,14 @@
   "Sign in with Google in your browser and you're done — no setup needed. Dank Calendar syncs your calendars, events, and tasks.": {
     "Sign in with Google in your browser and you're done — no setup needed. Dank Calendar syncs your calendars, events, and tasks.": "Log in met Google in je browser en je bent klaar — geen configuratie nodig. Dank Calendar synchroniseert je agenda's, afspraken en taken."
   },
+  "Sign in with Google in your browser and you're done — no setup needed. Dux Calendar syncs your calendars, events, and tasks.": {
+    "Sign in with Google in your browser and you're done — no setup needed. Dux Calendar syncs your calendars, events, and tasks.": "Meld je aan met Google in je browser en je bent klaar — geen configuratie nodig. Dux Calendar synchroniseert je agenda's, afspraken en taken."
+  },
   "Sign in with Microsoft in your browser and you're done — no setup needed. Dank Calendar syncs your Outlook calendars, events, and tasks.": {
     "Sign in with Microsoft in your browser and you're done — no setup needed. Dank Calendar syncs your Outlook calendars, events, and tasks.": "Log in met Microsoft in je browser en je bent klaar — geen configuratie nodig. Dank Calendar synchroniseert je Outlook-agenda's, afspraken en taken."
+  },
+  "Sign in with Microsoft in your browser and you're done — no setup needed. Dux Calendar syncs your Outlook calendars, events, and tasks.": {
+    "Sign in with Microsoft in your browser and you're done — no setup needed. Dux Calendar syncs your Outlook calendars, events, and tasks.": "Meld je aan met Microsoft in je browser en je bent klaar — geen configuratie nodig. Dux Calendar synchroniseert je Outlook-agenda's, afspraken en taken."
   },
   "Sign in with your Apple ID and an app-specific password. Regular Apple ID passwords will not work.": {
     "Sign in with your Apple ID and an app-specific password. Regular Apple ID passwords will not work.": "Log in met je Apple ID en een app-specifiek wachtwoord. Normale Apple ID-wachtwoorden werken niet."
@@ -1494,22 +1635,25 @@
     "Skip certificate verification": "Certificaatverificatie overslaan"
   },
   "Smooth": {
-    "Smooth": ""
+    "Smooth": "Vloeiend"
   },
   "Snooze duration": {
     "Snooze duration": "Sluimertijd"
   },
   "Some calendars couldn't be synced; their events may be missing or out of date.": {
-    "Some calendars couldn't be synced; their events may be missing or out of date.": ""
+    "Some calendars couldn't be synced; their events may be missing or out of date.": "Sommige agenda's konden niet worden gesynchroniseerd; hun afspraken kunnen ontbreken of verouderd zijn."
   },
   "Sort By": {
     "Sort By": "Sorteren op"
   },
   "Spring": {
-    "Spring": ""
+    "Spring": "Vering"
   },
   "Square": {
-    "Square": ""
+    "Square": "Vierkant"
+  },
+  "Start": {
+    "Start": "Begin"
   },
   "Start at login": {
     "Start at login": "Starten bij inloggen"
@@ -1541,6 +1685,12 @@
   "Subscribing…": {
     "Subscribing…": "Abonneren…"
   },
+  "Support Dank Linux": {
+    "Support Dank Linux": "Dank Linux steunen"
+  },
+  "Support Dux Labs": {
+    "Support Dux Labs": "Dux Labs steunen"
+  },
   "Sync interval": {
     "Sync interval": "Synchronisatie-interval"
   },
@@ -1553,8 +1703,14 @@
   "Synced as \"%1\". The name only changes in Dank Calendar.": {
     "Synced as \"%1\". The name only changes in Dank Calendar.": "Gesynchroniseerd als \"%1\". De naam verandert alleen in Dank Calendar."
   },
+  "Synced as \"%1\". The name only changes in Dux Calendar.": {
+    "Synced as \"%1\". The name only changes in Dux Calendar.": "Gesynchroniseerd als \"%1\". De naam verandert alleen in Dux Calendar."
+  },
+  "System": {
+    "System": "Systeem"
+  },
   "System default": {
-    "System default": ""
+    "System default": "Systeemstandaard"
   },
   "System default (%1)": {
     "System default (%1)": "Systeemstandaard (%1)"
@@ -1584,37 +1740,40 @@
     "Test notification": "Testnotificatie"
   },
   "Text color": {
-    "Text color": ""
+    "Text color": "Tekstkleur"
   },
   "That file is not valid JSON.": {
     "That file is not valid JSON.": "Dat bestand is geen geldig JSON-bestand."
   },
   "The server refused to return some events or tasks, so they were skipped; the rest of the calendar is syncing.": {
-    "The server refused to return some events or tasks, so they were skipped; the rest of the calendar is syncing.": ""
+    "The server refused to return some events or tasks, so they were skipped; the rest of the calendar is syncing.": "De server weigerde sommige afspraken of taken terug te geven, dus deze zijn overgeslagen; de rest van de agenda wordt gesynchroniseerd."
   },
   "Theme": {
     "Theme": "Thema"
   },
   "Theme, shape and motion": {
-    "Theme, shape and motion": ""
+    "Theme, shape and motion": "Thema, vorm en beweging"
   },
   "These events will be deleted from their calendars. Recurring selections delete only the selected occurrences.": {
-    "These events will be deleted from their calendars. Recurring selections delete only the selected occurrences.": ""
+    "These events will be deleted from their calendars. Recurring selections delete only the selected occurrences.": "Deze afspraken worden uit hun agenda's verwijderd. Bij terugkerende afspraken worden alleen de geselecteerde exemplaren verwijderd."
   },
   "Thickness": {
-    "Thickness": ""
+    "Thickness": "Dikte"
   },
   "This account cannot be reconnected — remove it and add it again.": {
     "This account cannot be reconnected — remove it and add it again.": "Dit account kan niet opnieuw worden verbonden — verwijder het en voeg het opnieuw toe."
   },
   "This event": {
-    "This event": ""
+    "This event": "Deze afspraak"
   },
   "This event will be deleted from its calendar.": {
-    "This event will be deleted from its calendar.": ""
+    "This event will be deleted from its calendar.": "Deze afspraak wordt uit de agenda verwijderd."
   },
   "Time format": {
     "Time format": "Tijdnotatie"
+  },
+  "Title bars": {
+    "Title bars": "Titelbalken"
   },
   "Title is required": {
     "Title is required": "Titel is verplicht"
@@ -1626,7 +1785,7 @@
     "Toggle calendar, switch view or sync account": "Agenda in-/uitschakelen, weergave wijzigen of account synchroniseren"
   },
   "Toggle sidebar": {
-    "Toggle sidebar": ""
+    "Toggle sidebar": "Zijbalk tonen/verbergen"
   },
   "Toggle this help": {
     "Toggle this help": "Help in-/uitschakelen"
@@ -1650,7 +1809,7 @@
     "Type at least 2 characters to search events.": "Typ ten minste 2 tekens om afspraken te zoeken."
   },
   "Typography": {
-    "Typography": ""
+    "Typography": "Typografie"
   },
   "Undo": {
     "Undo": "Ongedaan maken"
@@ -1685,6 +1844,12 @@
   "Using DankMaterialShell dynamic colors.": {
     "Using DankMaterialShell dynamic colors.": "DankMaterialShell dynamische kleuren worden gebruikt."
   },
+  "Using Dux Shell dynamic colors.": {
+    "Using Dux Shell dynamic colors.": "Dynamische kleuren van Dux Shell worden gebruikt."
+  },
+  "Using Matugen colors.": {
+    "Using Matugen colors.": "Matugen-kleuren worden gebruikt."
+  },
   "Verify desktop notifications are working.": {
     "Verify desktop notifications are working.": "Controleer of desktopnotificaties werken."
   },
@@ -1692,7 +1857,7 @@
     "Version": "Versie"
   },
   "Version and links": {
-    "Version and links": ""
+    "Version and links": "Versie en links"
   },
   "Videos": {
     "Videos": "Video's"
@@ -1701,7 +1866,7 @@
     "View": "Weergave"
   },
   "Views": {
-    "Views": ""
+    "Views": "Weergaven"
   },
   "Visibility, names, and removal per calendar.": {
     "Visibility, names, and removal per calendar.": "Zichtbaarheid, namen en verwijdering per agenda."
@@ -1725,13 +1890,16 @@
     "Weekly": "Wekelijks"
   },
   "Weight": {
-    "Weight": ""
+    "Weight": "Gewicht"
   },
   "What the window's close button does.": {
     "What the window's close button does.": "Wat de sluitknop van het venster doet."
   },
   "When all-day event reminders fire.": {
     "When all-day event reminders fire.": "Wanneer dagherinneringen worden gegeven."
+  },
+  "Windows": {
+    "Windows": "Vensters"
   },
   "Yearly": {
     "Yearly": "Jaarlijks"
@@ -1745,8 +1913,14 @@
   "Your client ID, secret, and refresh token are stored in the system keyring (libsecret/kwallet) when available, or an encrypted local file.": {
     "Your client ID, secret, and refresh token are stored in the system keyring (libsecret/kwallet) when available, or an encrypted local file.": "Je client-ID, geheim en vernieuwingstoken worden opgeslagen in de systeem-sleutelbos (libsecret/kwallet) indien beschikbaar, of in een versleuteld lokaal bestand."
   },
+  "Your compositor does not support background blur.": {
+    "Your compositor does not support background blur.": ""
+  },
   "Your response": {
     "Your response": "Je reactie"
+  },
+  "Zoom": {
+    "Zoom": "Zoomen"
   },
   "all day": {
     "all day": "hele dag"

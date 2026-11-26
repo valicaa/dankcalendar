@@ -11,7 +11,7 @@ import (
 	"google.golang.org/api/calendar/v3"
 	"google.golang.org/api/googleapi"
 
-	cal "github.com/AvengeMedia/dankcalendar/core/internal/calendar"
+	cal "github.com/duxlabs-dev/dux-calendar/core/internal/calendar"
 )
 
 // scheduleFields is a partial-response Fields() list: data minimisation so a

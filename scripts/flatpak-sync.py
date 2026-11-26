@@ -14,9 +14,14 @@ import re
 import subprocess
 import sys
 
-METAINFO = pathlib.Path("assets/com.danklinux.dankcalendar.metainfo.xml")
+METAINFO = pathlib.Path("assets/dev.duxlabs.calendar.metainfo.xml")
 MANIFEST = pathlib.Path("distro/flatpak/com.danklinux.dankcalendar.yml")
-SKIP_SUBJECT = re.compile(r"^(nix|i18n|flatpak|ci|chore|build)[(:]", re.I)
+SKIP_SUBJECT = re.compile(r"^(nix|flake|i18n|flatpak|ci|chore|build)[(:]", re.I)
+RELEASE_LINE = re.compile(r'^ *<release version="([^"]+)"', re.M)
+
+
+def version_key(version):
+    return [int(n) for n in re.findall(r"\d+", version)]
 
 
 def git(*args):
@@ -52,10 +57,14 @@ def cmd_metainfo(args):
         f"      <description>\n{release_notes(args.tag)}\n      </description>\n"
         f"    </release>\n"
     )
-    marker = "  <releases>\n"
-    if marker not in text:
+    closing = "  </releases>\n"
+    if closing not in text:
         sys.exit("metainfo has no <releases> section")
-    METAINFO.write_text(text.replace(marker, marker + entry, 1))
+    at = next(
+        (m.start() for m in RELEASE_LINE.finditer(text) if version_key(m.group(1)) < version_key(version)),
+        text.index(closing),
+    )
+    METAINFO.write_text(text[:at] + entry + text[at:])
     print(f"added {version} release entry")
 
 
@@ -66,7 +75,7 @@ def cmd_pin(args):
     text = re.sub(r"main\.Commit=\w+", f"main.Commit={args.commit[:8]}", text)
 
     source = re.compile(
-        r"(url: https://github\.com/AvengeMedia/dankcalendar\.git\n)(\s*)(?:tag: \S+\n\s*)?commit: \S+"
+        r"(url: https://github\.com/duxlabs-dev/dux-calendar\.git\n)(\s*)(?:tag: \S+\n\s*)?commit: \S+"
     )
     m = source.search(text)
     if m is None:

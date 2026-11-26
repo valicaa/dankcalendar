@@ -3,26 +3,26 @@
     "dank-qml-common": {
       "flake": false,
       "locked": {
-        "lastModified": 1790212412,
-        "narHash": "sha256-K42tXEVWy8EoeuZf2YL5frZnK3rtxPUG5r8vw6HH0q8=",
-        "owner": "AvengeMedia",
-        "repo": "dank-qml-common",
-        "rev": "971aa3d326cb01e174d34f4dc843719386c6464f",
+        "lastModified": 1794151087,
+        "narHash": "sha256-U8tfltFSLjvb+FqbRbydohaMFUt1MiHJqBMrcWCr6t4=",
+        "owner": "duxlabs-dev",
+        "repo": "dux-qml-common",
+        "rev": "b78c6fc861bcf1955d3db0c016779886add1f207",
         "type": "github"
       },
       "original": {
-        "owner": "AvengeMedia",
-        "repo": "dank-qml-common",
+        "owner": "duxlabs-dev",
+        "repo": "dux-qml-common",
         "type": "github"
       }
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1782723713,
-        "narHash": "sha256-oPXCU/SSUokcGaJREHibG1CBX3+s/W7orDWQOZDsEeQ=",
+        "lastModified": 1791456040,
+        "narHash": "sha256-H83yz/do+hjOO0uujHyH8RgtIQP2v7Mw+cLwcZK/xKc=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "b5aa0fbd538984f6e3d201be0005b4463d8b09f8",
+        "rev": "e7439b6b14ad3cc35d05608ebca9bce01a25f5f8",
         "type": "github"
       },
       "original": {

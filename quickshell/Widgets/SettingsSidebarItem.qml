@@ -1,6 +1,6 @@
 import QtQuick
 import qs.Common
-import qs.DankCommon.Widgets
+import qs.DCommon.Widgets
 
 Rectangle {
     id: root
@@ -49,8 +49,8 @@ Rectangle {
         if (active)
             return SettingsMetrics.selectedRowColor;
         if (highlighted)
-            return Theme.blend(SettingsMetrics.rowColor, Theme.primary, SettingsMetrics.highlightBlend);
-        return SettingsMetrics.rowColor;
+            return Theme.blend(SettingsMetrics.sidebarRowColor, Theme.primary, SettingsMetrics.highlightBlend);
+        return SettingsMetrics.sidebarRowColor;
     }
 
     Behavior on color {
@@ -81,7 +81,7 @@ Rectangle {
         }
     }
 
-    DankRipple {
+    DRipple {
         id: ripple
         rippleColor: Theme.surfaceText
         topLeftRadius: root.topRadius
@@ -122,7 +122,7 @@ Rectangle {
             }
         }
 
-        DankIcon {
+        DIcon {
             anchors.centerIn: parent
             name: root.iconName
             size: Theme.iconSizeMedium

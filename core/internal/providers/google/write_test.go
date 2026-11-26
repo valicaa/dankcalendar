@@ -11,7 +11,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	cal "github.com/AvengeMedia/dankcalendar/core/internal/calendar"
+	cal "github.com/duxlabs-dev/dux-calendar/core/internal/calendar"
 )
 
 // eventWrites runs each event mutation against p so a test can assert how
