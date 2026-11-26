@@ -49,6 +49,11 @@ block is one Bash call; a `STOP` is a failed step.
    `GRAPHIFY_VIZ_NODE_LIMIT=0 ~/.local/share/graphify-venv/bin/graphify update .`. If upstream
    changed a lot of QML (`.claude/tools/graph-qml.py status`), offer the QML refresh from the
    `code-graph` skill. It costs LLM tokens, so ask first.
+   Then walk every entry in `FEATURES.md` against the merged branch: the fork-feature checks in
+   the offline dev instance (`verify-change` section 4, `.claude/tools/dev-instance.sh`), the
+   desktop-integration items by reading the cited files and flagging what only a real deploy can
+   prove. The PR body lists each entry with pass/fail; a failed entry blocks the PR until the
+   feature is reapplied on top of upstream's code.
 4. **Open the PR.** The PM writes `<scratchpad>/pr-sync.md`: what's coming in, the flagged
    migrations, the verify results, each closing-keyword hit by commit hash only, then the
    attribution line. Never copy a `Fixes #12`-style line into it: GitHub acts on keywords in a

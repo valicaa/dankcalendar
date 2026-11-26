@@ -5,7 +5,7 @@ go upstream as PRs, so all code follows `CONTRIBUTING.md` (read it before a firs
 
 - `origin` = `valicaa/dankcalendar` (branches + PRs), `upstream` = `AvengeMedia/dankcalendar`.
 - Installed build: `~/.local/bin/dcal`, run by `~/.config/systemd/user/dcal.service`
-  (no AUR package, no autostart entry — never re-enable the in-app "Start at login").
+  (no AUR package, no autostart entry — never re-enable the in-app "Start at login"). Custom features and their checks: `FEATURES.md`.
 - User data: `~/.local/share/dankcal/` (SQLite `dankcal.db` + keyring), UI settings:
   `~/.config/dankcal/ui-settings.json`. Treat both as production data.
 
